@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Build & Debug VavvalPennu",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/vavvalpennu_debug.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "expressions": "native",
+            "preLaunchTask": "Make Build"
+        }
+    ]
+}

@@ -1,0 +1,20 @@
+SRCS=src\main.c src\game.c src\anim_asset.c
+INC_PATH=-I$(USERPROFILE)\raylib\include -I. -Isrc
+LIB_PATH=-L $(USERPROFILE)\raylib\lib
+LIBS=-lm -lraylib -lgdi32 -lwinmm
+C_OPTS=-Wall -Werror -pedantic -std=c11
+CFLAGS=$(C_OPTS) $(INC_PATH) $(LIB_PATH) $(LIBS)
+CFLAGS_DEBUG=-g -glldb -O0
+CC=cc
+APP=vavvalpennu
+BUILD_DIR=.
+
+all:
+	@$(CC) $(SRCS) $(CFLAGS) -o $(BUILD_DIR)\$(APP)
+
+debug:
+	@$(CC) $(SRCS) $(CFLAGS) $(CFLAGS_DEBUG) -o $(BUILD_DIR)\$(APP)_debug
+
+clean:
+	@del $(BUILD_DIR)\$(APP).exe
+	@del $(BUILD_DIR)\$(APP)_debug.exe

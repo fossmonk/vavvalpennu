@@ -1,0 +1,42 @@
+#include <raylib.h>
+#include <anim_asset.h>
+#include <config.h>
+
+// PLAYER
+anim_asset_t player_run;
+anim_asset_t player_idle;
+anim_asset_t player_jump;
+
+// BATARANG
+anim_asset_t batr_rotate;
+
+// VADAYAKSHI
+anim_asset_t vy_rise;
+
+void anim_asset_load(anim_info_t info, anim_asset_t *asset) {
+    asset->texture = LoadTexture(info.filepath);
+    asset->name = info.name;
+    asset->framecount = info.framecount;
+    asset->duration = info.duration;
+    asset->repeat = info.repeat;
+}
+
+Vector2 anim_asset_get_frame_dim(anim_asset_t *asset) {
+    int w = asset->texture.width/asset->framecount;
+    int h = asset->texture.height;
+    return (Vector2){w, h};
+}
+
+void anim_asset_load_all(void) {
+    //player assets
+    anim_asset_load(ANIM_P_RUN, &player_run);
+    anim_asset_load(ANIM_P_IDLE, &player_idle);
+    anim_asset_load(ANIM_P_JUMP, &player_jump);
+
+    //batr assets
+    anim_asset_load(ANIM_BATARANG, &batr_rotate);
+
+    //vy assets
+    anim_asset_load(ANIM_VY_RISE, &vy_rise);
+}
+

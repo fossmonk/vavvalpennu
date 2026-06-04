@@ -1,9 +1,9 @@
 #ifndef _GAME_H_
 #define _GAME_H_
 
-#include <config.h>
+#include <vpconfig.h>
 #include <raylib.h>
-#include "anim_asset.h"
+#include <anim_asset.h>
 
 typedef enum {
     LEFT,

@@ -1,10 +1,10 @@
-#include <config.h>
+#include <vpconfig.h>
 #include <raylib.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "game.h"
+#include <game.h>
 
 // SOME HELPER MACROS
 

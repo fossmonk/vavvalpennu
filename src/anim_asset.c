@@ -1,6 +1,6 @@
 #include <raylib.h>
 #include <anim_asset.h>
-#include <config.h>
+#include <vpconfig.h>
 
 // PLAYER
 anim_asset_t player_run;

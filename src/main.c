@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <raylib.h>
-#include <config.h>
+#include <vpconfig.h>
 
-#include "game.h"
+#include <game.h>
 
 int main(void) {
     InitWindow(G_W, G_H, G_TITLE);

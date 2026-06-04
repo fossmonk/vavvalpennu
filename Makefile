@@ -1,20 +1,33 @@
-SRCS=src\main.c src\game.c src\anim_asset.c
-INC_PATH=-I$(USERPROFILE)\raylib\include -I. -Isrc
-LIB_PATH=-L $(USERPROFILE)\raylib\lib
-LIBS=-lm -lraylib -lgdi32 -lwinmm
-C_OPTS=-Wall -Werror -pedantic -std=c11
-CFLAGS=$(C_OPTS) $(INC_PATH) $(LIB_PATH) $(LIBS)
-CFLAGS_DEBUG=-g -glldb -O0
-CC=cc
-APP=vavvalpennu
-BUILD_DIR=.
+# Detect the Operating System
+# On Windows, the OS environment variable is typically set to "Windows_NT"
+ifeq ($(OS),Windows_NT)
+    TARGET_MAKEFILE := Makefile.win
+    RM := del /Q
+else
+    # On Unix-like systems, we query 'uname'
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Darwin)
+        TARGET_MAKEFILE := Makefile.osx
+    else
+        # Optional: Handle Linux or fallback
+        TARGET_MAKEFILE := Makefile.linux
+    endif
+    RM := rm -f
+endif
 
+.PHONY: all clean debug
+
+# Default target forwards all arguments to the OS-specific Makefile
 all:
-	@$(CC) $(SRCS) $(CFLAGS) -o $(BUILD_DIR)\$(APP)
+	@echo "Detected OS. Forwarding build to $(TARGET_MAKEFILE)..."
+	$(MAKE) -f $(TARGET_MAKEFILE)
 
-debug:
-	@$(CC) $(SRCS) $(CFLAGS) $(CFLAGS_DEBUG) -o $(BUILD_DIR)\$(APP)_debug
-
+# Clean target forwards to the OS-specific Makefile
 clean:
-	@del $(BUILD_DIR)\$(APP).exe
-	@del $(BUILD_DIR)\$(APP)_debug.exe
+	@echo "Forwarding clean to $(TARGET_MAKEFILE)..."
+	$(MAKE) -f $(TARGET_MAKEFILE) clean
+
+# Debug target forwards to the OS-specific Makefile
+debug:
+	@echo "Forwarding test to $(TARGET_MAKEFILE)..."
+	$(MAKE) -f $(TARGET_MAKEFILE) test

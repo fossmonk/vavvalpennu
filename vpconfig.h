@@ -1,5 +1,5 @@
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
+#ifndef _VPCONFIG_H_
+#define _VPCONFIG_H_
 
 #include <anim_asset.h>
 
@@ -47,4 +47,4 @@
 #define MAX_BATRS (10)
 #define MAX_ORBS  (6)
 
-#endif
+#endif /* _VPCONFIG_H_ */

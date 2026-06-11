@@ -25,16 +25,18 @@
 
 // Animation assets
 // PLAYER
-#define ANIM_P_IDLE   (anim_info_t){"assets/sprites/player/idle.png", "P IDLE", 16, 0.07f, true}
-#define ANIM_P_RUN    (anim_info_t){"assets/sprites/player/run.png", "P RUN", 16, 0.07f, true}
-#define ANIM_P_JUMP   (anim_info_t){"assets/sprites/player/jump.png", "P JUMP", 8, 0.07f, false}
+#define ANIM_P_IDLE     (anim_info_t){"assets/sprites/player/idle.png", "P IDLE", 16, 0.07f, true}
+#define ANIM_P_RUN      (anim_info_t){"assets/sprites/player/run.png", "P RUN", 16, 0.07f, true}
+#define ANIM_P_JUMP     (anim_info_t){"assets/sprites/player/jump.png", "P JUMP", 8, 0.07f, false}
 
 // BATARANG
-#define ANIM_BATARANG (anim_info_t){"assets/sprites/batarang/batarang_rotate.png", "BATARANG", 8, 0.1f, true}
+#define ANIM_BATARANG   (anim_info_t){"assets/sprites/batarang/batarang_rotate.png", "BATARANG", 8, 0.1f, true}
 
 // VADAYAKSHI
-#define ANIM_VY_RISE  (anim_info_t){"assets/sprites/vadayakshi/rise.png", "VY RISE", 25, 0.07f, true}
+#define ANIM_VY_RISE    (anim_info_t){"assets/sprites/vadayakshi/rise.png", "VY RISE", 25, 0.07f, true}
 
+// AANAMARUTHA
+#define ANIM_AANAM_RUN  (anim_info_t){"assets/sprites/aanamarutha/run.png", "AANAM RUN", 16, 0.2f, true}
 
 // Textures
 #define ORB_TEXTURE   "assets/textures/orb.png"
@@ -46,5 +48,6 @@
 // Other Config
 #define MAX_BATRS (10)
 #define MAX_ORBS  (6)
+#define MAX_AANAS (4)
 
 #endif /* _VPCONFIG_H_ */

@@ -30,4 +30,4 @@ clean:
 # Debug target forwards to the OS-specific Makefile
 debug:
 	@echo "Forwarding test to $(TARGET_MAKEFILE)..."
-	$(MAKE) -f $(TARGET_MAKEFILE) test
+	$(MAKE) -f $(TARGET_MAKEFILE) debug

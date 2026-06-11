@@ -13,6 +13,9 @@ anim_asset_t batr_rotate;
 // VADAYAKSHI
 anim_asset_t vy_rise;
 
+// AANAMARUTHA
+anim_asset_t aanam_run;
+
 void anim_asset_load(anim_info_t info, anim_asset_t *asset) {
     asset->texture = LoadTexture(info.filepath);
     asset->name = info.name;
@@ -38,5 +41,8 @@ void anim_asset_load_all(void) {
 
     //vy assets
     anim_asset_load(ANIM_VY_RISE, &vy_rise);
+
+    // aanam assets
+    anim_asset_load(ANIM_AANAM_RUN, &aanam_run);
 }
 

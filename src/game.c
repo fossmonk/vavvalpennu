@@ -51,6 +51,9 @@ extern anim_asset_t batr_rotate;
 // VADAYAKSHI
 extern anim_asset_t vy_rise;
 
+// AANAMARUTHA
+extern anim_asset_t aanam_run;
+
 void game_load_assets(void) {
     // background
     g.bg = LoadTexture(BACKGROUND);
@@ -177,6 +180,22 @@ void orb_draw(orb_t *orb) {
     EndShaderMode();
 }
 
+void aanam_init(aanam_t *aana) {
+    // ANIM
+    Vector2 dim;
+    // run
+    dim = anim_asset_get_frame_dim(&aanam_run);
+    aana->anim_run.asset = &aanam_run;
+    aana->anim_run.timer = 0.0f;
+    aana->anim_run.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
+
+    // STATE
+    aana->obj.curr_anim = &aana->anim_run;
+    aana->obj.size = (Vector2){dim.x, dim.y};
+    aana->obj.is_active = false;
+    aana->is_dying = false;
+}
+
 void vy_init(vy_t *vy) {
     // ANIM
     Vector2 dim;
@@ -219,6 +238,11 @@ void game_init(void) {
     // ORBS
     for(int i = 0; i < MAX_ORBS; ++i) {
         orb_init(&g.orbs[i]);
+    }
+
+    // init aanam
+    for(int i = 0; i < MAX_AANAS; ++i) {
+        aanam_init(&g.aanas[i]);
     }
 
     // init general things
@@ -353,9 +377,6 @@ void game_update(float dt) {
             } else {
                 flip_anim_left(&g.p.obj);
             }
-            // TESTING: Update hbar
-            g.p.health -= 2;
-            hbar_update(&g.p.hbar, g.p.health, 100);
         }
 
         if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
@@ -523,6 +544,37 @@ void game_update(float dt) {
         }
     }
 
+    // AANAMARUTHAS
+    for(int i = 0; i < MAX_AANAS; ++i) {
+        aanam_t *aana = &g.aanas[i];
+        if(!aana->obj.is_active && (rand() % 12283 == 0)) {
+            aana->obj.is_active = true;
+            Vector2 pos, vel;
+            pos.y = GAME_GROUND_Y - aana->obj.size.y;
+            pos.x = G_W - aana->obj.size.x;
+            pos = GetScreenToWorld2D(pos, g.cam);
+            vel.y = 0;
+            vel.x = -400.0f;
+            aana->obj.pos = pos;
+            aana->obj.vel = vel;
+        }
+    }
+
+    for(int i = 0; i < MAX_AANAS; i++) {
+        aanam_t *aana = &g.aanas[i];
+        if(aana->obj.is_active) {
+            // check for bounds
+            if(game_obj_is_oob(&aana->obj, COORDS_WORLD)) {
+                aana->obj.is_active = false;
+            } else {
+                // update x pos
+                aana->obj.pos.x += aana->obj.vel.x * dt;
+                game_advance_anim(aana->obj.curr_anim, dt);
+            }
+        }
+    }
+
+
     /////////////////////////////////////////////////
     //////////// COLLISION DETECTION ////////////////
     /////////////////////////////////////////////////
@@ -564,7 +616,7 @@ void game_update(float dt) {
     }
 
     // check for player death
-    if(g.p.health == 0) {
+    if(g.p.health <= 0) {
         g.p.is_dying = true;
     }
 }
@@ -612,11 +664,18 @@ void game_start_main_loop(void) {
                 DrawTextureRec(b->obj.curr_anim->asset->texture, b->obj.curr_anim->curr_frame, b->obj.pos, WHITE);
             }
         }
+        // Draw VY
         if(g.vy.obj.is_active) {
             DrawTextureRec(g.vy.obj.curr_anim->asset->texture, g.vy.obj.curr_anim->curr_frame, g.vy.obj.pos, WHITE);
         }
+        // Draw all aanas
+        for(int i = 0; i < MAX_AANAS; ++i) {
+            aanam_t *aana = &g.aanas[i];
+            if(aana->obj.is_active) {
+                DrawTextureRec(aana->obj.curr_anim->asset->texture, aana->obj.curr_anim->curr_frame, aana->obj.pos, LIGHTGRAY);
+            }
+        }
         EndMode2D();
-        
         
         for(int i = 0; i < MAX_ORBS; ++i) {
             orb_t *orb = &g.orbs[i];

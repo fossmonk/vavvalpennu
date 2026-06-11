@@ -66,6 +66,14 @@ typedef struct {
 
 typedef struct {
     obj_t obj;
+    bool is_dying;
+
+    // animations
+    anim_t anim_run;
+} aanam_t;
+
+typedef struct {
+    obj_t obj;
     int health;
     int max_health;
     hbar_t hbar;
@@ -83,10 +91,15 @@ typedef struct {
     bool is_game_wclosed;
     bool is_boss_active;
 
+    // player and weapons
     player_t p;
     batr_t batrs[MAX_BATRS];
-    orb_t orbs[MAX_ORBS];
+
+    // npcs and weapons
     vy_t vy;
+    orb_t orbs[MAX_ORBS];
+
+    aanam_t aanas[MAX_AANAS];
 
     Font game_font;
     Texture2D bg;

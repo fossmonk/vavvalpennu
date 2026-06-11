@@ -7,13 +7,13 @@
 #define G_TITLE "VAVVALPENNU🦇"
 
 // Global width and height
-#define G_W (1280)
-#define G_H (720)
-#define GAME_GROUND_Y (626)
+#define G_W (1920)
+#define G_H (1080)
+#define GAME_GROUND_Y (942)
 
 // Deadzone parameters
-#define DZ_RL (200)
-#define DZ_LL (-400)
+#define DZ_RL (400)
+#define DZ_LL (-600)
 
 // Max Healths
 #define PLAYER_MAX_HEALTH_INITIAL (100)

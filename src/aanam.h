@@ -1,0 +1,15 @@
+#include <obj.h>
+#include <anim.h>
+
+#ifndef _AANAM_H_
+#define _AANAM_H_
+
+typedef struct {
+    obj_t obj;
+    bool is_dying;
+
+    // animations
+    anim_t anim_run;
+} aanam_t;
+
+#endif

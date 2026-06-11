@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <player.h>
 #include <game.h>
 
 // SOME HELPER MACROS
@@ -17,9 +18,6 @@
 #ifndef _abs
 #define _abs(a) ((a) > 0) ? (a) : -(a)
 #endif
-
-#define COORDS_SCREEN (0)
-#define COORDS_WORLD  (1)
 
 #define vec_equals(a, b) ((a).x == (b).x && (a).y == (b).y) ? true : false
 
@@ -39,18 +37,6 @@
 // top level game object
 static game_t g;
 
-// all animation assets externed
-// PLAYER
-extern anim_asset_t player_run;
-extern anim_asset_t player_idle;
-extern anim_asset_t player_jump;
-
-// BATARANG
-extern anim_asset_t batr_rotate;
-
-// VADAYAKSHI
-extern anim_asset_t vy_rise;
-
 // AANAMARUTHA
 extern anim_asset_t aanam_run;
 
@@ -63,121 +49,6 @@ void game_load_assets(void) {
 
     // animation assets
     anim_asset_load_all();
-}
-
-void hbar_init(hbar_t *h, Vector2 pos, int max_w, int height, int spacing) {
-    // load shader
-    h->shader = LoadShader(NULL, HBAR_SHADER);
-    h->spacing = spacing;
-    h->outer_rec.width = max_w;
-    h->outer_rec.height = height;
-    h->outer_rec.x = pos.x;
-    h->outer_rec.y = pos.y;
-    
-    h->max_inner_w = max_w - 2*h->spacing;
-    h->inner_rec.x = pos.x + h->spacing;
-    h->inner_rec.y = pos.y + h->spacing;
-    h->inner_rec.height = height - 2*h->spacing;
-    h->inner_rec.width = h->max_inner_w;
-    int rec_topy_loc = GetShaderLocation(h->shader, "u_topY");
-    int rec_height_loc = GetShaderLocation(h->shader, "u_recH");
-    int win_height_loc = GetShaderLocation(h->shader, "u_winHeight");
-    float win_h = G_H;
-    SetShaderValue(h->shader, rec_topy_loc, &h->inner_rec.y, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(h->shader, rec_height_loc, &h->inner_rec.height, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(h->shader, win_height_loc, &win_h, SHADER_UNIFORM_FLOAT);
-}
-
-void hbar_update(hbar_t *h, int health, int max_health) {
-    int w = (health * h->max_inner_w) / max_health;
-    h->inner_rec.width = w;
-}
-
-void hbar_draw(hbar_t *h) {
-    DrawRectangleRounded(h->outer_rec, 1, 5, RAYWHITE);
-    BeginShaderMode(h->shader);
-    DrawRectangleRounded(h->inner_rec, 1, 5, RED);
-    EndShaderMode();
-}
-
-void player_init(player_t *p) {
-    // ANIM
-    Vector2 dim;
-    // idle
-    dim = anim_asset_get_frame_dim(&player_idle);
-    p->anim_idle_r.asset = &player_idle;
-    p->anim_idle_r.timer = 0.0f;
-    p->anim_idle_r.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
-    // run
-    dim = anim_asset_get_frame_dim(&player_run);
-    p->anim_run_r.asset = &player_run;
-    p->anim_run_r.timer = 0.0f;
-    p->anim_run_r.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
-    // jump
-    dim = anim_asset_get_frame_dim(&player_jump);
-    p->anim_jump_r.asset = &player_jump;
-    p->anim_jump_r.timer = 0.0f;
-    p->anim_jump_r.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
-    
-    // STATE
-    p->obj.curr_anim = &p->anim_idle_r;
-    float player_initx = G_W/2 - p->obj.curr_anim->curr_frame.width;
-    float player_inity = GAME_GROUND_Y - p->obj.curr_anim->curr_frame.height;
-    p->obj.is_active = true;
-    p->obj.pos = (Vector2){player_initx, player_inity};
-    p->obj.vel = (Vector2){0, 0};
-    p->obj.size = (Vector2){p->obj.curr_anim->curr_frame.width, p->obj.curr_anim->curr_frame.height};
-    p->obj.hdir = RIGHT;
-    p->max_health = PLAYER_MAX_HEALTH_INITIAL;
-    p->health = p->max_health;
-    p->is_dying = false;
-    p->is_jumping = false;
-
-    // init player healthbar
-    hbar_init(&p->hbar, (Vector2){10, 10}, 300, 20, 2);
-}
-
-void batr_init(batr_t *b) {
-    // ANIM
-    Vector2 dim;
-    dim = anim_asset_get_frame_dim(&batr_rotate);
-    b->anim_rotate.asset = &batr_rotate;
-    b->anim_rotate.timer = 0.0f;
-    b->anim_rotate.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
-
-    // STATE
-    b->obj.curr_anim = &b->anim_rotate;
-    b->obj.size = (Vector2){b->obj.curr_anim->curr_frame.width, b->obj.curr_anim->curr_frame.height};
-    b->obj.is_active = false;
-    // purposely don't set pos and vel.
-    // this has to be init'ed when spawned.
-}
-
-void orb_init(orb_t *orb) {
-    Image noise_img = GenImageCellular(64, 64, 20);
-    orb->noise_tex = LoadTextureFromImage(noise_img);
-    SetTextureWrap(orb->noise_tex, TEXTURE_WRAP_REPEAT);
-    UnloadImage(noise_img);
-    orb->orb_tex = LoadTexture(ORB_TEXTURE);
-    orb->shader = LoadShader(NULL, ORB_SHADER);
-    orb->r = orb->orb_tex.width/2;
-    orb->time_loc = GetShaderLocation(orb->shader, "u_time");
-    int noise_tex_loc = GetShaderLocation(orb->shader, "u_noiseTex");
-    SetShaderValueTexture(orb->shader, noise_tex_loc, orb->noise_tex);
-    orb->obj.is_active = false;
-    orb->obj.size = (Vector2){orb->orb_tex.width, orb->orb_tex.width};
-    // purposely don't set pos and vel.
-    // this has to be init'ed when spawned.
-}
-
-void orb_draw(orb_t *orb) {
-    float time = (float)GetTime();
-    SetShaderValue(orb->shader, orb->time_loc, &time, SHADER_UNIFORM_FLOAT);
-    BeginShaderMode(orb->shader);
-    Rectangle src = {0.0f, 0.0f, (float)orb->orb_tex.width, (float)orb->orb_tex.height};
-    Rectangle dst = {orb->obj.pos.x, orb->obj.pos.y, 64.0f, 64.0f};
-    DrawTexturePro(orb->orb_tex, src, dst, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
-    EndShaderMode();
 }
 
 void aanam_init(aanam_t *aana) {
@@ -194,29 +65,6 @@ void aanam_init(aanam_t *aana) {
     aana->obj.size = (Vector2){dim.x, dim.y};
     aana->obj.is_active = false;
     aana->is_dying = false;
-}
-
-void vy_init(vy_t *vy) {
-    // ANIM
-    Vector2 dim;
-    // idle
-    // rise
-    dim = anim_asset_get_frame_dim(&vy_rise);
-    vy->anim_vy_rise.asset = &vy_rise;
-    vy->anim_vy_rise.timer = 0.0f;
-    vy->anim_vy_rise.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
-
-    // STATE
-    vy->obj.curr_anim = &vy->anim_vy_rise;
-    vy->obj.size = (Vector2){vy->obj.curr_anim->curr_frame.width, vy->obj.curr_anim->curr_frame.height};
-    vy->obj.is_active = false;
-    vy->is_dying = false;
-    vy->is_orbpos = false;
-    vy->max_health = 500;
-    vy->health = vy->max_health;
-
-    // init vy healthbar
-    hbar_init(&vy->hbar, (Vector2){60, G_H - 40}, G_W - 120, 30, 2);
 }
 
 void game_init(void) {
@@ -269,43 +117,6 @@ void game_advance_anim(anim_t *anim, float dt) {
         anim->curr_frame.x = curr_x;
         anim->timer -= anim->asset->duration;
     }
-}
-
-int game_detect_obj_collision_aabb(obj_t* attack, int attack_coords, obj_t* attackee, int attackee_coords) {
-    int collided = 0;
-
-    Vector2 attack_pos = attack->pos;
-    if(attack_coords == COORDS_WORLD) {
-        attack_pos = GetWorldToScreen2D(attack->pos, g.cam);
-    }
-    Vector2 attackee_pos = attackee->pos;
-    if(attack_coords == COORDS_WORLD) {
-        attackee_pos = GetWorldToScreen2D(attackee->pos, g.cam);
-    }
-
-    int s_w = attack->size.x;
-    int s_h = attack->size.y;
-
-    float xlim = s_w/1.2;
-    float ylim = s_h/1.2;
-
-    float cx1 = attack_pos.x + s_w/2;
-    float cx2 = attackee_pos.x + attackee->size.x/2;
-    float cy1 = attack_pos.y + s_h/2;
-    float cy2 = attackee_pos.y + attackee->size.y/2;
-
-    if(fabsf(cx2-cx1) < xlim && fabsf(cy2-cy1) < ylim)collided = 1;
-
-    return collided;
-}
-
-bool game_obj_is_oob(obj_t *obj, int coords) {
-    Vector2 screenpos = obj->pos;
-    if(coords == COORDS_WORLD) {
-        screenpos = GetWorldToScreen2D(obj->pos, g.cam);
-    }
-    if((screenpos.y < 0) || (screenpos.y > G_H) || (screenpos.x > G_W) || (screenpos.x < 0)) return true;
-    return false;
 }
 
 bool game_obj_is_xr_lim(obj_t *obj, float lim) {
@@ -467,7 +278,7 @@ void game_update(float dt) {
             batr_t *b = &g.batrs[i];
             if(b->obj.is_active) {
                 // check for bounds
-                if(game_obj_is_oob(&b->obj, COORDS_WORLD)) {
+                if(obj_is_oob(&b->obj, COORDS_WORLD, g.cam)) {
                     b->obj.is_active = false;
                 } else {
                     // update positions with velocity
@@ -533,7 +344,7 @@ void game_update(float dt) {
             orb_t *orb = &g.orbs[i];
             if(orb->obj.is_active) {
                 // check for bounds
-                if(game_obj_is_oob(&orb->obj, COORDS_SCREEN)) {
+                if(obj_is_oob(&orb->obj, COORDS_SCREEN, g.cam)) {
                     orb->obj.is_active = false;
                 } else {
                     // update y pos and velocity
@@ -564,7 +375,7 @@ void game_update(float dt) {
         aanam_t *aana = &g.aanas[i];
         if(aana->obj.is_active) {
             // check for bounds
-            if(game_obj_is_oob(&aana->obj, COORDS_WORLD)) {
+            if(obj_is_oob(&aana->obj, COORDS_WORLD, g.cam)) {
                 aana->obj.is_active = false;
             } else {
                 // update x pos

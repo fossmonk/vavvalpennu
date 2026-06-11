@@ -1,6 +1,6 @@
 THIS_DIR=$(realpath .)
 THIRD_PARTY=$(HOME)/projects/third-party
-SRCS=src/main.c src/game.c src/anim_asset.c
+SRCS := $(wildcard $(addsuffix /*.c, src))
 INC_PATH=-I$(THIRD_PARTY)/raylib/src -I$(THIS_DIR) -Isrc
 LIB_PATH=-L$(THIRD_PARTY)/raylib/src
 LIBS=-framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL -lraylib

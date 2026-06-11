@@ -1,4 +1,4 @@
-SRCS=src\main.c src\game.c src\anim_asset.c
+SRCS := $(wildcard $(addsuffix /*.c, src))
 INC_PATH=-I$(USERPROFILE)\raylib\include -I. -Isrc
 LIB_PATH=-L $(USERPROFILE)\raylib\lib
 LIBS=-lm -lraylib -lgdi32 -lwinmm

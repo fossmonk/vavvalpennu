@@ -14,6 +14,7 @@
 #include <player.h>
 
 typedef struct {
+    RenderTexture2D *canvas;
     Camera2D cam;
     bool is_gameover;
     bool is_game_wclosed;
@@ -33,7 +34,7 @@ typedef struct {
     Texture2D bg;
 } game_t;
 
-void game_init(void);
+void game_init(RenderTexture2D *canvas);
 void game_start_scene(void);
 void game_start_main_loop(void);
 

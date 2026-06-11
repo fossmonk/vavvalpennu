@@ -33,7 +33,10 @@ void player_init(player_t *p) {
     p->obj.is_active = true;
     p->obj.pos = (Vector2){player_initx, player_inity};
     p->obj.vel = (Vector2){0, 0};
-    p->obj.size = (Vector2){p->obj.curr_anim->curr_frame.width, p->obj.curr_anim->curr_frame.height};
+    p->obj.size = (Vector2){
+        p->obj.curr_anim->curr_frame.width, 
+        p->obj.curr_anim->curr_frame.height
+    };
     p->obj.hdir = RIGHT;
     p->max_health = PLAYER_MAX_HEALTH_INITIAL;
     p->health = p->max_health;

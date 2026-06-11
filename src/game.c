@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <player.h>
 #include <game.h>
 
 // SOME HELPER MACROS
@@ -37,8 +36,12 @@
 // top level game object
 static game_t g;
 
-// AANAMARUTHA
-extern anim_asset_t aanam_run;
+Vector2 game_get_scaled_mouse_pos(void) {
+    Vector2 mouseScalePos = GetMousePosition();
+    mouseScalePos.x = (mouseScalePos.x / GetScreenWidth()) * G_W;
+    mouseScalePos.y = (mouseScalePos.y / GetScreenHeight()) * G_H;
+    return mouseScalePos;
+}
 
 void game_load_assets(void) {
     // background
@@ -51,25 +54,12 @@ void game_load_assets(void) {
     anim_asset_load_all();
 }
 
-void aanam_init(aanam_t *aana) {
-    // ANIM
-    Vector2 dim;
-    // run
-    dim = anim_asset_get_frame_dim(&aanam_run);
-    aana->anim_run.asset = &aanam_run;
-    aana->anim_run.timer = 0.0f;
-    aana->anim_run.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
-
-    // STATE
-    aana->obj.curr_anim = &aana->anim_run;
-    aana->obj.size = (Vector2){dim.x, dim.y};
-    aana->obj.is_active = false;
-    aana->is_dying = false;
-}
-
-void game_init(void) {
+void game_init(RenderTexture2D *canvas) {
     // load all assets
     game_load_assets();
+
+    // set canvas
+    g.canvas = canvas;
 
     // init player
     player_init(&g.p);
@@ -191,7 +181,7 @@ void game_update(float dt) {
         }
 
         if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
-            Vector2 mouse_pos = GetMousePosition();
+            Vector2 mouse_pos = game_get_scaled_mouse_pos();
             // check for empty slot
             batr_t *b = NULL;
             // int b_idx = 0;
@@ -436,14 +426,29 @@ void game_update(float dt) {
 //////// SCENES //////////////
 //////////////////////////////
 
+void game_draw_canvas_to_screen(void) {
+    BeginDrawing();
+    ClearBackground(BLACK);
+    // Calculate destination rectangle
+    // If aspect ratios differ, you would calculate letterboxing math here.
+    // Note: Y is negative because textures are inverted in OpenGL
+    Rectangle sourceRec = { 0.0f, 0.0f, (float)g.canvas->texture.width, -(float)g.canvas->texture.height };
+    Rectangle destRec = { 0.0f, 0.0f, (float)GetScreenWidth(), (float)GetScreenHeight() };
+    Vector2 origin = { 0.0f, 0.0f };
+    // The GPU will scale the game correctly
+    DrawTexturePro(g.canvas->texture, sourceRec, destRec, origin, 0.0f, WHITE);
+    EndDrawing();
+}
+
 void game_start_scene(void) {
     char *welcome_text = "PRESS P TO PLAY";
     Vector2 fontWH = MeasureTextEx(g.game_font, welcome_text, 50, 1.5);
     while(!IsKeyPressed(KEY_P) && !g.is_game_wclosed) {
-        BeginDrawing();
+        BeginTextureMode(*g.canvas);
         ClearBackground(DARKGRAY);
         DrawTextEx(g.game_font, welcome_text, (Vector2){G_W/2 - fontWH.x/2, G_H/2 - fontWH.y/2}, 50, 1.5, WHITE);
-        EndDrawing();
+        EndTextureMode();
+        game_draw_canvas_to_screen();
         g.is_game_wclosed = WindowShouldClose();
     }
 }
@@ -452,7 +457,7 @@ void game_start_main_loop(void) {
     while(!g.is_game_wclosed && !g.is_gameover) {
         game_update(GetFrameTime());
         
-        BeginDrawing();
+        BeginTextureMode(*g.canvas);
         BeginMode2D(g.cam);
     
         float cam_left_edge = g.cam.target.x - (G_W/2);
@@ -526,7 +531,8 @@ void game_start_main_loop(void) {
         if(g.vy.obj.is_active) {
             hbar_draw(&g.vy.hbar);
         }
-        EndDrawing();
+        EndTextureMode();
+        game_draw_canvas_to_screen();
         g.is_game_wclosed = WindowShouldClose();
     }
 }

@@ -15,7 +15,10 @@ void batr_init(batr_t *b) {
 
     // STATE
     b->obj.curr_anim = &b->anim_rotate;
-    b->obj.size = (Vector2){b->obj.curr_anim->curr_frame.width, b->obj.curr_anim->curr_frame.height};
+    b->obj.size = (Vector2){
+        b->obj.curr_anim->curr_frame.width,
+        b->obj.curr_anim->curr_frame.height
+    };
     b->obj.is_active = false;
     // purposely don't set pos and vel.
     // this has to be init'ed when spawned.

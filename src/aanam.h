@@ -12,4 +12,6 @@ typedef struct {
     anim_t anim_run;
 } aanam_t;
 
+void aanam_init(aanam_t *aana);
+
 #endif

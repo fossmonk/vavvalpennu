@@ -7,6 +7,6 @@ bool obj_is_oob(obj_t *obj, int coords, Camera2D cam) {
     if(coords == COORDS_WORLD) {
         screenpos = GetWorldToScreen2D(obj->pos, cam);
     }
-    if((screenpos.y < 0) || (screenpos.y > G_H) || (screenpos.x > G_W) || (screenpos.x < 0)) return true;
+    if((screenpos.y + obj->size.y < 0) || (screenpos.y > G_H) || (screenpos.x > G_W) || (screenpos.x + obj->size.x < 0)) return true;
     return false;
 }

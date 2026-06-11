@@ -18,6 +18,7 @@ typedef struct {
     Camera2D cam;
     bool is_gameover;
     bool is_game_wclosed;
+    bool is_game_paused;
     bool is_boss_active;
 
     // player and weapons
@@ -32,6 +33,8 @@ typedef struct {
 
     Font game_font;
     Texture2D bg;
+    Texture2D splash;
+    Texture2D pausemenu;
 } game_t;
 
 void game_init(RenderTexture2D *canvas);

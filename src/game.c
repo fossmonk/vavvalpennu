@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <game.h>
+#include <menu.h>
 
 // SOME HELPER MACROS
 
@@ -14,23 +15,10 @@
 #ifndef _min
 #define _min(a, b) ((a) < (b) ? (a) : (b))
 #endif
-#ifndef _abs
-#define _abs(a) ((a) > 0) ? (a) : -(a)
-#endif
 
 #define vec_equals(a, b) ((a).x == (b).x && (a).y == (b).y) ? true : false
 
 #define player_center_xy(obj) (Vector2){((obj).pos.x + fabsf(((obj).curr_anim->curr_frame.width))/2) , ((obj).pos.y + ((obj).curr_anim->curr_frame.height)/2)} 
-#define flip_anim_left(obj) do {                  \
-    if((obj)->curr_anim->curr_frame.width > 0) {  \
-        (obj)->curr_anim->curr_frame.width *= -1; \
-    }                                             \
-} while(0)
-#define flip_anim_right(obj) do {                  \
-    if((obj)->curr_anim->curr_frame.width < 0) {  \
-        (obj)->curr_anim->curr_frame.width *= -1; \
-    }                                             \
-} while(0)
 
 // GLOBALS
 // top level game object
@@ -46,6 +34,10 @@ Vector2 game_get_scaled_mouse_pos(void) {
 void game_load_assets(void) {
     // background
     g.bg = LoadTexture(BACKGROUND);
+    // splash
+    g.splash = LoadTexture(SPLASH_BG);
+    // pause menu
+    g.pausemenu = LoadTexture(PAUSEMENU_BG);
     
     // fonts
     g.game_font = LoadFontEx(MAIN_FONT, 96, NULL, 0);
@@ -57,6 +49,9 @@ void game_load_assets(void) {
 void game_init(RenderTexture2D *canvas) {
     // load all assets
     game_load_assets();
+
+    // menu init
+    menu_init();
 
     // set canvas
     g.canvas = canvas;
@@ -86,27 +81,11 @@ void game_init(RenderTexture2D *canvas) {
     // init general things
     g.is_gameover = false;
     g.is_game_wclosed = false;
+    g.is_game_paused = false;
     g.cam.rotation = 0;
     g.cam.zoom = 1;
     g.cam.target = player_center_xy(g.p.obj);
     g.cam.offset = (Vector2){G_W/2, (GAME_GROUND_Y - g.p.obj.curr_anim->curr_frame.height/2)};
-}
-
-void game_advance_anim(anim_t *anim, float dt) {
-    anim->timer += dt;
-    if(anim->timer >= anim->asset->duration) {
-        // advance frame
-        int fw = fabsf(anim->curr_frame.width);
-        int tw = anim->asset->texture.width;
-        int curr_x = anim->curr_frame.x;
-        if(!anim->asset->repeat) {
-            curr_x = _min(curr_x + fw, tw-fw); 
-        } else {
-            curr_x = (curr_x + fw) % tw;
-        }
-        anim->curr_frame.x = curr_x;
-        anim->timer -= anim->asset->duration;
-    }
 }
 
 bool game_obj_is_xr_lim(obj_t *obj, float lim) {
@@ -133,7 +112,7 @@ bool game_obj_is_yl_lim(obj_t *obj, float lim) {
     return false;
 }
 
-void game_update(float dt) {
+void _game_update(float dt) {
     if(dt > 0.1f)dt = 0.1f;
     float ax = 4000.0f;
 
@@ -247,7 +226,7 @@ void game_update(float dt) {
         }
         
         // update animation
-        game_advance_anim(g.p.obj.curr_anim, dt);
+        anim_advance(g.p.obj.curr_anim, dt);
 
         // update camera position w.r.t player considering deadzone
         // DEADZONE RIGHT LIMIT
@@ -276,7 +255,7 @@ void game_update(float dt) {
                     b->obj.pos.y += b->obj.vel.y * dt;
 
                     // update animation
-                    game_advance_anim(b->obj.curr_anim, dt);
+                    anim_advance(b->obj.curr_anim, dt);
                 }
             }
         }
@@ -312,7 +291,7 @@ void game_update(float dt) {
             }
             g.vy.obj.pos.x += g.vy.obj.vel.x * dt;
         }
-        game_advance_anim(g.vy.obj.curr_anim, dt);
+        anim_advance(g.vy.obj.curr_anim, dt);
     }
 
     if(g.vy.is_orbpos) {
@@ -370,7 +349,7 @@ void game_update(float dt) {
             } else {
                 // update x pos
                 aana->obj.pos.x += aana->obj.vel.x * dt;
-                game_advance_anim(aana->obj.curr_anim, dt);
+                anim_advance(aana->obj.curr_anim, dt);
             }
         }
     }
@@ -422,6 +401,17 @@ void game_update(float dt) {
     }
 }
 
+// pause wrapper
+void game_update(float dt) {
+    if(!IsKeyPressed(KEY_ESCAPE) && !g.is_game_paused) {
+        _game_update(dt);
+    } else {
+        if(IsKeyPressed(KEY_ESCAPE)) {
+            g.is_game_paused = !g.is_game_paused;
+        }
+    }
+}
+
 //////////////////////////////
 //////// SCENES //////////////
 //////////////////////////////
@@ -441,98 +431,95 @@ void game_draw_canvas_to_screen(void) {
 }
 
 void game_start_scene(void) {
-    char *welcome_text = "PRESS P TO PLAY";
-    Vector2 fontWH = MeasureTextEx(g.game_font, welcome_text, 50, 1.5);
-    while(!IsKeyPressed(KEY_P) && !g.is_game_wclosed) {
+    bool game_start = false;
+    bool game_quit = false;
+    menu_action m_act = MENU_NO_ACTION;
+    while(!game_start && !g.is_game_wclosed) {
         BeginTextureMode(*g.canvas);
-        ClearBackground(DARKGRAY);
-        DrawTextEx(g.game_font, welcome_text, (Vector2){G_W/2 - fontWH.x/2, G_H/2 - fontWH.y/2}, 50, 1.5, WHITE);
+        DrawTexture(g.splash, 0, 0, DARKGRAY);
+        menu_draw(m_act, MENU_START);
         EndTextureMode();
         game_draw_canvas_to_screen();
-        g.is_game_wclosed = WindowShouldClose();
+
+        // check menu interaction
+        m_act = menu_get_action();
+        game_start = (m_act == MENU_CLICK_START);
+        game_quit = (m_act == MENU_CLICK_QUIT);
+        g.is_game_wclosed = WindowShouldClose() | game_quit;
     }
 }
 
 void game_start_main_loop(void) {
     while(!g.is_game_wclosed && !g.is_gameover) {
         game_update(GetFrameTime());
-        
-        BeginTextureMode(*g.canvas);
-        BeginMode2D(g.cam);
-    
-        float cam_left_edge = g.cam.target.x - (G_W/2);
-        float bg_offset = (int)cam_left_edge % g.bg.width;
-        if(bg_offset < 0) {
-            bg_offset += g.bg.width;
-        }
-        float drawX = cam_left_edge - bg_offset;
-        
-        // Draw infinite background
-        DrawTexture(g.bg, drawX, 0, DARKGRAY);
-        DrawTexture(g.bg, drawX + g.bg.width, 0, DARKGRAY);
-        DrawTexture(g.bg, drawX + 2*g.bg.width, 0, DARKGRAY);
-        // Draw player
-        DrawTextureRec(g.p.obj.curr_anim->asset->texture, g.p.obj.curr_anim->curr_frame, g.p.obj.pos, WHITE);
-        // Draw all batarangs
-        for(int i = 0; i < MAX_BATRS; ++i) {
-            batr_t *b = &g.batrs[i];
-            if(b->obj.is_active) {
-                DrawTextureRec(b->obj.curr_anim->asset->texture, b->obj.curr_anim->curr_frame, b->obj.pos, WHITE);
-            }
-        }
-        // Draw VY
-        if(g.vy.obj.is_active) {
-            DrawTextureRec(g.vy.obj.curr_anim->asset->texture, g.vy.obj.curr_anim->curr_frame, g.vy.obj.pos, WHITE);
-        }
-        // Draw all aanas
-        for(int i = 0; i < MAX_AANAS; ++i) {
-            aanam_t *aana = &g.aanas[i];
-            if(aana->obj.is_active) {
-                DrawTextureRec(aana->obj.curr_anim->asset->texture, aana->obj.curr_anim->curr_frame, aana->obj.pos, LIGHTGRAY);
-            }
-        }
-        EndMode2D();
-        
-        for(int i = 0; i < MAX_ORBS; ++i) {
-            orb_t *orb = &g.orbs[i];
-            if(orb->obj.is_active) {
-                orb_draw(orb);
-            }
-        }
 
-        // Draw lines from orb to player
-        Vector2 ppos = GetWorldToScreen2D(g.p.obj.pos, g.cam);
-        float pcx = ppos.x + g.p.obj.size.x/2;
-        float pcy = ppos.y + g.p.obj.size.y/2 - 50;
-        for(int i = 0; i < MAX_ORBS; ++i) {
-            orb_t *orb = &g.orbs[i];
-            if(orb->obj.is_active) {
-                float orb_cx = orb->obj.pos.x + orb->obj.size.x/2;
-                float orb_cy = orb->obj.pos.y + orb->obj.size.y/2;
-                DrawLine(pcx, pcy, orb_cx, orb_cy, RED);
+        if(!g.is_game_paused) {
+            BeginTextureMode(*g.canvas);
+            BeginMode2D(g.cam);
+        
+            float cam_left_edge = g.cam.target.x - (G_W/2);
+            float bg_offset = (int)cam_left_edge % g.bg.width;
+            if(bg_offset < 0) {
+                bg_offset += g.bg.width;
             }
-        }
-
-        // Draw lines from BATR to VY
-        Vector2 vypos = GetWorldToScreen2D(g.vy.obj.pos, g.cam);
-        float vy_cx = vypos.x + g.vy.obj.size.x/2;
-        float vy_cy = vypos.y + g.vy.obj.size.y/2;
-        for(int i = 0; i < MAX_BATRS; ++i) {
-            batr_t *b = &g.batrs[i];
-            Vector2 bpos = GetWorldToScreen2D(b->obj.pos, g.cam);
-            if(b->obj.is_active) {
-                float b_cx = bpos.x + b->obj.size.x/2;
-                float b_cy = bpos.y + b->obj.size.y/2;
-                DrawLine(vy_cx, vy_cy, b_cx, b_cy, RED);
+            float drawX = cam_left_edge - bg_offset;
+            
+            // Draw infinite background
+            DrawTexture(g.bg, drawX, 0, DARKGRAY);
+            DrawTexture(g.bg, drawX + g.bg.width, 0, DARKGRAY);
+            DrawTexture(g.bg, drawX + 2*g.bg.width, 0, DARKGRAY);
+            // Draw player
+            DrawTextureRec(g.p.obj.curr_anim->asset->texture, g.p.obj.curr_anim->curr_frame, g.p.obj.pos, WHITE);
+            // Draw all batarangs
+            for(int i = 0; i < MAX_BATRS; ++i) {
+                batr_t *b = &g.batrs[i];
+                if(b->obj.is_active) {
+                    DrawTextureRec(b->obj.curr_anim->asset->texture, b->obj.curr_anim->curr_frame, b->obj.pos, WHITE);
+                }
             }
-        }
+            // Draw VY
+            if(g.vy.obj.is_active) {
+                DrawTextureRec(g.vy.obj.curr_anim->asset->texture, g.vy.obj.curr_anim->curr_frame, g.vy.obj.pos, WHITE);
+            }
+            // Draw all aanas
+            for(int i = 0; i < MAX_AANAS; ++i) {
+                aanam_t *aana = &g.aanas[i];
+                if(aana->obj.is_active) {
+                    DrawTextureRec(aana->obj.curr_anim->asset->texture, aana->obj.curr_anim->curr_frame, aana->obj.pos, LIGHTGRAY);
+                }
+            }
+            EndMode2D();
+            
+            for(int i = 0; i < MAX_ORBS; ++i) {
+                orb_t *orb = &g.orbs[i];
+                if(orb->obj.is_active) {
+                    orb_draw(orb);
+                }
+            }
 
-        hbar_draw(&g.p.hbar);
-        if(g.vy.obj.is_active) {
-            hbar_draw(&g.vy.hbar);
+            hbar_draw(&g.p.hbar);
+            if(g.vy.obj.is_active) {
+                hbar_draw(&g.vy.hbar);
+            }
+
+            EndTextureMode();
+            game_draw_canvas_to_screen();
+            g.is_game_wclosed = WindowShouldClose();
+        } else {
+            bool game_resumed = false;
+            bool game_quit = false;
+            menu_action m_act = menu_get_action();
+            BeginTextureMode(*g.canvas);
+            DrawTexture(g.pausemenu, 0, 0, WHITE);
+            menu_draw(m_act, MENU_PAUSE);
+            EndTextureMode();
+            game_draw_canvas_to_screen();
+
+            // check menu interaction
+            game_quit = (m_act == MENU_CLICK_QUIT);
+            game_resumed = (m_act == MENU_CLICK_START);
+            g.is_game_wclosed = WindowShouldClose() | game_quit;
+            g.is_game_paused = !game_resumed;
         }
-        EndTextureMode();
-        game_draw_canvas_to_screen();
-        g.is_game_wclosed = WindowShouldClose();
     }
 }

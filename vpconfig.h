@@ -21,7 +21,10 @@
 
 // Asset files
 #define MAIN_FONT      "assets/fonts/StackSansTextB.ttf"
+#define MENU_FONT      "assets/fonts/AladinR.ttf"
 #define BACKGROUND     "assets/backdrop/keralabackdrop.png"
+#define SPLASH_BG      "assets/backdrop/splash.png"
+#define PAUSEMENU_BG   "assets/backdrop/pausemenu.png"
 
 // Animation assets
 // PLAYER
@@ -48,6 +51,6 @@
 // Other Config
 #define MAX_BATRS (10)
 #define MAX_ORBS  (6)
-#define MAX_AANAS (4)
+#define MAX_AANAS (2)
 
 #endif /* _VPCONFIG_H_ */

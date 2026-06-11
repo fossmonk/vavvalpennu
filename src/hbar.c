@@ -31,9 +31,12 @@ void hbar_update(hbar_t *h, int health, int max_health) {
     h->inner_rec.width = w;
 }
 
-void hbar_draw(hbar_t *h) {
+void hbar_draw(hbar_t *h, Texture2D* icon, Vector2 iconpos, Color c) {
     DrawRectangleRounded(h->outer_rec, 1, 5, RAYWHITE);
     BeginShaderMode(h->shader);
-    DrawRectangleRounded(h->inner_rec, 1, 5, RED);
+    DrawRectangleRounded(h->inner_rec, 1, 5, c);
     EndShaderMode();
+    if(icon) {
+        DrawTexture(*icon, iconpos.x, iconpos.y, WHITE);
+    }
 }

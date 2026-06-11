@@ -42,7 +42,9 @@
 #define ANIM_AANAM_RUN  (anim_info_t){"assets/sprites/aanamarutha/run.png", "AANAM RUN", 16, 0.2f, true}
 
 // Textures
-#define ORB_TEXTURE   "assets/textures/orb.png"
+#define ORB_TEXTURE      "assets/textures/orb.png"
+#define PLAYER_HBAR_ICON "assets/textures/vp_head.png"
+#define VY_HBAR_ICON     "assets/textures/vy_head.png"
 
 // Shader files
 #define HBAR_SHADER    "shaders/hbar.fs"

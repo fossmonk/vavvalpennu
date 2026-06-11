@@ -70,6 +70,7 @@ menu_action menu_get_action(void) {
 
 void menu_init(void) {
     menu_font = LoadFontEx(MENU_FONT, 96, NULL, 0);
+    SetTextureFilter(menu_font.texture, TEXTURE_FILTER_BILINEAR);
     // Populate BB rectangles for clickable areas
     // START
     // CONTROLS

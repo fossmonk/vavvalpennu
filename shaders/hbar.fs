@@ -16,8 +16,8 @@ void main() {
     float localY = (rlY - u_topY)/u_recH;
 
     float distFromCenter = abs(localY - 0.5);
-    float centerGradient = smoothstep(0.8, 0.1, distFromCenter);
+    float centerGradient = smoothstep(0.95, 0.1, distFromCenter);
 
-    vec3 mixedColor = mix(pureWhite, baseColor, centerGradient);
+    vec3 mixedColor = mix(pureWhite, baseColor, centerGradient * 1.2);
     finalColor = vec4(mixedColor, fragColor.a);
 }

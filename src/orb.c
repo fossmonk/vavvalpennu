@@ -16,6 +16,7 @@ void orb_init(orb_t *orb) {
     SetShaderValueTexture(orb->shader, noise_tex_loc, orb->noise_tex);
     orb->obj.is_active = false;
     orb->obj.size = (Vector2){orb->orb_tex.width, orb->orb_tex.width};
+    orb->is_hostile = false;
     // purposely don't set pos and vel.
     // this has to be init'ed when spawned.
 }

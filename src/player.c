@@ -1,6 +1,11 @@
 #include <player.h>
 #include <anim_asset.h>
 
+static const Vector2 p_hbar_pos = (Vector2){12, 12};
+static const int p_hbar_maxw = 300;
+static const int p_hbar_height = 20;
+static const int p_hbar_spacing = 1;
+
 
 // PLAYER ANIMATIONS
 extern anim_asset_t player_run;
@@ -44,5 +49,10 @@ void player_init(player_t *p) {
     p->is_jumping = false;
 
     // init player healthbar
-    hbar_init(&p->hbar, (Vector2){10, 10}, 300, 20, 2);
+    hbar_init(&p->hbar, p_hbar_pos, p_hbar_maxw, p_hbar_height, p_hbar_spacing);
+    // load hbar icon
+    p->hbar_icon = LoadTexture(PLAYER_HBAR_ICON);
+    p->hbar_iconpos = p_hbar_pos;
+    p->hbar_iconpos.x -= 7.0;
+    p->hbar_iconpos.y -= 7.0;
 }

@@ -30,16 +30,15 @@ Vector2 game_get_scaled_mouse_pos(void) {
 }
 
 void game_load_assets(void) {
-    // background
+    // background texture
     g.bg = LoadTexture(BACKGROUND);
-    // splash
+    // splash screen texture
     g.splash = LoadTexture(SPLASH_BG);
-    // pause menu
+    // pause menu texture
     g.pausemenu = LoadTexture(PAUSEMENU_BG);
-    
     // fonts
     g.game_font = LoadFontEx(MAIN_FONT, 96, NULL, 0);
-
+    SetTextureFilter(g.game_font.texture, TEXTURE_FILTER_BILINEAR);
     // animation assets
     anim_asset_load_all();
 }
@@ -231,7 +230,7 @@ void _game_update(float dt) {
 
     if(IsKeyPressed(KEY_V)) {
         if(!g.vy.obj.is_active) {
-            g.vy.obj.pos = GetScreenToWorld2D((Vector2){G_W-300, GAME_GROUND_Y-250}, g.cam);
+            g.vy.obj.pos = GetScreenToWorld2D(vy_get_initial_spos(), g.cam);
             g.vy.obj.is_active = true;
             g.is_boss_active = true;
             g.vy.obj.vel.x = -3E2;
@@ -243,7 +242,7 @@ void _game_update(float dt) {
     }
 
     if(g.vy.obj.is_active && !g.vy.is_dying) {
-        Vector2 vy_sfinalpos = GetScreenToWorld2D((Vector2){G_W/2 - 150, 40}, g.cam);
+        Vector2 vy_sfinalpos = GetScreenToWorld2D(vy_get_final_spos(), g.cam);
         if(!g.vy.is_orbpos) {
             g.vy.obj.pos.x += g.vy.obj.vel.x * dt;
             g.vy.obj.pos.y += g.vy.obj.vel.y * dt;
@@ -457,9 +456,9 @@ void game_start_main_loop(void) {
                 }
             }
 
-            hbar_draw(&g.p.hbar);
+            hbar_draw(&g.p.hbar, &g.p.hbar_icon, g.p.hbar_iconpos, (Color){0x3E, 0, 0, 0xFF});
             if(g.vy.obj.is_active) {
-                hbar_draw(&g.vy.hbar);
+                hbar_draw(&g.vy.hbar, &g.vy.hbar_icon, g.vy.hbar_iconpos, RED);
             }
 
             EndTextureMode();

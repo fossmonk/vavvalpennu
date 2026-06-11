@@ -11,6 +11,8 @@ typedef struct {
     int health;
     int max_health;
     hbar_t hbar;
+    Texture2D hbar_icon;
+    Vector2 hbar_iconpos;
     bool is_dying;
     bool is_jumping;
 

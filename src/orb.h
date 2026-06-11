@@ -11,6 +11,7 @@ typedef struct {
     Texture2D noise_tex;
     Texture2D orb_tex;
     int time_loc;
+    bool is_hostile;
 } orb_t;
 
 void orb_init(orb_t *orb);

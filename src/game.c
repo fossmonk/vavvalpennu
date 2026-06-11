@@ -18,8 +18,6 @@
 
 #define vec_equals(a, b) ((a).x == (b).x && (a).y == (b).y) ? true : false
 
-#define player_center_xy(obj) (Vector2){((obj).pos.x + fabsf(((obj).curr_anim->curr_frame.width))/2) , ((obj).pos.y + ((obj).curr_anim->curr_frame.height)/2)} 
-
 // GLOBALS
 // top level game object
 static game_t g;
@@ -47,69 +45,39 @@ void game_load_assets(void) {
 }
 
 void game_init(RenderTexture2D *canvas) {
-    // load all assets
-    game_load_assets();
-
-    // menu init
-    menu_init();
-
     // set canvas
     g.canvas = canvas;
-
-    // init player
+    // load all assets
+    game_load_assets();
+    // initialize menu
+    menu_init();
+    // initialize player
     player_init(&g.p);
+    // initialize vadayakshi
+    vy_init(&g.vy);
 
-    // init other actors/sprites
-    // BATARANG
+    // initialize other actors/sprites
+    
+    // BATARANGS
     for(int i = 0; i < MAX_BATRS; ++i) {
         batr_init(&g.batrs[i]);
     }
-
-    // init vy
-    vy_init(&g.vy);
-
     // ORBS
     for(int i = 0; i < MAX_ORBS; ++i) {
         orb_init(&g.orbs[i]);
     }
-
-    // init aanam
+    // AANAMARUTHAS
     for(int i = 0; i < MAX_AANAS; ++i) {
         aanam_init(&g.aanas[i]);
     }
-
-    // init general things
+    // initialize generic game object stuff
     g.is_gameover = false;
     g.is_game_wclosed = false;
     g.is_game_paused = false;
     g.cam.rotation = 0;
     g.cam.zoom = 1;
-    g.cam.target = player_center_xy(g.p.obj);
+    g.cam.target = obj_cxy(&g.p.obj);
     g.cam.offset = (Vector2){G_W/2, (GAME_GROUND_Y - g.p.obj.curr_anim->curr_frame.height/2)};
-}
-
-bool game_obj_is_xr_lim(obj_t *obj, float lim) {
-    Vector2 screenpos = GetWorldToScreen2D(obj->pos, g.cam);
-    if(screenpos.x > lim) return true;
-    return false;
-}
-
-bool game_obj_is_xl_lim(obj_t *obj, float lim) {
-    Vector2 screenpos = GetWorldToScreen2D(obj->pos, g.cam);
-    if(screenpos.x < lim) return true;
-    return false;
-}
-
-bool game_obj_is_yr_lim(obj_t *obj, float lim) {
-    Vector2 screenpos = GetWorldToScreen2D(obj->pos, g.cam);
-    if(screenpos.y > lim) return true;
-    return false;
-}
-
-bool game_obj_is_yl_lim(obj_t *obj, float lim) {
-    Vector2 screenpos = GetWorldToScreen2D(obj->pos, g.cam);
-    if(screenpos.y < lim) return true;
-    return false;
 }
 
 void _game_update(float dt) {
@@ -123,39 +91,39 @@ void _game_update(float dt) {
             // set curr_anim to run
             if(!g.p.is_jumping) {
                 g.p.obj.curr_anim = &g.p.anim_run_r;
-                g.p.obj.size = (Vector2){fabsf(g.p.obj.curr_anim->curr_frame.width), g.p.obj.curr_anim->curr_frame.height};
+                g.p.obj.size = anim_get_framesize(g.p.obj.curr_anim);
             }
             // reverse direction if left
             if(g.p.obj.curr_anim->curr_frame.width < 0) {
                 g.p.obj.curr_anim->curr_frame.width *= -1;
             }
             g.p.obj.hdir = RIGHT;
-            flip_anim_right(&g.p.obj);
+            anim_hflipr(&g.p.obj);
         }
 
         if(IsKeyDown(KEY_A)) {
             g.p.obj.vel.x -= ax*dt;
             if(!g.p.is_jumping) {
                 g.p.obj.curr_anim = &g.p.anim_run_r;
-                g.p.obj.size = (Vector2){fabsf(g.p.obj.curr_anim->curr_frame.width), g.p.obj.curr_anim->curr_frame.height};
+                g.p.obj.size = anim_get_framesize(g.p.obj.curr_anim);
             }
             // reverse direction if right
             if(g.p.obj.curr_anim->curr_frame.width > 0) {
                 g.p.obj.curr_anim->curr_frame.width *= -1;
             }
             g.p.obj.hdir = LEFT;
-            flip_anim_left(&g.p.obj);
+            anim_hflipl(&g.p.obj);
         }
 
         if(IsKeyPressed(KEY_SPACE) && !g.p.is_jumping) {
             g.p.obj.vel.y -= 700;
             g.p.is_jumping = true;
             g.p.obj.curr_anim = &g.p.anim_jump_r;
-            g.p.obj.size = (Vector2){fabsf(g.p.obj.curr_anim->curr_frame.width), g.p.obj.curr_anim->curr_frame.height};
+            g.p.obj.size = anim_get_framesize(g.p.obj.curr_anim);
             if(g.p.obj.hdir == RIGHT) {
-                flip_anim_right(&g.p.obj);
+                anim_hflipr(&g.p.obj);
             } else {
-                flip_anim_left(&g.p.obj);
+                anim_hflipl(&g.p.obj);
             }
         }
 
@@ -175,7 +143,7 @@ void _game_update(float dt) {
                 b->obj.is_active = true;
                 b->obj.curr_anim->curr_frame.x = 0;
                 float delta = 70.0;
-                b->obj.pos = player_center_xy(g.p.obj);
+                b->obj.pos = obj_cxy(&g.p.obj);
                 b->obj.pos.y -= delta;
                 Vector2 spawn_pos_s = GetWorldToScreen2D(b->obj.pos, g.cam);
                 float dx = mouse_pos.x - spawn_pos_s.x;
@@ -199,14 +167,14 @@ void _game_update(float dt) {
         g.p.obj.pos.y += g.p.obj.vel.y*dt;
 
         // clamp y
-        g.p.obj.pos.y = _min(g.p.obj.pos.y, GAME_GROUND_Y - g.p.obj.curr_anim->curr_frame.height);
+        g.p.obj.pos.y = _min(g.p.obj.pos.y, GAME_GROUND_Y - g.p.obj.size.y);
 
         // clamp x if boss is active
         if(g.is_boss_active) {
             // get world coordinates for screen x limits
             Vector2 player_screen_pos = GetWorldToScreen2D(g.p.obj.pos, g.cam);
             player_screen_pos.x = _max(player_screen_pos.x, 0);
-            player_screen_pos.x = _min(player_screen_pos.x, G_W - g.p.obj.curr_anim->curr_frame.width);
+            player_screen_pos.x = _min(player_screen_pos.x, G_W - g.p.obj.size.x);
             g.p.obj.pos = GetScreenToWorld2D(player_screen_pos, g.cam);
         }
 
@@ -218,10 +186,10 @@ void _game_update(float dt) {
         if(!g.p.is_jumping && ((int)(g.p.obj.vel.x) == 0)) {
             g.p.obj.curr_anim = &g.p.anim_idle_r;
             if(g.p.obj.hdir == LEFT) {
-                flip_anim_left(&g.p.obj);
+                anim_hflipl(&g.p.obj);
             }
             if(g.p.obj.hdir == RIGHT) {
-                flip_anim_right(&g.p.obj);
+                anim_hflipr(&g.p.obj);
             }
         }
         
@@ -283,10 +251,10 @@ void _game_update(float dt) {
             g.vy.obj.pos.y = _max(g.vy.obj.pos.y, vy_sfinalpos.y);
             g.vy.is_orbpos = vec_equals(g.vy.obj.pos, vy_sfinalpos);
         } else {
-            if(game_obj_is_xl_lim(&g.vy.obj, 300)) {
+            if(obj_wx_lt_s(&g.vy.obj, 300, g.cam)) {
                 g.vy.obj.vel.x = 2.5E2;
             }
-            if(game_obj_is_xr_lim(&g.vy.obj, G_W - 300)) {
+            if(obj_wx_gt_s(&g.vy.obj, G_W - 300, g.cam)) {
                 g.vy.obj.vel.x = -2.5E2;
             }
             g.vy.obj.pos.x += g.vy.obj.vel.x * dt;
@@ -354,7 +322,6 @@ void _game_update(float dt) {
         }
     }
 
-
     /////////////////////////////////////////////////
     //////////// COLLISION DETECTION ////////////////
     /////////////////////////////////////////////////
@@ -363,15 +330,9 @@ void _game_update(float dt) {
     for(int i = 0; i < MAX_BATRS; ++i) {
         batr_t *b = &g.batrs[i];
         if(b->obj.is_active && !g.vy.is_dying) {
-            Vector2 bspos = GetWorldToScreen2D(b->obj.pos, g.cam);
-            Vector2 vyspos = GetWorldToScreen2D(g.vy.obj.pos, g.cam);
-            float b_c_y = bspos.y + b->obj.size.y/2;
-            float b_c_x = bspos.x + b->obj.size.x/2;
-            float vy_c_y = vyspos.y + g.vy.obj.size.y/2;
-            float vy_c_x = vyspos.x + g.vy.obj.size.x/2;
-            float cart_d = (b_c_y - vy_c_y)*(b_c_y - vy_c_y) + (b_c_x - vy_c_x)*(b_c_x - vy_c_x);
+            float cart_d2 = obj_cartd2(&b->obj, COORDS_WORLD, &g.vy.obj, COORDS_WORLD, g.cam);
             float lim = b->obj.size.x/2;
-            if(cart_d < lim*lim) {
+            if(cart_d2 < lim*lim) {
                 b->obj.is_active = false;
                 g.vy.health -= 5;
                 hbar_update(&g.vy.hbar, g.vy.health, g.vy.max_health);
@@ -394,7 +355,6 @@ void _game_update(float dt) {
             }
         }
     }
-
     // check for player death
     if(g.p.health <= 0) {
         g.p.is_dying = true;

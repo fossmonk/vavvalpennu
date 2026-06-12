@@ -7,8 +7,31 @@
 #include <game.h>
 #include <menu.h>
 
-// SOME HELPER MACROS
+// SOME CONSTANTS
+#define ACCEL_PUSH             (4000.0f)
+#define ACCEL_G                (400.0f)
 
+#define JUMP_VEL_Y_0           (700.0f)
+#define PLAYER_CENTER_TO_CHEST (70.0f)
+#define BATARANG_VEL_R         (600.0f)
+
+#define PLAYER_VEL_X_DECAY     (-12)
+#define PLAYER_VEL_Y_DECAY     (-2)
+
+#define VY_RISE_VEL_X_0        (-3E2)
+#define VY_RISE_VEL_Y_0        (-2.5E2)
+#define VY_RISE_VEL_X_1        (2.5E2)
+
+#define ORB_RAND_CHANCE        ((rand() % 100003 == 0))
+#define ORB_RAND_POS_X         (100 + (rand() % (G_W - 200)))
+
+#define AANA_RAND_CHANCE       ((rand() % 12283 == 0))
+#define AANA_VEL_X             (-400.0f)
+
+#define VY_BATR_HEALTH_DECR    (5)
+#define PLAYER_ORB_HEALTH_DECR (20)
+
+// SOME MACRO FUNCTIONS
 #ifndef _max
 #define _max(a, b) ((a) > (b) ? (a) : (b))
 #endif
@@ -54,6 +77,12 @@ void game_init(RenderTexture2D *canvas) {
     player_init(&g.p);
     // initialize vadayakshi
     vy_init(&g.vy);
+    // initialize epechi
+    epechi_init(&g.ep);
+
+    // initialize environment stuff
+    // BONFIRE
+    bf_init(&g.bonfire);
 
     // initialize other actors/sprites
     
@@ -81,7 +110,7 @@ void game_init(RenderTexture2D *canvas) {
 
 void _game_update(float dt) {
     if(dt > 0.1f)dt = 0.1f;
-    float ax = 4000.0f;
+    float ax = ACCEL_PUSH;
 
     // handle inputs only when player is alive.
     if(!g.p.is_dying) {
@@ -115,7 +144,7 @@ void _game_update(float dt) {
         }
 
         if(IsKeyPressed(KEY_SPACE) && !g.p.is_jumping) {
-            g.p.obj.vel.y -= 700;
+            g.p.obj.vel.y -= JUMP_VEL_Y_0;
             g.p.is_jumping = true;
             g.p.obj.curr_anim = &g.p.anim_jump_r;
             g.p.obj.size = anim_get_framesize(g.p.obj.curr_anim);
@@ -141,7 +170,7 @@ void _game_update(float dt) {
             if(b) {
                 b->obj.is_active = true;
                 b->obj.curr_anim->curr_frame.x = 0;
-                float delta = 70.0;
+                float delta = PLAYER_CENTER_TO_CHEST;
                 b->obj.pos = obj_cxy(&g.p.obj);
                 b->obj.pos.y -= delta;
                 Vector2 spawn_pos_s = GetWorldToScreen2D(b->obj.pos, g.cam);
@@ -151,16 +180,16 @@ void _game_update(float dt) {
                 if(d == 0.0f)d = 1.0f;
                 float sintheta = dy/d;
                 float costheta = dx/d;
-                b->obj.vel.x = 500.0 * costheta;
-                b->obj.vel.y = 500.0 * sintheta;
+                b->obj.vel.x = BATARANG_VEL_R * costheta;
+                b->obj.vel.y = BATARANG_VEL_R * sintheta;
             }
         }
 
         // decay player velocity
-        g.p.obj.vel.x *= expf(-12*dt);
-        g.p.obj.vel.y *= expf(-2*dt);
+        g.p.obj.vel.x *= expf(PLAYER_VEL_X_DECAY*dt);
+        g.p.obj.vel.y *= expf(PLAYER_VEL_Y_DECAY*dt);
         // update yvel with gravity
-        g.p.obj.vel.y += 400*dt;
+        g.p.obj.vel.y += ACCEL_G*dt;
         // now update position
         g.p.obj.pos.x += g.p.obj.vel.x*dt;
         g.p.obj.pos.y += g.p.obj.vel.y*dt;
@@ -178,7 +207,7 @@ void _game_update(float dt) {
         }
 
         // switch to idle animation if player is in ground
-        if(g.p.is_jumping && (g.p.obj.pos.y >= (float)(GAME_GROUND_Y - g.p.obj.curr_anim->curr_frame.height))) {
+        if(g.p.is_jumping && (g.p.obj.pos.y >= (float)(GAME_GROUND_Y - g.p.obj.size.y))) {
             g.p.is_jumping = false;
         }
 
@@ -228,17 +257,30 @@ void _game_update(float dt) {
         }
     }
 
+    // BONFIRE
+    if(!g.bonfire.obj.is_active) {
+        g.bonfire.obj.is_active = true;
+    }
+
+    if(g.bonfire.obj.is_active) {
+        g.bonfire.obj.pos.x = G_W/2;
+        anim_advance(g.bonfire.obj.curr_anim, dt);
+    }
+
+    // VADAYAKSHI
+    // TODO: move to automatic appearance as level boss
     if(IsKeyPressed(KEY_V)) {
         if(!g.vy.obj.is_active) {
-            g.vy.obj.pos = GetScreenToWorld2D(vy_get_initial_spos(), g.cam);
             g.vy.obj.is_active = true;
             g.is_boss_active = true;
-            g.vy.obj.vel.x = -3E2;
-            g.vy.obj.vel.y = -2.5E2;
         } else {
             g.vy.obj.is_active = false;
             g.is_boss_active = false;
+            g.vy.is_orbpos = false;
         }
+        g.vy.obj.pos = GetScreenToWorld2D(vy_get_initial_spos(), g.cam);
+        g.vy.obj.vel.x = VY_RISE_VEL_X_0;
+        g.vy.obj.vel.y = VY_RISE_VEL_Y_0;
     }
 
     if(g.vy.obj.is_active && !g.vy.is_dying) {
@@ -251,10 +293,10 @@ void _game_update(float dt) {
             g.vy.is_orbpos = vec_equals(g.vy.obj.pos, vy_sfinalpos);
         } else {
             if(obj_wx_lt_s(&g.vy.obj, 300, g.cam)) {
-                g.vy.obj.vel.x = 2.5E2;
+                g.vy.obj.vel.x = VY_RISE_VEL_X_1;
             }
             if(obj_wx_gt_s(&g.vy.obj, G_W - 300, g.cam)) {
-                g.vy.obj.vel.x = -2.5E2;
+                g.vy.obj.vel.x = -VY_RISE_VEL_X_1;
             }
             g.vy.obj.pos.x += g.vy.obj.vel.x * dt;
         }
@@ -264,44 +306,63 @@ void _game_update(float dt) {
     if(g.vy.is_orbpos) {
         for(int i = 0; i < MAX_ORBS; i++) {
             orb_t *orb = &g.orbs[i];
-            if(!orb->obj.is_active && (rand() % 100003 == 0)) {
+            if(!orb->obj.is_active && ORB_RAND_CHANCE) {
                 orb->obj.is_active = true;
                 Vector2 pos, vel;
                 pos.y = 0;
-                pos.x = 100 + (rand() % (G_W - 200));
+                pos.x = ORB_RAND_POS_X;
                 vel.x = 0;
-                vel.y = 400.0f*dt;
+                vel.y = ACCEL_G*dt;
                 orb->obj.pos = pos;
                 orb->obj.vel = vel;
             }
         }
+    }
 
-        for(int i = 0; i < MAX_ORBS; i++) {
-            orb_t *orb = &g.orbs[i];
-            if(orb->obj.is_active) {
-                // check for bounds
-                if(obj_is_oob(&orb->obj, COORDS_SCREEN, g.cam)) {
-                    orb->obj.is_active = false;
-                } else {
-                    // update y pos and velocity
-                    orb->obj.vel.y += 400.0f*dt;
-                    orb->obj.pos.y += orb->obj.vel.y * dt;
-                }
+    for(int i = 0; i < MAX_ORBS; i++) {
+        orb_t *orb = &g.orbs[i];
+        if(orb->obj.is_active) {
+            // check for bounds
+            if(obj_is_oob(&orb->obj, COORDS_SCREEN, g.cam)) {
+                orb->obj.is_active = false;
+            } else {
+                // update y pos and velocity
+                orb->obj.vel.y += ACCEL_G*dt;
+                orb->obj.pos.y += orb->obj.vel.y * dt;
             }
         }
+    }
+
+    // EENAMPECHI
+    if(IsKeyPressed(KEY_E)) {
+        if(!g.ep.obj.is_active) {
+            g.ep.obj.is_active = true;
+            g.is_boss_active = true;
+        } else {
+            g.ep.obj.is_active = false;
+            g.is_boss_active = false;
+        }
+        g.ep.obj.pos = GetScreenToWorld2D(epechi_get_initial_spos(), g.cam);
+        g.ep.obj.vel.x = -6E2;
+        g.ep.obj.vel.y = 0;
+    }
+
+    if(g.ep.obj.is_active && !g.ep.is_dying) {
+        g.ep.obj.pos.x += g.ep.obj.vel.x*dt;
+        anim_advance(g.ep.obj.curr_anim, dt);
     }
 
     // AANAMARUTHAS
     for(int i = 0; i < MAX_AANAS; ++i) {
         aanam_t *aana = &g.aanas[i];
-        if(!aana->obj.is_active && (rand() % 12283 == 0)) {
+        if(!aana->obj.is_active && AANA_RAND_CHANCE) {
             aana->obj.is_active = true;
             Vector2 pos, vel;
             pos.y = GAME_GROUND_Y - aana->obj.size.y;
             pos.x = G_W - aana->obj.size.x;
             pos = GetScreenToWorld2D(pos, g.cam);
             vel.y = 0;
-            vel.x = -400.0f;
+            vel.x = AANA_VEL_X;
             aana->obj.pos = pos;
             aana->obj.vel = vel;
         }
@@ -333,7 +394,7 @@ void _game_update(float dt) {
             float lim = b->obj.size.x/2;
             if(cart_d2 < lim*lim) {
                 b->obj.is_active = false;
-                g.vy.health -= 5;
+                g.vy.health -= VY_BATR_HEALTH_DECR;
                 hbar_update(&g.vy.hbar, g.vy.health, g.vy.max_health);
             }
         }
@@ -349,7 +410,7 @@ void _game_update(float dt) {
             float p_c_x = pspos.x + g.p.obj.size.x/2;
             if((fabsf(orb_down_y - p_up_y) < 40) && (fabsf(orb_c_x - p_c_x) < 40)) {
                 orb->obj.is_active = false;
-                g.p.health -= 20;
+                g.p.health -= PLAYER_ORB_HEALTH_DECR;
                 hbar_update(&g.p.hbar, g.p.health, g.p.max_health);
             }
         }
@@ -429,6 +490,10 @@ void game_start_main_loop(void) {
             DrawTexture(g.bg, drawX + 2*g.bg.width, 0, DARKGRAY);
             // Draw player
             DrawTextureRec(g.p.obj.curr_anim->asset->texture, g.p.obj.curr_anim->curr_frame, g.p.obj.pos, WHITE);
+            // Draw bonfire
+            if(g.bonfire.obj.is_active) {
+                DrawTextureRec(g.bonfire.obj.curr_anim->asset->texture, g.bonfire.obj.curr_anim->curr_frame, g.bonfire.obj.pos, WHITE);
+            }
             // Draw all batarangs
             for(int i = 0; i < MAX_BATRS; ++i) {
                 batr_t *b = &g.batrs[i];
@@ -439,6 +504,10 @@ void game_start_main_loop(void) {
             // Draw VY
             if(g.vy.obj.is_active) {
                 DrawTextureRec(g.vy.obj.curr_anim->asset->texture, g.vy.obj.curr_anim->curr_frame, g.vy.obj.pos, WHITE);
+            }
+            // Draw EPECHI
+            if(g.ep.obj.is_active) {
+                DrawTextureRec(g.ep.obj.curr_anim->asset->texture, g.ep.obj.curr_anim->curr_frame, g.ep.obj.pos, WHITE);
             }
             // Draw all aanas
             for(int i = 0; i < MAX_AANAS; ++i) {

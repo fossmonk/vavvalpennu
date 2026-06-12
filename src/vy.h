@@ -1,4 +1,5 @@
 #include <raylib.h>
+#include <vpconfig.h>
 #include <obj.h>
 #include <hbar.h>
 

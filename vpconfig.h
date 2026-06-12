@@ -11,7 +11,10 @@
 #define G_H (1080)
 #define GAME_GROUND_Y (942)
 
-// Deadzone parameters
+#define WORLD_XL (-9600)
+#define WORLD_XR (9600)
+
+// Camera deadzone parameters
 #define DZ_RL (400)
 #define DZ_LL (-600)
 
@@ -28,18 +31,24 @@
 
 // Animation assets
 // PLAYER
-#define ANIM_P_IDLE     (anim_info_t){"assets/sprites/player/idle.png", "P IDLE", 16, 0.07f, true}
-#define ANIM_P_RUN      (anim_info_t){"assets/sprites/player/run.png", "P RUN", 16, 0.07f, true}
-#define ANIM_P_JUMP     (anim_info_t){"assets/sprites/player/jump.png", "P JUMP", 8, 0.07f, false}
+#define ANIM_P_IDLE       (anim_info_t){"assets/sprites/player/idle.png", "P IDLE", 16, 0.07f, true}
+#define ANIM_P_RUN        (anim_info_t){"assets/sprites/player/run.png", "P RUN", 16, 0.07f, true}
+#define ANIM_P_JUMP       (anim_info_t){"assets/sprites/player/jump.png", "P JUMP", 8, 0.07f, false}
+
+// BONFIRE
+#define ANIM_BF_BURN      (anim_info_t){"assets/sprites/bonfire/burn.png", "BONFIRE BURN", 16, 0.07f, true}
 
 // BATARANG
-#define ANIM_BATARANG   (anim_info_t){"assets/sprites/batarang/batarang_rotate.png", "BATARANG", 8, 0.1f, true}
+#define ANIM_BATARANG     (anim_info_t){"assets/sprites/batarang/batarang_rotate.png", "BATARANG", 8, 0.1f, true}
 
 // VADAYAKSHI
-#define ANIM_VY_RISE    (anim_info_t){"assets/sprites/vadayakshi/rise.png", "VY RISE", 25, 0.07f, true}
+#define ANIM_VY_RISE      (anim_info_t){"assets/sprites/vadayakshi/rise.png", "VY RISE", 25, 0.07f, true}
 
 // AANAMARUTHA
-#define ANIM_AANAM_RUN  (anim_info_t){"assets/sprites/aanamarutha/run.png", "AANAM RUN", 16, 0.05f, true}
+#define ANIM_AANAM_RUN    (anim_info_t){"assets/sprites/aanamarutha/run.png", "AANAM RUN", 16, 0.05f, true}
+
+// EENAMPECHI
+#define ANIM_EPECHI_ROLL  (anim_info_t){"assets/sprites/epechi/roll.png", "EPECHI ROLL", 25, 0.04f, true}
 
 // Textures
 #define ORB_TEXTURE      "assets/textures/orb.png"
@@ -54,5 +63,6 @@
 #define MAX_BATRS (10)
 #define MAX_ORBS  (6)
 #define MAX_AANAS (2)
+#define MAX_BONFIRES (5)
 
 #endif /* _VPCONFIG_H_ */

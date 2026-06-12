@@ -11,7 +11,9 @@
 #include <batr.h>
 #include <vy.h>
 #include <aanam.h>
+#include <epechi.h>
 #include <player.h>
+#include <bonfire.h>
 
 typedef struct {
     RenderTexture2D *canvas;
@@ -25,9 +27,14 @@ typedef struct {
     player_t p;
     batr_t batrs[MAX_BATRS];
 
+    // environment
+    bf_t bonfire;
+
     // npcs and weapons
     vy_t vy;
     orb_t orbs[MAX_ORBS];
+    epechi_t ep;
+    
 
     aanam_t aanas[MAX_AANAS];
 

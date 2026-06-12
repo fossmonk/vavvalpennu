@@ -7,6 +7,9 @@ anim_asset_t player_run;
 anim_asset_t player_idle;
 anim_asset_t player_jump;
 
+// BONFIRE
+anim_asset_t bonfire_burn;
+
 // BATARANG
 anim_asset_t batr_rotate;
 
@@ -15,6 +18,9 @@ anim_asset_t vy_rise;
 
 // AANAMARUTHA
 anim_asset_t aanam_run;
+
+// EPECHI
+anim_asset_t epechi_roll;
 
 void anim_asset_load(anim_info_t info, anim_asset_t *asset) {
     asset->texture = LoadTexture(info.filepath);
@@ -36,6 +42,9 @@ void anim_asset_load_all(void) {
     anim_asset_load(ANIM_P_IDLE, &player_idle);
     anim_asset_load(ANIM_P_JUMP, &player_jump);
 
+    // bonfire assets
+    anim_asset_load(ANIM_BF_BURN, &bonfire_burn);
+
     //batr assets
     anim_asset_load(ANIM_BATARANG, &batr_rotate);
 
@@ -44,5 +53,8 @@ void anim_asset_load_all(void) {
 
     // aanam assets
     anim_asset_load(ANIM_AANAM_RUN, &aanam_run);
+
+    // epechi assets
+    anim_asset_load(ANIM_EPECHI_ROLL, &epechi_roll);
 }
 

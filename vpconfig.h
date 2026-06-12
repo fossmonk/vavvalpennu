@@ -39,7 +39,7 @@
 #define ANIM_VY_RISE    (anim_info_t){"assets/sprites/vadayakshi/rise.png", "VY RISE", 25, 0.07f, true}
 
 // AANAMARUTHA
-#define ANIM_AANAM_RUN  (anim_info_t){"assets/sprites/aanamarutha/run.png", "AANAM RUN", 16, 0.2f, true}
+#define ANIM_AANAM_RUN  (anim_info_t){"assets/sprites/aanamarutha/run.png", "AANAM RUN", 16, 0.05f, true}
 
 // Textures
 #define ORB_TEXTURE      "assets/textures/orb.png"

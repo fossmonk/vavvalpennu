@@ -24,3 +24,11 @@ void bf_init(bf_t *bf) {
     // purposely don't set xpos.
     // this has to be init'ed when spawned.
 }
+
+void bf_draw(bf_t *bf) {
+    DrawTextureRec(
+        bf->obj.curr_anim->asset->texture,
+        bf->obj.curr_anim->curr_frame,
+        bf->obj.pos,
+        WHITE);
+}

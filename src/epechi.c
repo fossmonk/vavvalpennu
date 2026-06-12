@@ -36,3 +36,11 @@ void epechi_init(epechi_t *ep) {
     ep->hbar_iconpos.x -= 3.0;
     ep->hbar_iconpos.y -= 20.0;
 }
+
+void epechi_draw(epechi_t *ep) {
+    DrawTextureRec(
+        ep->obj.curr_anim->asset->texture,
+        ep->obj.curr_anim->curr_frame, ep->obj.pos,
+        WHITE
+    );
+}

@@ -12,5 +12,6 @@ typedef struct {
 } batr_t;
 
 void batr_init(batr_t *b);
+void batr_draw(batr_t *b);
 
 #endif

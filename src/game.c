@@ -8,12 +8,11 @@
 #include <menu.h>
 
 // SOME CONSTANTS
-#define ACCEL_PUSH             (4000.0f)
-#define ACCEL_G                (400.0f)
+#define ACCEL_PUSH             (4400.0f)
 
-#define JUMP_VEL_Y_0           (700.0f)
+#define JUMP_VEL_Y_0           (800.0f)
 #define PLAYER_CENTER_TO_CHEST (70.0f)
-#define BATARANG_VEL_R         (600.0f)
+#define BATARANG_VEL_R         (800.0f)
 
 #define PLAYER_VEL_X_DECAY     (-12)
 #define PLAYER_VEL_Y_DECAY     (-2)
@@ -23,7 +22,6 @@
 #define VY_RISE_VEL_X_1        (2.5E2)
 
 #define ORB_RAND_CHANCE        ((rand() % 100003 == 0))
-#define ORB_RAND_POS_X         (100 + (rand() % (G_W - 200)))
 
 #define AANA_RAND_CHANCE       ((rand() % 12283 == 0))
 #define AANA_VEL_X             (-400.0f)
@@ -69,6 +67,8 @@ void game_load_assets(void) {
 void game_init(RenderTexture2D *canvas) {
     // set canvas
     g.canvas = canvas;
+    // kind of a hack, but makes stuff easy
+    obj_global_set_cam2d(&g.cam);
     // load all assets
     game_load_assets();
     // initialize menu
@@ -243,7 +243,7 @@ void _game_update(float dt) {
             batr_t *b = &g.batrs[i];
             if(b->obj.is_active) {
                 // check for bounds
-                if(obj_is_oob(&b->obj, COORDS_WORLD, g.cam)) {
+                if(obj_is_oob(&b->obj, COORDS_WORLD)) {
                     b->obj.is_active = false;
                 } else {
                     // update positions with velocity
@@ -307,14 +307,7 @@ void _game_update(float dt) {
         for(int i = 0; i < MAX_ORBS; i++) {
             orb_t *orb = &g.orbs[i];
             if(!orb->obj.is_active && ORB_RAND_CHANCE) {
-                orb->obj.is_active = true;
-                Vector2 pos, vel;
-                pos.y = 0;
-                pos.x = ORB_RAND_POS_X;
-                vel.x = 0;
-                vel.y = ACCEL_G*dt;
-                orb->obj.pos = pos;
-                orb->obj.vel = vel;
+                orb_activate(orb, dt);
             }
         }
     }
@@ -322,14 +315,7 @@ void _game_update(float dt) {
     for(int i = 0; i < MAX_ORBS; i++) {
         orb_t *orb = &g.orbs[i];
         if(orb->obj.is_active) {
-            // check for bounds
-            if(obj_is_oob(&orb->obj, COORDS_SCREEN, g.cam)) {
-                orb->obj.is_active = false;
-            } else {
-                // update y pos and velocity
-                orb->obj.vel.y += ACCEL_G*dt;
-                orb->obj.pos.y += orb->obj.vel.y * dt;
-            }
+            orb_update(orb, dt);
         }
     }
 
@@ -372,7 +358,7 @@ void _game_update(float dt) {
         aanam_t *aana = &g.aanas[i];
         if(aana->obj.is_active) {
             // check for bounds
-            if(obj_is_oob(&aana->obj, COORDS_WORLD, g.cam)) {
+            if(obj_is_oob(&aana->obj, COORDS_WORLD)) {
                 aana->obj.is_active = false;
             } else {
                 // update x pos
@@ -390,7 +376,7 @@ void _game_update(float dt) {
     for(int i = 0; i < MAX_BATRS; ++i) {
         batr_t *b = &g.batrs[i];
         if(b->obj.is_active && !g.vy.is_dying) {
-            float cart_d2 = obj_cartd2(&b->obj, COORDS_WORLD, &g.vy.obj, COORDS_WORLD, g.cam);
+            float cart_d2 = obj_cartd2(&b->obj, COORDS_WORLD, &g.vy.obj, COORDS_WORLD);
             float lim = b->obj.size.x/2;
             if(cart_d2 < lim*lim) {
                 b->obj.is_active = false;
@@ -439,13 +425,10 @@ void game_update(float dt) {
 void game_draw_canvas_to_screen(void) {
     BeginDrawing();
     ClearBackground(BLACK);
-    // Calculate destination rectangle
-    // If aspect ratios differ, you would calculate letterboxing math here.
-    // Note: Y is negative because textures are inverted in OpenGL
+    // Y is negative because textures are inverted in OpenGL
     Rectangle sourceRec = { 0.0f, 0.0f, (float)g.canvas->texture.width, -(float)g.canvas->texture.height };
     Rectangle destRec = { 0.0f, 0.0f, (float)GetScreenWidth(), (float)GetScreenHeight() };
     Vector2 origin = { 0.0f, 0.0f };
-    // The GPU will scale the game correctly
     DrawTexturePro(g.canvas->texture, sourceRec, destRec, origin, 0.0f, WHITE);
     EndDrawing();
 }
@@ -489,31 +472,31 @@ void game_start_main_loop(void) {
             DrawTexture(g.bg, drawX + g.bg.width, 0, DARKGRAY);
             DrawTexture(g.bg, drawX + 2*g.bg.width, 0, DARKGRAY);
             // Draw player
-            DrawTextureRec(g.p.obj.curr_anim->asset->texture, g.p.obj.curr_anim->curr_frame, g.p.obj.pos, WHITE);
+            player_draw(&g.p);
             // Draw bonfire
             if(g.bonfire.obj.is_active) {
-                DrawTextureRec(g.bonfire.obj.curr_anim->asset->texture, g.bonfire.obj.curr_anim->curr_frame, g.bonfire.obj.pos, WHITE);
+                bf_draw(&g.bonfire);
             }
             // Draw all batarangs
             for(int i = 0; i < MAX_BATRS; ++i) {
                 batr_t *b = &g.batrs[i];
                 if(b->obj.is_active) {
-                    DrawTextureRec(b->obj.curr_anim->asset->texture, b->obj.curr_anim->curr_frame, b->obj.pos, WHITE);
+                    batr_draw(b);
                 }
             }
             // Draw VY
             if(g.vy.obj.is_active) {
-                DrawTextureRec(g.vy.obj.curr_anim->asset->texture, g.vy.obj.curr_anim->curr_frame, g.vy.obj.pos, WHITE);
+                vy_draw(&g.vy);
             }
             // Draw EPECHI
             if(g.ep.obj.is_active) {
-                DrawTextureRec(g.ep.obj.curr_anim->asset->texture, g.ep.obj.curr_anim->curr_frame, g.ep.obj.pos, WHITE);
+                epechi_draw(&g.ep);
             }
             // Draw all aanas
             for(int i = 0; i < MAX_AANAS; ++i) {
                 aanam_t *aana = &g.aanas[i];
                 if(aana->obj.is_active) {
-                    DrawTextureRec(aana->obj.curr_anim->asset->texture, aana->obj.curr_anim->curr_frame, aana->obj.pos, LIGHTGRAY);
+                    aanam_draw(aana);
                 }
             }
             EndMode2D();

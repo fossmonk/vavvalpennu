@@ -13,5 +13,6 @@ typedef struct {
 } aanam_t;
 
 void aanam_init(aanam_t *aana);
+void aanam_draw(aanam_t *aana);
 
 #endif

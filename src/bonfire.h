@@ -11,5 +11,6 @@ typedef struct {
 } bf_t;
 
 void bf_init(bf_t *bf);
+void bf_draw(bf_t *bf);
 
 #endif

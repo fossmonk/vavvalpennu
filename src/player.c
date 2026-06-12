@@ -56,3 +56,12 @@ void player_init(player_t *p) {
     p->hbar_iconpos.x -= 7.0;
     p->hbar_iconpos.y -= 7.0;
 }
+
+void player_draw(player_t *p) {
+    DrawTextureRec(
+        p->obj.curr_anim->asset->texture,
+        p->obj.curr_anim->curr_frame,
+        p->obj.pos,
+        WHITE
+    );
+}

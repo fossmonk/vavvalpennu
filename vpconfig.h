@@ -18,6 +18,9 @@
 #define DZ_RL (400)
 #define DZ_LL (-600)
 
+// Common Physics constants
+#define ACCEL_G (600.0f)
+
 // Max Healths
 #define PLAYER_MAX_HEALTH_INITIAL (100)
 #define VY_MAX_HEALTH             (300)
@@ -64,5 +67,6 @@
 #define MAX_ORBS  (6)
 #define MAX_AANAS (2)
 #define MAX_BONFIRES (5)
+
 
 #endif /* _VPCONFIG_H_ */

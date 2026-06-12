@@ -23,3 +23,11 @@ void batr_init(batr_t *b) {
     // purposely don't set pos and vel.
     // this has to be init'ed when spawned.
 }
+
+void batr_draw(batr_t *b) {
+    DrawTextureRec(
+        b->obj.curr_anim->asset->texture,
+        b->obj.curr_anim->curr_frame,
+        b->obj.pos,
+        WHITE);
+}

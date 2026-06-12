@@ -21,6 +21,7 @@ typedef struct {
 } epechi_t;
 
 void epechi_init(epechi_t *ep);
+void epechi_draw(epechi_t *ep);
 
 static inline Vector2 epechi_get_initial_spos(void) {
     return (Vector2){G_W-300, GAME_GROUND_Y-190};

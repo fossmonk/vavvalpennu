@@ -13,7 +13,7 @@ int main(void) {
     // No exit keys, handle separately.
     SetExitKey(KEY_NULL);
     // Start game in full screen mode
-    SetWindowState(FLAG_FULLSCREEN_MODE);
+    // SetWindowState(FLAG_FULLSCREEN_MODE);
 
     // Create virtual canvas with G_W, G_H
     RenderTexture2D canvas = LoadRenderTexture(G_W, G_H);

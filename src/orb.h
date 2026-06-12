@@ -16,5 +16,7 @@ typedef struct {
 
 void orb_init(orb_t *orb);
 void orb_draw(orb_t *orb);
+void orb_activate(orb_t *orb, float dt);
+void orb_update(orb_t *orb, float dt);
 
 #endif

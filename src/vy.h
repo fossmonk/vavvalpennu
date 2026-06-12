@@ -22,6 +22,7 @@ typedef struct {
 } vy_t;
 
 void vy_init(vy_t *vy);
+void vy_draw(vy_t *vy);
 
 static inline Vector2 vy_get_initial_spos(void) {
     return (Vector2){G_W-300, GAME_GROUND_Y-250};

@@ -23,3 +23,12 @@ void aanam_init(aanam_t *aana) {
     aana->obj.is_active = false;
     aana->is_dying = false;
 }
+
+void aanam_draw(aanam_t *aana) {
+    DrawTextureRec(
+        aana->obj.curr_anim->asset->texture,
+        aana->obj.curr_anim->curr_frame,
+        aana->obj.pos,
+        WHITE
+    );
+}

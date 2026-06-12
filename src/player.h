@@ -23,5 +23,6 @@ typedef struct {
 } player_t;
 
 void player_init(player_t *p);
+void player_draw(player_t *p);
 
 #endif

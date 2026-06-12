@@ -34,3 +34,11 @@ void vy_init(vy_t *vy) {
     vy->hbar_iconpos.x -= 3.0;
     vy->hbar_iconpos.y -= 20.0;
 }
+
+void vy_draw(vy_t *vy) {
+    DrawTextureRec(
+        vy->obj.curr_anim->asset->texture, 
+        vy->obj.curr_anim->curr_frame, vy->obj.pos, 
+        WHITE
+    );
+}

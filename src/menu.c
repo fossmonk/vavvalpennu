@@ -13,22 +13,31 @@ typedef enum {
     MENU_CONTROLS
 } menu_state;
 
-static menu_state mstate = MENU_MAIN;
-static char *menu_start = "START GAME";
-static char *menu_pause = "RESUME GAME";
-static char *menu_controls = "CONTROLS";
-static char *menu_quit = "QUIT GAME";
-static char *menu_back = "GO BACK";
+typedef struct {
+    const char *action;
+    const char *control;
+} cp;
 
-static char* controls_text[] = {
-    "          CONTROLS         ",
-    "===========================",
-    "MOVE LEFT                 A",
-    "MOVE RIGHT                D",
-    "JUMP                  SPACE",
-    "THROW BATARANG          RMB",
-    "HEAVY ATTACK            LMB",
+static menu_state mstate = MENU_MAIN;
+static const char *menu_start = "START GAME";
+static const char *menu_pause = "RESUME GAME";
+static const char *menu_controls = "CONTROLS";
+static const char *menu_quit = "QUIT GAME";
+static const char *menu_back = "GO BACK";
+
+static const char* controls_heading[] = {
+    "CONTROLS",
+    "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
     NULL
+};
+
+static cp control_pairs[] = {
+    {"MOVE LEFT","A"},
+    {"MOVE RIGHT","D"},
+    {"JUMP","SPACE"},
+    {"THROW BATARANG","RMB"},
+    {"HEAVY ATTACK","LMB"},
+    {NULL, NULL}
 };
 
 static Font menu_font;
@@ -51,8 +60,16 @@ bool point_in_rect(Vector2 p, Rectangle r) {
     float yl = r.y;
     float yh = r.y + r.height;
 
-    if(p.x > xl && p.x < xh && p.y > yl && p.y < yh) return true;
-    return false;
+    return (p.x > xl && p.x < xh && p.y > yl && p.y < yh);
+}
+
+// Since we can't curry let's save on some typing
+Vector2 menu_measure_text(const char *text) {
+    return MeasureTextEx(menu_font, text, MENU_FONT_SIZE, MENU_SPACING);
+}
+
+void menu_draw_text(const char* text, Vector2 position) {
+    DrawTextEx(menu_font, text, position, MENU_FONT_SIZE, MENU_SPACING, WHITE);
 }
 
 menu_action menu_get_action(void) {
@@ -78,14 +95,14 @@ void menu_init(void) {
     // BACK
     float top_y = MENU_TOP_Y;
     float padding = 5.0f;
-    Vector2 fontWH = MeasureTextEx(menu_font, menu_start, MENU_FONT_SIZE, MENU_SPACING);
+    Vector2 fontWH = menu_measure_text(menu_start);
     start_bb.x = G_W/2 - fontWH.x/2;
     start_bb.y = top_y;
     start_bb.width = fontWH.x;
     start_bb.height = fontWH.y;
 
     // Don't increment y yet, RESUME will be at the same place as START
-    fontWH = MeasureTextEx(menu_font, menu_pause, MENU_FONT_SIZE, MENU_SPACING);
+    fontWH = menu_measure_text(menu_pause);
     pause_bb.x = G_W/2 - fontWH.x/2;
     pause_bb.y = top_y;
     pause_bb.width = fontWH.x;
@@ -93,14 +110,14 @@ void menu_init(void) {
 
     top_y += fontWH.y + padding;
 
-    fontWH = MeasureTextEx(menu_font, menu_controls, MENU_FONT_SIZE, MENU_SPACING);
+    fontWH = menu_measure_text(menu_controls);
     controls_bb.x = G_W/2 - fontWH.x/2;
     controls_bb.y = top_y;
     controls_bb.width = fontWH.x;
     controls_bb.height = fontWH.y;
     top_y += fontWH.y + padding;
 
-    fontWH = MeasureTextEx(menu_font, menu_quit, MENU_FONT_SIZE, MENU_SPACING);
+    fontWH = menu_measure_text(menu_quit);
     quit_bb.x = G_W/2 - fontWH.x/2;
     quit_bb.y = top_y;
     quit_bb.width = fontWH.x;
@@ -108,13 +125,36 @@ void menu_init(void) {
     top_y += fontWH.y + padding;
 
     int control_linecount = 0;
-    for(int i = 0; controls_text[i] != NULL; ++i) control_linecount++;
+    for(int i = 0; controls_heading[i] != NULL; ++i) control_linecount++;
+    for(int i = 0; control_pairs[i].action != NULL; ++i) control_linecount++;
 
-    fontWH = MeasureTextEx(menu_font, menu_back, MENU_FONT_SIZE, MENU_SPACING);
+    fontWH = menu_measure_text(menu_back);
     back_bb.x = G_W/2 - fontWH.x/2;
     back_bb.y = CONTROLS_TOP_Y + ((fontWH.y + padding) * control_linecount);
     back_bb.width = fontWH.x;
     back_bb.height = fontWH.y;
+}
+
+void menu_draw_controls(void) {
+    Vector2 fontWH;
+    float top_y = CONTROLS_TOP_Y;
+    float padding = 5.0f;
+    // Draw CONTROLS
+    //      ========
+    for(int i = 0; i < 2; ++i) {
+        fontWH = menu_measure_text(controls_heading[i]);
+        menu_draw_text(controls_heading[i], (Vector2){G_W/2 - fontWH.x/2, top_y});
+        top_y += fontWH.y + padding;
+    }
+    float xl = G_W/2 - fontWH.x/2;
+    float xr = xl + fontWH.x;
+
+    for(int i = 0; control_pairs[i].action != NULL; ++i) {
+        menu_draw_text(control_pairs[i].action, (Vector2){xl, top_y});
+        fontWH = menu_measure_text(control_pairs[i].control);
+        menu_draw_text(control_pairs[i].control, (Vector2){xr - fontWH.x, top_y});
+        top_y += fontWH.y + padding;
+    }
 }
 
 void menu_draw(menu_action ma, menu_type mt) {
@@ -122,22 +162,14 @@ void menu_draw(menu_action ma, menu_type mt) {
     if(mstate == MENU_CONTROLS && ma == MENU_CLICK_BACK) mstate = MENU_MAIN;
     if(mstate == MENU_MAIN) {
         if(mt == MENU_START) {
-            DrawTextEx(menu_font, menu_start, (Vector2){start_bb.x, start_bb.y}, MENU_FONT_SIZE, MENU_SPACING, WHITE);
+            menu_draw_text(menu_start, (Vector2){start_bb.x, start_bb.y});
         } else {
-            DrawTextEx(menu_font, menu_pause, (Vector2){pause_bb.x, pause_bb.y}, MENU_FONT_SIZE, MENU_SPACING, WHITE);
+            menu_draw_text(menu_pause, (Vector2){pause_bb.x, pause_bb.y});
         }
-        DrawTextEx(menu_font, menu_controls, (Vector2){controls_bb.x, controls_bb.y}, MENU_FONT_SIZE, MENU_SPACING, WHITE);
-        DrawTextEx(menu_font, menu_quit, (Vector2){quit_bb.x, quit_bb.y}, MENU_FONT_SIZE, MENU_SPACING, WHITE);
+        menu_draw_text(menu_controls, (Vector2){controls_bb.x, controls_bb.y});
+        menu_draw_text(menu_quit, (Vector2){quit_bb.x, quit_bb.y});
     } else {
-        Vector2 fontWH;
-        float top_y = CONTROLS_TOP_Y;
-        float padding = 5.0f;
-        for(int i = 0; controls_text[i] != NULL; ++i) {
-            fontWH = MeasureTextEx(menu_font, controls_text[i], MENU_FONT_SIZE, MENU_SPACING);
-            DrawTextEx(menu_font, controls_text[i], (Vector2){G_W/2 - fontWH.x/2, top_y}, MENU_FONT_SIZE, MENU_SPACING, WHITE);
-            top_y += fontWH.y + padding;
-        }
-        DrawTextEx(menu_font, menu_back, (Vector2){back_bb.x, back_bb.y}, MENU_FONT_SIZE, MENU_SPACING, WHITE);
+        menu_draw_controls();
+        menu_draw_text(menu_back, (Vector2){back_bb.x, back_bb.y});
     }
-
 }

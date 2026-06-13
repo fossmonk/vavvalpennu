@@ -6,6 +6,7 @@
 anim_asset_t player_run;
 anim_asset_t player_idle;
 anim_asset_t player_jump;
+anim_asset_t player_hithurt;
 
 // BONFIRE
 anim_asset_t bonfire_burn;
@@ -41,6 +42,7 @@ void anim_asset_load_all(void) {
     anim_asset_load(ANIM_P_RUN, &player_run);
     anim_asset_load(ANIM_P_IDLE, &player_idle);
     anim_asset_load(ANIM_P_JUMP, &player_jump);
+    anim_asset_load(ANIM_P_JUMP, &player_hithurt);
 
     // bonfire assets
     anim_asset_load(ANIM_BF_BURN, &bonfire_burn);

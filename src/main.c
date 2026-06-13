@@ -5,17 +5,20 @@
 #include <game.h>
 
 int main(void) {
-    // Init Raylib window with current monitor dimensions
-    int monitor = GetCurrentMonitor();
-    int monitor_w = GetMonitorWidth(monitor);
-    int monitor_h = GetMonitorHeight(monitor);
-    InitWindow(monitor_w, monitor_h, G_TITLE);
-    // No exit keys, handle separately.
+    // Init Window with our original dimensions
+    InitWindow(G_W, G_H, G_TITLE);
+    // Find out display resolutions
+    int mon = GetCurrentMonitor();
+    int sw = GetMonitorWidth(mon);
+    int sh = GetMonitorHeight(mon);
+    // Now reset the window size to screen size
+    SetWindowSize(sw, sh);
+    // No exit keys, handle separately
     SetExitKey(KEY_NULL);
     // Start game in full screen mode
-    // SetWindowState(FLAG_FULLSCREEN_MODE);
+    SetWindowState(FLAG_FULLSCREEN_MODE);
 
-    // Create virtual canvas with G_W, G_H
+    // Create virtual canvas always with original dims G_W, G_H
     RenderTexture2D canvas = LoadRenderTexture(G_W, G_H);
     SetTextureFilter(canvas.texture, TEXTURE_FILTER_BILINEAR);
 

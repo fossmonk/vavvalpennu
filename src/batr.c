@@ -24,6 +24,20 @@ void batr_init(batr_t *b) {
     // this has to be init'ed when spawned.
 }
 
+void batr_update(batr_t *b, float dt) {
+    // check for bounds
+    if(obj_is_oob(&b->obj, COORDS_WORLD)) {
+        b->obj.is_active = false;
+    } else {
+        // update positions with velocity
+        b->obj.pos.x += b->obj.vel.x * dt;
+        b->obj.pos.y += b->obj.vel.y * dt;
+
+        // update animation
+        anim_advance(b->obj.curr_anim, dt);
+    }
+}
+
 void batr_draw(batr_t *b) {
     DrawTextureRec(
         b->obj.curr_anim->asset->texture,

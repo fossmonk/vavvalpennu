@@ -26,6 +26,8 @@ typedef struct {
 void obj_global_set_cam2d(Camera2D *camref);
 bool obj_is_oob(obj_t *obj, coord_sys coords);
 float obj_cartd2(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2);
+Vector2 obj_w2s_pos(Vector2 pos);
+Vector2 obj_s2w_pos(Vector2 pos);
 
 /// SOME STATIC INLINES
 // Object Center XY

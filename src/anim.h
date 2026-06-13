@@ -11,21 +11,22 @@ typedef struct {
     Rectangle curr_frame;
 } anim_t;
 
-#define anim_hflipl(obj) do {                  \
-    if((obj)->curr_anim->curr_frame.width > 0) {  \
-        (obj)->curr_anim->curr_frame.width *= -1; \
-    }                                             \
-} while(0)
-#define anim_hflipr(obj) do {                  \
-    if((obj)->curr_anim->curr_frame.width < 0) {  \
-        (obj)->curr_anim->curr_frame.width *= -1; \
-    }                                             \
-} while(0)
-
 void anim_advance(anim_t *anim, float dt);
 
 static inline Vector2 anim_get_framesize(anim_t *anim) {
     return (Vector2){fabsf(anim->curr_frame.width), anim->curr_frame.height};
+}
+
+static inline void anim_hflipr(anim_t *anim) {
+    if(anim->curr_frame.width < 0) {
+        anim->curr_frame.width *= -1;
+    }
+}
+
+static inline void anim_hflipl(anim_t *anim) {
+    if(anim->curr_frame.width > 0) {
+        anim->curr_frame.width *= -1;
+    }
 }
 
 #endif

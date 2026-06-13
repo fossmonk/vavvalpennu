@@ -28,3 +28,11 @@ float obj_cartd2(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2) {
     float dcy = (obj1_pos.y + obj1->size.y/2) - (obj2_pos.y + obj2->size.y/2);
     return dcx*dcx + dcy*dcy;
 }
+
+Vector2 obj_w2s_pos(Vector2 pos) {
+    return GetWorldToScreen2D(pos, *gcam2d);
+}
+
+Vector2 obj_s2w_pos(Vector2 pos) {
+    return GetScreenToWorld2D(pos, *gcam2d);
+}

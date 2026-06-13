@@ -37,6 +37,7 @@
 #define ANIM_P_IDLE       (anim_info_t){"assets/sprites/player/idle.png", "P IDLE", 16, 0.07f, true}
 #define ANIM_P_RUN        (anim_info_t){"assets/sprites/player/run.png", "P RUN", 16, 0.07f, true}
 #define ANIM_P_JUMP       (anim_info_t){"assets/sprites/player/jump.png", "P JUMP", 8, 0.07f, false}
+#define ANIM_P_HITHURT    (anim_info_t){"assets/sprites/player/hithurt.png", "P HITHURT", 25, 0.05f, false}
 
 // BONFIRE
 #define ANIM_BF_BURN      (anim_info_t){"assets/sprites/bonfire/burn.png", "BONFIRE BURN", 16, 0.07f, true}

@@ -8,15 +8,6 @@
 #include <menu.h>
 
 // SOME CONSTANTS
-#define ACCEL_PUSH             (4400.0f)
-
-#define JUMP_VEL_Y_0           (800.0f)
-#define PLAYER_CENTER_TO_CHEST (70.0f)
-#define BATARANG_VEL_R         (800.0f)
-
-#define PLAYER_VEL_X_DECAY     (-12)
-#define PLAYER_VEL_Y_DECAY     (-2)
-
 #define VY_RISE_VEL_X_0        (-3E2)
 #define VY_RISE_VEL_Y_0        (-2.5E2)
 #define VY_RISE_VEL_X_1        (2.5E2)
@@ -110,119 +101,37 @@ void game_init(RenderTexture2D *canvas) {
 
 void _game_update(float dt) {
     if(dt > 0.1f)dt = 0.1f;
-    float ax = ACCEL_PUSH;
 
     // handle inputs only when player is alive.
-    if(!g.p.is_dying) {
+    if(!g.p.is_dying && !g.p.is_hurting) {
         if(IsKeyDown(KEY_D)) {
-            g.p.obj.vel.x += ax*dt;
-            // set curr_anim to run
-            if(!g.p.is_jumping) {
-                g.p.obj.curr_anim = &g.p.anim_run_r;
-                g.p.obj.size = anim_get_framesize(g.p.obj.curr_anim);
-            }
-            // reverse direction if left
-            if(g.p.obj.curr_anim->curr_frame.width < 0) {
-                g.p.obj.curr_anim->curr_frame.width *= -1;
-            }
-            g.p.obj.hdir = RIGHT;
-            anim_hflipr(&g.p.obj);
+            player_activate_move_r(&g.p, dt);
         }
 
         if(IsKeyDown(KEY_A)) {
-            g.p.obj.vel.x -= ax*dt;
-            if(!g.p.is_jumping) {
-                g.p.obj.curr_anim = &g.p.anim_run_r;
-                g.p.obj.size = anim_get_framesize(g.p.obj.curr_anim);
-            }
-            // reverse direction if right
-            if(g.p.obj.curr_anim->curr_frame.width > 0) {
-                g.p.obj.curr_anim->curr_frame.width *= -1;
-            }
-            g.p.obj.hdir = LEFT;
-            anim_hflipl(&g.p.obj);
+            player_activate_move_l(&g.p, dt);
         }
 
         if(IsKeyPressed(KEY_SPACE) && !g.p.is_jumping) {
-            g.p.obj.vel.y -= JUMP_VEL_Y_0;
-            g.p.is_jumping = true;
-            g.p.obj.curr_anim = &g.p.anim_jump_r;
-            g.p.obj.size = anim_get_framesize(g.p.obj.curr_anim);
-            if(g.p.obj.hdir == RIGHT) {
-                anim_hflipr(&g.p.obj);
-            } else {
-                anim_hflipl(&g.p.obj);
-            }
+            player_activate_jump(&g.p, dt);
         }
 
         if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
             Vector2 mouse_pos = game_get_scaled_mouse_pos();
             // check for empty slot
             batr_t *b = NULL;
-            // int b_idx = 0;
             for(int i = 0; i < MAX_BATRS; ++i) {
                 if(!g.batrs[i].obj.is_active) {
                     b = &g.batrs[i];
-                    // b_idx = i;
                     break;
                 }
             }
             if(b) {
-                b->obj.is_active = true;
-                b->obj.curr_anim->curr_frame.x = 0;
-                float delta = PLAYER_CENTER_TO_CHEST;
-                b->obj.pos = obj_cxy(&g.p.obj);
-                b->obj.pos.y -= delta;
-                Vector2 spawn_pos_s = GetWorldToScreen2D(b->obj.pos, g.cam);
-                float dx = mouse_pos.x - spawn_pos_s.x;
-                float dy = mouse_pos.y - spawn_pos_s.y;
-                float d  = sqrt(dx*dx + dy*dy);
-                if(d == 0.0f)d = 1.0f;
-                float sintheta = dy/d;
-                float costheta = dx/d;
-                b->obj.vel.x = BATARANG_VEL_R * costheta;
-                b->obj.vel.y = BATARANG_VEL_R * sintheta;
+                player_activate_batr(&g.p, b, mouse_pos, dt);
             }
         }
 
-        // decay player velocity
-        g.p.obj.vel.x *= expf(PLAYER_VEL_X_DECAY*dt);
-        g.p.obj.vel.y *= expf(PLAYER_VEL_Y_DECAY*dt);
-        // update yvel with gravity
-        g.p.obj.vel.y += ACCEL_G*dt;
-        // now update position
-        g.p.obj.pos.x += g.p.obj.vel.x*dt;
-        g.p.obj.pos.y += g.p.obj.vel.y*dt;
-
-        // clamp y
-        g.p.obj.pos.y = _min(g.p.obj.pos.y, GAME_GROUND_Y - g.p.obj.size.y);
-
-        // clamp x if boss is active
-        if(g.is_boss_active) {
-            // get world coordinates for screen x limits
-            Vector2 player_screen_pos = GetWorldToScreen2D(g.p.obj.pos, g.cam);
-            player_screen_pos.x = _max(player_screen_pos.x, 0);
-            player_screen_pos.x = _min(player_screen_pos.x, G_W - g.p.obj.size.x);
-            g.p.obj.pos = GetScreenToWorld2D(player_screen_pos, g.cam);
-        }
-
-        // switch to idle animation if player is in ground
-        if(g.p.is_jumping && (g.p.obj.pos.y >= (float)(GAME_GROUND_Y - g.p.obj.size.y))) {
-            g.p.is_jumping = false;
-        }
-
-        if(!g.p.is_jumping && ((int)(g.p.obj.vel.x) == 0)) {
-            g.p.obj.curr_anim = &g.p.anim_idle_r;
-            if(g.p.obj.hdir == LEFT) {
-                anim_hflipl(&g.p.obj);
-            }
-            if(g.p.obj.hdir == RIGHT) {
-                anim_hflipr(&g.p.obj);
-            }
-        }
-        
-        // update animation
-        anim_advance(g.p.obj.curr_anim, dt);
+        player_update(&g.p, g.is_boss_active, dt);
 
         // update camera position w.r.t player considering deadzone
         // DEADZONE RIGHT LIMIT
@@ -242,19 +151,17 @@ void _game_update(float dt) {
         for(int i = 0; i < MAX_BATRS; ++i) {
             batr_t *b = &g.batrs[i];
             if(b->obj.is_active) {
-                // check for bounds
-                if(obj_is_oob(&b->obj, COORDS_WORLD)) {
-                    b->obj.is_active = false;
-                } else {
-                    // update positions with velocity
-                    b->obj.pos.x += b->obj.vel.x * dt;
-                    b->obj.pos.y += b->obj.vel.y * dt;
-
-                    // update animation
-                    anim_advance(b->obj.curr_anim, dt);
-                }
+                batr_update(b, dt);
             }
         }
+    }
+
+    // handle hurting
+    if(g.p.is_hurting) {
+        // switch to hurt animation
+        player_activate_hurting(&g.p, dt);
+        // if hurt animation is over, switch to idle
+        
     }
 
     // BONFIRE

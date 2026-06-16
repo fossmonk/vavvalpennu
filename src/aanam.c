@@ -22,6 +22,7 @@ void aanam_init(aanam_t *aana) {
     };
     aana->obj.is_active = false;
     aana->is_dying = false;
+    aana->hit_player = false;
 }
 
 void aanam_draw(aanam_t *aana) {

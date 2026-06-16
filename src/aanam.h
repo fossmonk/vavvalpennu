@@ -7,6 +7,7 @@
 typedef struct {
     obj_t obj;
     bool is_dying;
+    bool hit_player;
 
     // animations
     anim_t anim_run;

@@ -6,13 +6,14 @@
 #include <string.h>
 #include <game.h>
 #include <menu.h>
+#include <collisions.h>
 
 // SOME CONSTANTS
 #define VY_RISE_VEL_X_0        (-3E2)
 #define VY_RISE_VEL_Y_0        (-2.5E2)
 #define VY_RISE_VEL_X_1        (2.5E2)
 
-#define ORB_RAND_CHANCE        ((rand() % 100003 == 0))
+#define ORB_RAND_CHANCE        ((rand() % 99 == 0))
 
 #define AANA_RAND_CHANCE       ((rand() % 12283 == 0))
 #define AANA_VEL_X             (-400.0f)
@@ -29,6 +30,7 @@
 #endif
 
 #define vec_equals(a, b) ((a).x == (b).x && (a).y == (b).y) ? true : false
+#define vec_magnitude(v) ((float)sqrt((v).x * (v).x + (v).y * (v).y))
 
 // GLOBALS
 // top level game object
@@ -248,8 +250,9 @@ void _game_update(float dt) {
     // AANAMARUTHAS
     for(int i = 0; i < MAX_AANAS; ++i) {
         aanam_t *aana = &g.aanas[i];
-        if(!aana->obj.is_active && AANA_RAND_CHANCE) {
+        if(!aana->obj.is_active && AANA_RAND_CHANCE && !g.is_boss_active) {
             aana->obj.is_active = true;
+            aana->hit_player = false;
             Vector2 pos, vel;
             pos.y = GAME_GROUND_Y - aana->obj.size.y;
             pos.x = G_W - aana->obj.size.x;
@@ -279,13 +282,27 @@ void _game_update(float dt) {
     //////////// COLLISION DETECTION ////////////////
     /////////////////////////////////////////////////
     // BATARANG WITH ORB
+    for(int i = 0; i < MAX_BATRS; ++i) {
+        for(int j = 0; j < MAX_ORBS; ++j) {
+            batr_t *b = &g.batrs[i];
+            orb_t *orb = &g.orbs[j];
+            if(b->obj.is_active && orb->obj.is_active) {
+                if(col_check_batr_orb(b, orb)) {
+                    // deactivate batr, change velocity of orb and aim it at vy
+                    b->obj.is_active = false;
+                    float v = vec_magnitude(b->obj.vel);
+                    orb->obj.vel = orb_get_hostile_vel(&g.vy, orb, v);
+                    // set orb as hostile
+                    orb->is_hostile = true;
+                }
+            }
+        }
+    }
     // BATARANG WITH VY
     for(int i = 0; i < MAX_BATRS; ++i) {
         batr_t *b = &g.batrs[i];
-        if(b->obj.is_active && !g.vy.is_dying) {
-            float cart_d2 = obj_cartd2(&b->obj, COORDS_WORLD, &g.vy.obj, COORDS_WORLD);
-            float lim = b->obj.size.x/2;
-            if(cart_d2 < lim*lim) {
+        if(b->obj.is_active && !g.vy.is_dying && col_check_vy_batr(&g.vy, b)) {
+            if(col_check_vy_batr(&g.vy, b)) {
                 b->obj.is_active = false;
                 g.vy.health -= VY_BATR_HEALTH_DECR;
                 hbar_update(&g.vy.hbar, g.vy.health, g.vy.max_health);
@@ -296,18 +313,25 @@ void _game_update(float dt) {
     for(int i = 0; i < MAX_ORBS; ++i) {
         orb_t *orb = &g.orbs[i];
         if(orb->obj.is_active && !g.p.is_dying) {
-            Vector2 pspos = GetWorldToScreen2D(g.p.obj.pos, g.cam);
-            float orb_down_y = orb->obj.pos.y + orb->obj.size.y;
-            float orb_c_x = orb->obj.pos.x + orb->obj.size.x/2;
-            float p_up_y = pspos.y;
-            float p_c_x = pspos.x + g.p.obj.size.x/2;
-            if((fabsf(orb_down_y - p_up_y) < 40) && (fabsf(orb_c_x - p_c_x) < 40)) {
+            if(col_check_player_orb(&g.p, orb)) {
                 orb->obj.is_active = false;
                 g.p.health -= PLAYER_ORB_HEALTH_DECR;
                 hbar_update(&g.p.hbar, g.p.health, g.p.max_health);
             }
         }
     }
+    // AANAM WITH PLAYER
+    for(int i = 0; i < MAX_AANAS; ++i) {
+        aanam_t *aana = &g.aanas[i];
+        if(aana->obj.is_active && !g.p.is_dying) {
+            if(col_check_player_aanam(&g.p, aana) && !aana->hit_player) {
+                aana->hit_player = true;
+                g.p.health -= 5;
+                hbar_update(&g.p.hbar, g.p.health, g.p.max_health);
+            }
+        }
+    } 
+
     // check for player death
     if(g.p.health <= 0) {
         g.p.is_dying = true;

@@ -3,10 +3,47 @@
 #include <vpconfig.h>
 #include <obj.h>
 #include <orb.h>
+#include <vy.h>
 
-#define ORB_RAND_POS_X         (100 + (rand() % (G_W - 200)))
+#include <stdio.h>
+
+static float g_orb_xpos[MAX_ORBS];
+bool xpos_init_done = false;
+int g_orbcount = 0;
+
+static int rand_lim(int min, int max) {
+    int z = 0;
+    if(min != max) z = (min + (rand() % (max - min)));
+    return z;
+}
+
+static void swap(float *a, float *b) {
+    float temp = *a; *a = *b; *b = temp;
+}
+
+static void _arr_shuffle(float *arr, int sz) {
+    for(int i = sz-2; i > 0 ; --i) {
+        int ridx = rand_lim(0, i);
+        swap(&arr[ridx], &arr[i+1]);
+    }
+}
+
+static void _orb_xpos_init(void) {
+    float margin = 0.1 * G_W;
+    float eff_w = G_W - margin*2;
+    float d = eff_w/MAX_ORBS;
+    g_orb_xpos[0] = margin;
+    for(int i = 1; i < MAX_ORBS; ++i) {
+        g_orb_xpos[i] = g_orb_xpos[i-1] + d;
+    }
+    _arr_shuffle(g_orb_xpos, MAX_ORBS);
+}
 
 void orb_init(orb_t *orb) {
+    if(!xpos_init_done) {
+        _orb_xpos_init();
+        xpos_init_done = true;
+    }
     Image noise_img = GenImageCellular(64, 64, 20);
     orb->noise_tex = LoadTextureFromImage(noise_img);
     SetTextureWrap(orb->noise_tex, TEXTURE_WRAP_REPEAT);
@@ -20,6 +57,8 @@ void orb_init(orb_t *orb) {
     orb->obj.is_active = false;
     orb->obj.size = (Vector2){orb->orb_tex.width, orb->orb_tex.width};
     orb->is_hostile = false;
+    orb->xpos = g_orb_xpos[g_orbcount++];
+    printf("Count: %d, xpos: %0.1f\n", g_orbcount, orb->xpos);
     // purposely don't set pos and vel.
     // this has to be init'ed when spawned.
 }
@@ -36,9 +75,10 @@ void orb_draw(orb_t *orb) {
 
 void orb_activate(orb_t *orb, float dt) {
     orb->obj.is_active = true;
+    orb->is_hostile = false;
     Vector2 pos, vel;
     pos.y = 0;
-    pos.x = ORB_RAND_POS_X;
+    pos.x = orb->xpos;
     vel.x = 0;
     vel.y = ACCEL_G*dt;
     orb->obj.pos = pos;
@@ -49,10 +89,28 @@ void orb_update(orb_t *orb, float dt) {
     // check for bounds
     if(obj_is_oob(&orb->obj, COORDS_SCREEN)) {
         orb->obj.is_active = false;
+        orb->is_hostile = false;
     } else {
-        // update y pos and velocity
-        orb->obj.vel.y += ACCEL_G*dt;
-        orb->obj.pos.y += orb->obj.vel.y * dt;
+        if(orb->is_hostile) {
+            // keep updating position, orb is hit
+            orb->obj.pos.x += orb->obj.vel.x * dt;
+            orb->obj.pos.y += orb->obj.vel.y * dt;
+        } else {
+            // update y pos and velocity
+            orb->obj.vel.y += ACCEL_G*dt;
+            orb->obj.pos.y += orb->obj.vel.y * dt;
+        }
     }
     // there is no animation for orb, shader magic!
+}
+
+Vector2 orb_get_hostile_vel(vy_t *vy, orb_t *orb, float v_mag) {
+    Vector2 v;
+    Vector2 vyspos = obj_w2s_pos(vy->obj.pos);
+    float dx = vyspos.x - orb->obj.pos.x;
+    float dy = vyspos.y - orb->obj.pos.y;
+    float theta = atan2(dy, dx);
+    v.x = v_mag * cos(theta);
+    v.y = v_mag * sin(theta);
+    return v;
 }

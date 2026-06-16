@@ -7,7 +7,7 @@ LIBS=-framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -fra
 C_OPTS=-Wall -Werror -pedantic -std=c11
 CFLAGS=$(C_OPTS) $(INC_PATH) $(LIB_PATH) $(LIBS)
 CFLAGS_DEBUG=-g -glldb -O0
-CC=cc
+CC=clang
 APP=vavvalpennu
 BUILD_DIR=.
 
@@ -19,5 +19,5 @@ debug:
 	@$(CC) $(SRCS) $(CFLAGS) $(CFLAGS_DEBUG) -o $(BUILD_DIR)/$(APP)_debug
 
 clean:
-	@del $(BUILD_DIR)/$(APP)
-	@del $(BUILD_DIR)/$(APP)_debug
+	@rm $(BUILD_DIR)/$(APP)
+	@rm $(BUILD_DIR)/$(APP)_debug

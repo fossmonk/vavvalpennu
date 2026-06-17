@@ -17,3 +17,15 @@ void anim_advance(anim_t *anim, float dt) {
         anim->timer -= anim->asset->duration;
     }
 }
+
+bool anim_is_lastframe(anim_t *anim) {
+    int fc = anim->asset->framecount;
+    int frame_w = anim->asset->texture.width/fc;
+    int curr_frame_idx = anim->curr_frame.x / frame_w;
+    return (curr_frame_idx == (fc - 1));
+}
+
+void anim_reset(anim_t *anim) {
+    anim->curr_frame.x = 0;
+    anim->timer = 0.0f;
+}

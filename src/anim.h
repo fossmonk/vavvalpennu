@@ -12,6 +12,8 @@ typedef struct {
 } anim_t;
 
 void anim_advance(anim_t *anim, float dt);
+bool anim_is_lastframe(anim_t *anim);
+void anim_reset(anim_t *anim);
 
 static inline Vector2 anim_get_framesize(anim_t *anim) {
     return (Vector2){fabsf(anim->curr_frame.width), anim->curr_frame.height};

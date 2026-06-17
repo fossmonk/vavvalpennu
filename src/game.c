@@ -13,12 +13,12 @@
 #define VY_RISE_VEL_Y_0        (-2.5E2)
 #define VY_RISE_VEL_X_1        (2.5E2)
 
-#define ORB_RAND_CHANCE        ((rand() % 99 == 0))
+#define ORB_RAND_CHANCE        ((rand() % 5557 == 0))
 
 #define AANA_RAND_CHANCE       ((rand() % 12283 == 0))
 #define AANA_VEL_X             (-400.0f)
 
-#define VY_BATR_HEALTH_DECR    (5)
+#define VY_BATR_HEALTH_DECR    (1)
 #define PLAYER_ORB_HEALTH_DECR (20)
 
 // SOME MACRO FUNCTIONS
@@ -105,7 +105,7 @@ void _game_update(float dt) {
     if(dt > 0.1f)dt = 0.1f;
 
     // handle inputs only when player is alive.
-    if(!g.p.is_dying && !g.p.is_hurting) {
+    if(!player_is_dying(&g.p) && !player_is_hurting(&g.p)) {
         if(IsKeyDown(KEY_D)) {
             player_activate_move_r(&g.p, dt);
         }
@@ -114,7 +114,7 @@ void _game_update(float dt) {
             player_activate_move_l(&g.p, dt);
         }
 
-        if(IsKeyPressed(KEY_SPACE) && !g.p.is_jumping) {
+        if(IsKeyPressed(KEY_SPACE) && !player_is_jumping(&g.p)) {
             player_activate_jump(&g.p, dt);
         }
 
@@ -148,22 +148,14 @@ void _game_update(float dt) {
                 g.cam.target.x = px_ll - DZ_LL;
             }
         }
-
-        // Update batarangs
-        for(int i = 0; i < MAX_BATRS; ++i) {
-            batr_t *b = &g.batrs[i];
-            if(b->obj.is_active) {
-                batr_update(b, dt);
-            }
-        }
     }
 
-    // handle hurting
-    if(g.p.is_hurting) {
-        // switch to hurt animation
-        player_activate_hurting(&g.p, dt);
-        // if hurt animation is over, switch to idle
-        
+    // Update batarangs
+    for(int i = 0; i < MAX_BATRS; ++i) {
+        batr_t *b = &g.batrs[i];
+        if(b->obj.is_active) {
+            batr_update(b, dt);
+        }
     }
 
     // BONFIRE
@@ -302,39 +294,67 @@ void _game_update(float dt) {
     for(int i = 0; i < MAX_BATRS; ++i) {
         batr_t *b = &g.batrs[i];
         if(b->obj.is_active && !g.vy.is_dying && col_check_vy_batr(&g.vy, b)) {
-            if(col_check_vy_batr(&g.vy, b)) {
-                b->obj.is_active = false;
-                g.vy.health -= VY_BATR_HEALTH_DECR;
-                hbar_update(&g.vy.hbar, g.vy.health, g.vy.max_health);
-            }
+            b->obj.is_active = false;
+            g.vy.health -= VY_BATR_HEALTH_DECR;
+            hbar_update(&g.vy.hbar, g.vy.health, g.vy.max_health);
         }
     }
     // ORB WITH PLAYER
     for(int i = 0; i < MAX_ORBS; ++i) {
         orb_t *orb = &g.orbs[i];
-        if(orb->obj.is_active && !g.p.is_dying) {
+        if(orb->obj.is_active && !player_is_dying(&g.p)) {
             if(col_check_player_orb(&g.p, orb)) {
                 orb->obj.is_active = false;
+                player_set_hurt_shock(&g.p);
                 g.p.health -= PLAYER_ORB_HEALTH_DECR;
                 hbar_update(&g.p.hbar, g.p.health, g.p.max_health);
             }
         }
     }
+    // HOSTILE ORB WITH VY
+    for(int i = 0; i < MAX_ORBS; ++i) {
+        orb_t *orb = &g.orbs[i];
+        if(orb->obj.is_active && orb->is_hostile && !g.vy.is_dying && col_check_vy_orb(&g.vy, orb)) {
+            orb->obj.is_active = false;
+            g.vy.health -= VY_BATR_HEALTH_DECR*5;
+            hbar_update(&g.vy.hbar, g.vy.health, g.vy.max_health);
+        }
+    }
     // AANAM WITH PLAYER
     for(int i = 0; i < MAX_AANAS; ++i) {
         aanam_t *aana = &g.aanas[i];
-        if(aana->obj.is_active && !g.p.is_dying) {
+        if(aana->obj.is_active && !player_is_dying(&g.p)) {
             if(col_check_player_aanam(&g.p, aana) && !aana->hit_player) {
                 aana->hit_player = true;
+                player_set_hurt_flash(&g.p);
                 g.p.health -= 5;
                 hbar_update(&g.p.hbar, g.p.health, g.p.max_health);
             }
         }
-    } 
+    }
+
+    // handle hurting
+    if(player_is_hurting(&g.p)) {
+        if(!g.p.in_hurt_anim) {
+            // switch to hurt animation
+            g.p.in_hurt_anim = true;
+            player_activate_hurting(&g.p, dt);
+        } else {
+            // if hurt animation is over, switch to idle
+            if(anim_is_lastframe(g.p.obj.curr_anim)) {
+                g.p.in_hurt_anim = false;
+                player_clr_hurt_burn(&g.p);
+                player_clr_hurt_shock(&g.p);
+                player_clr_hurt_flash(&g.p);
+                g.p.obj.curr_anim = &g.p.anim_idle_r;
+            }
+        }
+        anim_advance(g.p.obj.curr_anim, dt);
+    }
 
     // check for player death
     if(g.p.health <= 0) {
-        g.p.is_dying = true;
+        player_set_die(&g.p);
     }
 }
 

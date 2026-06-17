@@ -17,6 +17,15 @@ bool col_check_vy_batr(vy_t *vy, batr_t *b) {
     return (cartd2 < lim*lim);
 }
 
+bool col_check_vy_orb(vy_t *vy, orb_t *orb) {
+    // cartesian
+    obj_t *vy_obj = &vy->obj;
+    obj_t *orb_obj = &orb->obj;
+    float cartd2 = obj_cartd2(orb_obj, COORDS_SCREEN, vy_obj, COORDS_WORLD);
+    float lim = orb_obj->size.x/2;
+    return (cartd2 < lim*lim);
+}
+
 bool col_check_player_orb(player_t *p, orb_t *orb) {
     Vector2 pspos = obj_w2s_pos(p->obj.pos);
     float orb_down_y = orb->obj.pos.y + orb->obj.size.y;

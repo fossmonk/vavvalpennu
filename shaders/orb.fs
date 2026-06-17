@@ -6,6 +6,7 @@ out vec4 finalColor;
 uniform sampler2D texture0;
 uniform sampler2D u_noiseTex;
 uniform float u_time;
+uniform vec3 u_shade;
 
 void main() {
     // High-speed timelines for noise scrolling
@@ -50,6 +51,7 @@ void main() {
     // Aggressive, stable glow pulse
     float pulse = sin(u_time * 12.0) * 0.15 + 0.95;
     orbColor.rgb *= pulse;
+    orbColor.rgb *= u_shade.rgb;
 
     finalColor = orbColor;
 }

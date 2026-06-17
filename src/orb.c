@@ -52,20 +52,25 @@ void orb_init(orb_t *orb) {
     orb->shader = LoadShader(NULL, ORB_SHADER);
     orb->r = orb->orb_tex.width/2;
     orb->time_loc = GetShaderLocation(orb->shader, "u_time");
+    orb->shade_loc = GetShaderLocation(orb->shader, "u_shade");
     int noise_tex_loc = GetShaderLocation(orb->shader, "u_noiseTex");
     SetShaderValueTexture(orb->shader, noise_tex_loc, orb->noise_tex);
     orb->obj.is_active = false;
     orb->obj.size = (Vector2){orb->orb_tex.width, orb->orb_tex.width};
     orb->is_hostile = false;
     orb->xpos = g_orb_xpos[g_orbcount++];
-    printf("Count: %d, xpos: %0.1f\n", g_orbcount, orb->xpos);
     // purposely don't set pos and vel.
     // this has to be init'ed when spawned.
 }
 
 void orb_draw(orb_t *orb) {
     float time = (float)GetTime();
+    Vector3 shade = (Vector3){1.0, 1.0, 1.0}; //rgb white
     SetShaderValue(orb->shader, orb->time_loc, &time, SHADER_UNIFORM_FLOAT);
+    if(orb->is_hostile) {
+        shade = (Vector3){1.0, 0.0, 0.0}; // rgb red
+    }
+    SetShaderValue(orb->shader, orb->shade_loc, &shade, SHADER_UNIFORM_VEC3);
     BeginShaderMode(orb->shader);
     Rectangle src = {0.0f, 0.0f, (float)orb->orb_tex.width, (float)orb->orb_tex.height};
     Rectangle dst = {orb->obj.pos.x, orb->obj.pos.y, 64.0f, 64.0f};

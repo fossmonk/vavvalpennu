@@ -11,12 +11,18 @@ int main(void) {
     int mon = GetCurrentMonitor();
     int sw = GetMonitorWidth(mon);
     int sh = GetMonitorHeight(mon);
+    #ifndef DEBUG
     // Now reset the window size to screen size
     SetWindowSize(sw, sh);
-    // No exit keys, handle separately
-    SetExitKey(KEY_NULL);
     // Start game in full screen mode
     SetWindowState(FLAG_FULLSCREEN_MODE);
+    #else
+    (void)sw;
+    (void)sh;
+    SetWindowSize(G_W, G_H);
+    #endif
+    // No exit keys, handle separately
+    SetExitKey(KEY_NULL);
 
     // Create virtual canvas always with original dims G_W, G_H
     RenderTexture2D canvas = LoadRenderTexture(G_W, G_H);

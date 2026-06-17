@@ -6,7 +6,7 @@ LIB_PATH=-L$(THIRD_PARTY)/raylib/src
 LIBS=-framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL -lraylib
 C_OPTS=-Wall -Werror -pedantic -std=c11
 CFLAGS=$(C_OPTS) $(INC_PATH) $(LIB_PATH) $(LIBS)
-CFLAGS_DEBUG=-g -glldb -O0
+CFLAGS_DEBUG=-g -glldb -O0 -DDEBUG
 CC=clang
 APP=vavvalpennu
 BUILD_DIR=.

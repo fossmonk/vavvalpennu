@@ -13,6 +13,7 @@ typedef struct {
     Texture2D noise_tex;
     Texture2D orb_tex;
     int time_loc;
+    int shade_loc;
     bool is_hostile;
 } orb_t;
 

@@ -38,6 +38,8 @@
 #define ANIM_P_RUN        (anim_info_t){"assets/sprites/player/run.png", "P RUN", 16, 0.07f, true}
 #define ANIM_P_JUMP       (anim_info_t){"assets/sprites/player/jump.png", "P JUMP", 8, 0.07f, false}
 #define ANIM_P_HITHURT    (anim_info_t){"assets/sprites/player/hithurt.png", "P HITHURT", 25, 0.05f, false}
+#define ANIM_P_FLASH      (anim_info_t){"assets/sprites/player/flash.png", "P FLASH", 16, 0.05f, false}
+#define ANIM_P_SHOCK      (anim_info_t){"assets/sprites/player/shock.png", "P SHOCK", 16, 0.05f, false}
 
 // BONFIRE
 #define ANIM_BF_BURN      (anim_info_t){"assets/sprites/bonfire/burn.png", "BONFIRE BURN", 16, 0.07f, true}
@@ -64,8 +66,8 @@
 #define ORB_SHADER     "shaders/orb.fs"
 
 // Other Config
-#define MAX_BATRS (10)
-#define MAX_ORBS  (6)
+#define MAX_BATRS (8)
+#define MAX_ORBS  (5)
 #define MAX_AANAS (2)
 #define MAX_BONFIRES (5)
 

@@ -1,0 +1,23 @@
+THIS_DIR=$(realpath .)
+THIRD_PARTY=$(HOME)/projects/third-party
+SRCS := $(wildcard $(addsuffix /*.c, src))
+INC_PATH=-I$(THIRD_PARTY)/raylib/src -I$(THIS_DIR) -Isrc
+LIB_PATH=-L$(THIRD_PARTY)/raylib/src
+LIBS=-lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+C_OPTS=-Wall -Wno-newline-eof -Werror -pedantic -std=c11
+CFLAGS=$(C_OPTS) $(INC_PATH) $(LIB_PATH) $(LIBS)
+CFLAGS_DEBUG=-g -glldb -O0 -DDEBUG
+CC=clang
+APP=vavvalpennu
+BUILD_DIR=.
+
+all:
+	@echo $(THIS_DIR)
+	@$(CC) $(SRCS) $(CFLAGS) -o $(BUILD_DIR)/$(APP)
+
+debug:
+	@$(CC) $(SRCS) $(CFLAGS) $(CFLAGS_DEBUG) -o $(BUILD_DIR)/$(APP)_debug
+
+clean:
+	@rm $(BUILD_DIR)/$(APP)
+	@rm $(BUILD_DIR)/$(APP)_debug

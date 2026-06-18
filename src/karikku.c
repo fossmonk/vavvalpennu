@@ -25,10 +25,14 @@ void karikku_randomize_pos(void) {
     
         // Set ypos
         for(int i = 0; i < first_n; ++i) {
-            kpos[offset + i].y = h1;
+            int idx = offset + i;
+            if(idx >= TOTAL_KARIKKU) break;
+            kpos[idx].y = h1;
         }
         for(int i = first_n; i < MAX_KARIKKU; ++i) {
-            kpos[offset + i].y = h2;
+            int idx = offset + i;
+            if(idx >= TOTAL_KARIKKU) break;
+            kpos[idx].y = h2;
         }
         // equal spacing
         float eq_w = G_W/dim.x;
@@ -38,7 +42,9 @@ void karikku_randomize_pos(void) {
         kpos[offset].x = x0;
     
         for(int i = 1; i < MAX_KARIKKU; i++) {
-            kpos[offset + i].x = kpos[offset + i - 1].x + dim.x + (float)(rand() % ((int)dim.x));
+            int idx = offset + i;
+            if(idx >= TOTAL_KARIKKU) break;
+            kpos[idx].x = kpos[idx - 1].x + dim.x + (float)(rand() % ((int)dim.x));
         }
     }
 }
@@ -48,9 +54,6 @@ void karikku_init(karikku_t *k) {
     if(!kposinit) {
         karikku_randomize_pos();
         kposinit = true;
-        for(int i = 0; i < TOTAL_KARIKKU; i++) {
-            printf("%d. x: %0.1f, y: %0.1f\n", i+1, kpos[i].x, kpos[i].y);
-        }
     }
     // ANIM
     Vector2 dim;

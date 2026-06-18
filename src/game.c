@@ -172,6 +172,8 @@ void _game_update(float dt) {
 
     // BONFIRE
     // TODO
+
+    // KARIKKU
     for(int i = 0; i < TOTAL_KARIKKU; ++i) {
         karikku_t *k = &g->karikku[i];
         if(k->obj.is_active) {
@@ -514,6 +516,8 @@ void game_start_main_loop(void) {
                 hbar_draw(&g->vy.hbar, &g->vy.hbar_icon, g->vy.hbar_iconpos, RED);
             }
 
+            DrawText(TextFormat("P_X: %0.1f, P_Y: %0.1f", g->p.obj.pos.x, g->p.obj.pos.y), 0, 60, 15, WHITE);
+            
             EndTextureMode();
             game_draw_canvas_to_screen();
             g->is_game_wclosed = WindowShouldClose();

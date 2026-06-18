@@ -1,10 +1,13 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <raylib.h>
 #include <vpconfig.h>
 
 #include <game.h>
 
 int main(void) {
+    srand(time(NULL));
     // Init Window with our original dimensions
     InitWindow(G_W, G_H, G_TITLE);
     // Find out display resolutions
@@ -17,6 +20,8 @@ int main(void) {
     // Start game in full screen mode
     SetWindowState(FLAG_FULLSCREEN_MODE);
     #else
+    // Games in fullscreen can't be minimized (raylib issue)
+    // So for debug, show windowed original size window
     (void)sw;
     (void)sh;
     SetWindowSize(G_W, G_H);
@@ -31,6 +36,7 @@ int main(void) {
     game_init(&canvas);
     game_start_scene();
     game_start_main_loop();
+    game_deinit();
 
     CloseWindow();
     return 0;

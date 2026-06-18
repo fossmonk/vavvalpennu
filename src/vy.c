@@ -5,6 +5,7 @@
 
 // VADAYAKSHI ANIMATIONS
 extern anim_asset_t vy_rise;
+extern anim_asset_t vy_shock;
 
 void vy_init(vy_t *vy) {
     // ANIM
@@ -15,12 +16,17 @@ void vy_init(vy_t *vy) {
     vy->anim_vy_rise.asset = &vy_rise;
     vy->anim_vy_rise.timer = 0.0f;
     vy->anim_vy_rise.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
+    // shock
+    dim = anim_asset_get_frame_dim(&vy_shock);
+    vy->anim_vy_shock.asset = &vy_shock;
+    vy->anim_vy_shock.timer = 0.0f;
+    vy->anim_vy_shock.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
 
     // STATE
     vy->obj.curr_anim = &vy->anim_vy_rise;
     vy->obj.size = (Vector2){vy->obj.curr_anim->curr_frame.width, vy->obj.curr_anim->curr_frame.height};
     vy->obj.is_active = false;
-    vy->is_dying = false;
+    vy->actionmask = 0;
     vy->is_orbpos = false;
     vy->max_health = 500;
     vy->health = vy->max_health;
@@ -33,6 +39,19 @@ void vy_init(vy_t *vy) {
     vy->hbar_iconpos = hbar_pos;
     vy->hbar_iconpos.x -= 3.0;
     vy->hbar_iconpos.y -= 20.0;
+}
+void vy_activate_hurting(vy_t *vy, float dt) {
+    bool act = true;
+    if(vy->actionmask & VY_IS_HURTING_S) {
+        vy->obj.curr_anim = &vy->anim_vy_shock;
+    } else {
+        act = false;
+    }
+    if(act) {
+        vy->obj.size = anim_get_framesize(vy->obj.curr_anim);
+    }
+    // reset current animation to start
+    anim_reset(vy->obj.curr_anim);
 }
 
 void vy_draw(vy_t *vy) {

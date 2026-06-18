@@ -14,6 +14,7 @@
 #include <epechi.h>
 #include <player.h>
 #include <bonfire.h>
+#include <karikku.h>
 
 typedef struct {
     RenderTexture2D *canvas;
@@ -28,7 +29,10 @@ typedef struct {
     batr_t batrs[MAX_BATRS];
 
     // environment
-    bf_t bonfire;
+    bf_t bonfire[MAX_BONFIRES];
+
+    // pickups
+    karikku_t karikku[TOTAL_KARIKKU];
 
     // npcs and weapons
     vy_t vy;
@@ -47,5 +51,6 @@ typedef struct {
 void game_init(RenderTexture2D *canvas);
 void game_start_scene(void);
 void game_start_main_loop(void);
+void game_deinit(void);
 
 #endif

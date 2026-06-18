@@ -11,5 +11,6 @@ bool col_check_vy_orb(vy_t *vy, orb_t *orb);
 bool col_check_player_orb(player_t *p, orb_t *orb);
 bool col_check_player_aanam(player_t *p, aanam_t *aana);
 bool col_check_batr_orb(batr_t *b, orb_t *orb);
+bool col_check_player_karikku(player_t *p, karikku_t *k);
 
 #endif

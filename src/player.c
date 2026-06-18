@@ -31,6 +31,7 @@ extern anim_asset_t player_jump;
 extern anim_asset_t player_hithurt;
 extern anim_asset_t player_flash;
 extern anim_asset_t player_shock;
+extern anim_asset_t player_wlash;
 
 void player_init(player_t *p) {
     // ANIM
@@ -65,6 +66,11 @@ void player_init(player_t *p) {
     p->anim_shock.asset = &player_shock;
     p->anim_shock.timer = 0.0f;
     p->anim_shock.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
+    // whiplash
+    dim = anim_asset_get_frame_dim(&player_wlash);
+    p->anim_wlash.asset = &player_wlash;
+    p->anim_wlash.timer = 0.0f;
+    p->anim_wlash.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
     
     // STATE
     p->obj.curr_anim = &p->anim_idle_r;
@@ -81,6 +87,7 @@ void player_init(player_t *p) {
     p->max_health = PLAYER_MAX_HEALTH_INITIAL;
     p->health = p->max_health;
     p->actionmask = 0;
+    p->k_count = 0;
 
     // init player healthbar
     hbar_init(&p->hbar, P_HBAR_POS, P_HBAR_MAXW, P_HBAR_HEIGHT, P_HBAR_SPACING);
@@ -129,9 +136,9 @@ void player_activate_jump(player_t *p, float dt) {
 
 void player_activate_hurting(player_t *p, float dt) {
     bool act = true;
-    if(p->actionmask & IS_HURTING_F) {
+    if(p->actionmask & P_IS_HURTING_F) {
         p->obj.curr_anim = &p->anim_flash;
-    } else if(p->actionmask & IS_HURTING_S) {
+    } else if(p->actionmask & P_IS_HURTING_S) {
         p->obj.curr_anim = &p->anim_shock;
     } else {
         act = false;
@@ -143,6 +150,18 @@ void player_activate_hurting(player_t *p, float dt) {
         } else {
             anim_hflipr(p->obj.curr_anim);
         }
+    }
+    // reset current animation to start
+    anim_reset(p->obj.curr_anim);
+}
+
+void player_activate_whiplash(player_t *p, Vector2 mouse_pos, float dt) {
+    p->obj.curr_anim = &p->anim_wlash;
+    float psx = obj_w2s_pos(p->obj.pos).x;
+    if(mouse_pos.x > psx) {
+        anim_hflipr(p->obj.curr_anim);
+    } else {
+        anim_hflipl(p->obj.curr_anim);
     }
     // reset current animation to start
     anim_reset(p->obj.curr_anim);
@@ -178,13 +197,17 @@ void player_update(player_t *p, bool boss_active, float dt) {
     // clamp y
     p->obj.pos.y = _min(p->obj.pos.y, GAME_GROUND_Y - p->obj.size.y);
 
-    // clamp x if boss is active
     if(boss_active) {
+        // clamp x to screen boundaries if boss is active
         // get world coordinates for screen x limits
         Vector2 player_screen_pos = obj_w2s_pos(p->obj.pos);
         player_screen_pos.x = _max(player_screen_pos.x, 0);
         player_screen_pos.x = _min(player_screen_pos.x, G_W - p->obj.size.x);
         p->obj.pos = obj_s2w_pos(player_screen_pos);
+    } else {
+        // clamp x with global limits
+        p->obj.pos.x = _max(p->obj.pos.x, WORLD_XL);
+        p->obj.pos.x = _min(p->obj.pos.x, WORLD_XR - p->obj.size.x);
     }
 
     // switch to idle animation if player is in ground
@@ -192,7 +215,7 @@ void player_update(player_t *p, bool boss_active, float dt) {
         player_clr_jump(p);
     }
 
-    if(!player_is_jumping(p) && ((int)(p->obj.vel.x) == 0)) {
+    if(!player_is_jumping(p) && (p->obj.curr_anim == &p->anim_jump_r) && ((int)(p->obj.vel.x) == 0)) {
         p->obj.curr_anim = &p->anim_idle_r;
         // set direction for idle animation
         p->obj.hdir == RIGHT ? anim_hflipr(p->obj.curr_anim) : anim_hflipl(p->obj.curr_anim);

@@ -102,6 +102,7 @@ void game_init(RenderTexture2D *canvas) {
     g->is_gameover = false;
     g->is_game_wclosed = false;
     g->is_game_paused = false;
+    g->is_boss_active = false;
     g->cam.rotation = 0;
     g->cam.zoom = 1;
     g->cam.target = obj_cxy(&g->p.obj);
@@ -516,7 +517,7 @@ void game_start_main_loop(void) {
                 hbar_draw(&g->vy.hbar, &g->vy.hbar_icon, g->vy.hbar_iconpos, RED);
             }
 
-            DrawText(TextFormat("P_X: %0.1f, P_Y: %0.1f", g->p.obj.pos.x, g->p.obj.pos.y), 0, 60, 15, WHITE);
+            DrawText(TextFormat("KARIKKU x %d", g->p.k_count), 0, 60, 30, WHITE);
             
             EndTextureMode();
             game_draw_canvas_to_screen();

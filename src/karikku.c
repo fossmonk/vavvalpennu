@@ -49,7 +49,6 @@ void karikku_randomize_pos(void) {
     }
 }
 
-#include <stdio.h>
 void karikku_init(karikku_t *k) {
     if(!kposinit) {
         karikku_randomize_pos();

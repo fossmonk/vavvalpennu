@@ -215,7 +215,12 @@ void player_update(player_t *p, bool boss_active, float dt) {
         player_clr_jump(p);
     }
 
-    if(!player_is_jumping(p) && (p->obj.curr_anim == &p->anim_jump_r) && ((int)(p->obj.vel.x) == 0)) {
+    bool anim_check = (
+                       (p->obj.curr_anim == &p->anim_run_r) || 
+                       (p->obj.curr_anim == &p->anim_jump_r)
+                      );
+
+    if(!player_is_jumping(p) && anim_check && ((int)(p->obj.vel.x) == 0)) {
         p->obj.curr_anim = &p->anim_idle_r;
         // set direction for idle animation
         p->obj.hdir == RIGHT ? anim_hflipr(p->obj.curr_anim) : anim_hflipl(p->obj.curr_anim);

@@ -83,6 +83,11 @@ void game_init(RenderTexture2D *canvas) {
     for(int i = 0; i < TOTAL_KARIKKU; ++i) {
         karikku_init(&g->karikku[i]);
     }
+    
+    // FIREFLY
+    for(int i = 0; i < MAX_FFLY; ++i) {
+        ffly_init(&g->ffly[i]);
+    }
 
     // initialize other actors/sprites
     
@@ -179,6 +184,22 @@ void _game_update(float dt) {
         karikku_t *k = &g->karikku[i];
         if(k->obj.is_active) {
             anim_advance(k->obj.curr_anim, dt);
+        }
+    }
+
+    // ACTIVATE ALL NON_ACTIVE FFLYS
+    for(int i = 0; i < MAX_FFLY; ++i) {
+        ffly_t *ff = &g->ffly[i];
+        if(!ff->obj.is_active) {
+            ffly_activate(ff);
+        }
+    }
+
+    // NOW UPDATE THEM
+    for(int i = 0; i < MAX_FFLY; ++i) {
+        ffly_t *ff = &g->ffly[i];
+        if(ff->obj.is_active) {
+            ffly_update(ff, dt);
         }
     }
 
@@ -422,6 +443,7 @@ void game_update(float dt) {
 //////////////////////////////
 
 void game_draw_canvas_to_screen(void) {
+    Color overlay = (Color){ 50, 50, 250, 15 };
     BeginDrawing();
     ClearBackground(BLACK);
     // Y is negative because textures are inverted in OpenGL
@@ -429,6 +451,7 @@ void game_draw_canvas_to_screen(void) {
     Rectangle destRec = { 0.0f, 0.0f, (float)GetScreenWidth(), (float)GetScreenHeight() };
     Vector2 origin = { 0.0f, 0.0f };
     DrawTexturePro(g->canvas->texture, sourceRec, destRec, origin, 0.0f, WHITE);
+    DrawRectangle(0, 0, (float)GetScreenWidth(), (float)GetScreenHeight(), overlay);
     EndDrawing();
 }
 
@@ -447,7 +470,7 @@ void game_start_scene(void) {
         m_act = menu_get_action();
         game_start = (m_act == MENU_CLICK_START);
         game_quit = (m_act == MENU_CLICK_QUIT);
-        g->is_game_wclosed = WindowShouldClose() | game_quit;
+        g->is_game_wclosed = WindowShouldClose() || game_quit;
     }
 }
 
@@ -486,6 +509,13 @@ void game_start_main_loop(void) {
                 batr_t *b = &g->batrs[i];
                 if(b->obj.is_active) {
                     batr_draw(b);
+                }
+            }
+            // Draw all fireflys
+            for(int i = 0; i < MAX_FFLY; ++i) {
+                ffly_t *ff = &g->ffly[i];
+                if(ff->obj.is_active) {
+                    ffly_draw(ff);
                 }
             }
             // Draw VY

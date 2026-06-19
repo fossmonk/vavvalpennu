@@ -49,7 +49,10 @@
 #define ANIM_BATARANG     (anim_info_t){"assets/sprites/batarang/batarang_rotate.png", "BATARANG", 8, 0.1f, true}
 
 // KARIKKU
-#define ANIM_KARIKKU     (anim_info_t){"assets/sprites/karikku/rotate.png", "KARIKKU", 16, 0.07f, true}
+#define ANIM_KARIKKU     (anim_info_t){"assets/sprites/karikku/rotate.png", "KARIKKU", 25, 0.07f, true}
+
+// FIREFLY
+#define ANIM_FIREFLY     (anim_info_t){"assets/sprites/firefly/fly.png", "FF FLY", 25, 0.005f, true}
 
 // VADAYAKSHI
 #define ANIM_VY_RISE      (anim_info_t){"assets/sprites/vadayakshi/rise.png", "VY RISE", 25, 0.07f, true}
@@ -75,6 +78,7 @@
 #define MAX_ORBS  (5)
 #define MAX_AANAS (2)
 #define MAX_BONFIRES (5)
+#define MAX_FFLY (5)
 #define MAX_KARIKKU (8) // per screen width count?
 #define TOTAL_KARIKKU (MAX_KARIKKU * (WORLD_XR / G_W))
 

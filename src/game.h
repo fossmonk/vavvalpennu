@@ -15,6 +15,7 @@
 #include <player.h>
 #include <bonfire.h>
 #include <karikku.h>
+#include <ffly.h>
 
 typedef struct {
     RenderTexture2D *canvas;
@@ -30,6 +31,7 @@ typedef struct {
 
     // environment
     bf_t bonfire[MAX_BONFIRES];
+    ffly_t ffly[MAX_FFLY];
 
     // pickups
     karikku_t karikku[TOTAL_KARIKKU];

@@ -20,6 +20,9 @@ anim_asset_t batr_rotate;
 // KARIKKU
 anim_asset_t karikku_rotate;
 
+// FIREFLY
+anim_asset_t ff_fly;
+
 // VADAYAKSHI
 anim_asset_t vy_rise;
 anim_asset_t vy_shock;
@@ -62,6 +65,9 @@ void anim_asset_load_all(void) {
 
     // karikku assets
     anim_asset_load(ANIM_KARIKKU, &karikku_rotate);
+
+    // ffly assets
+    anim_asset_load(ANIM_FIREFLY, &ff_fly);
 
     //vy assets
     anim_asset_load(ANIM_VY_RISE, &vy_rise);

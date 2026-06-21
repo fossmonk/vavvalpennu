@@ -11,7 +11,7 @@
 #define PLAYER_VEL_Y_DECAY     (-2)
 #define PLAYER_CENTER_TO_CHEST (70.0f)
 #define JUMP_VEL_Y_0           (800.0f)
-#define ACCEL_PUSH             (4400.0f)
+#define ACCEL_PUSH             (4800.0f)
 #define P_HBAR_POS             (Vector2){12, 12}
 #define P_HBAR_MAXW            300
 #define P_HBAR_HEIGHT          20
@@ -71,6 +71,18 @@ void player_init(player_t *p) {
     p->anim_wlash.asset = &player_wlash;
     p->anim_wlash.timer = 0.0f;
     p->anim_wlash.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
+
+    // AUDIO
+    // whiplash
+    p->whip = LoadSound(SOUND_PWHIP);
+    // slurp
+    p->slurp = LoadSound(SOUND_PSLURP);
+    // jump
+    p->jump = LoadSound(SOUND_PJUMP);
+    // batarang whoosh
+    p->batr_whoosh = LoadSound(SOUND_PBATR);
+    // player hit hurt
+    p->hurt = LoadSound(SOUND_PPAIN);
     
     // STATE
     p->obj.curr_anim = &p->anim_idle_r;
@@ -101,7 +113,7 @@ void player_init(player_t *p) {
 void player_activate_move_r(player_t *p, float dt) {
     p->obj.vel.x += ACCEL_PUSH*dt;
     // set curr_anim to run
-    if(!player_is_jumping(p)) {
+    if(!player_is_jumping(p) && (p->obj.curr_anim != &p->anim_wlash)) {
         p->obj.curr_anim = &p->anim_run_r;
         p->obj.size = anim_get_framesize(p->obj.curr_anim);
     }
@@ -114,7 +126,7 @@ void player_activate_move_r(player_t *p, float dt) {
 void player_activate_move_l(player_t *p, float dt) {
     p->obj.vel.x -= ACCEL_PUSH*dt;
     // set curr_anim to run
-    if(!player_is_jumping(p)) {
+    if(!player_is_jumping(p) && (p->obj.curr_anim != &p->anim_wlash)) {
         p->obj.curr_anim = &p->anim_run_r;
         p->obj.size = anim_get_framesize(p->obj.curr_anim);
     }
@@ -131,7 +143,7 @@ void player_activate_jump(player_t *p, float dt) {
     p->obj.size = anim_get_framesize(p->obj.curr_anim);
     // set the direction for jump animation
     p->obj.hdir == RIGHT ? anim_hflipr(p->obj.curr_anim) : anim_hflipl(p->obj.curr_anim);
-
+    PlaySound(p->jump);
 }
 
 void player_activate_hurting(player_t *p, float dt) {
@@ -165,6 +177,8 @@ void player_activate_whiplash(player_t *p, Vector2 mouse_pos, float dt) {
     }
     // reset current animation to start
     anim_reset(p->obj.curr_anim);
+    // play whip sound (async)
+    PlaySound(p->whip);
 }
 
 void player_activate_batr(player_t *p, batr_t *b, Vector2 pos, float dt) {
@@ -182,9 +196,12 @@ void player_activate_batr(player_t *p, batr_t *b, Vector2 pos, float dt) {
     float costheta = dx/d;
     b->obj.vel.x = BATARANG_VEL_R * costheta;
     b->obj.vel.y = BATARANG_VEL_R * sintheta;
+    PlaySound(p->batr_whoosh);
 }
 
 void player_update(player_t *p, bool boss_active, float dt) {
+    // store initial position
+    Vector2 initpos = p->obj.pos;
     // decay player velocity
     p->obj.vel.x *= expf(PLAYER_VEL_X_DECAY*dt);
     p->obj.vel.y *= expf(PLAYER_VEL_Y_DECAY*dt);
@@ -226,6 +243,10 @@ void player_update(player_t *p, bool boss_active, float dt) {
         p->obj.hdir == RIGHT ? anim_hflipr(p->obj.curr_anim) : anim_hflipl(p->obj.curr_anim);
     }
     
+    if(p->obj.curr_anim == &p->anim_wlash) {
+        p->obj.pos.x = initpos.x;
+    }
+
     // update animation
     anim_advance(p->obj.curr_anim, dt);
 }

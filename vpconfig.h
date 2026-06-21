@@ -73,6 +73,15 @@
 #define HBAR_SHADER    "shaders/hbar.fs"
 #define ORB_SHADER     "shaders/orb.fs"
 
+// AUDIO
+#define AUD_AMBIENT    "assets/audio/ambient.mp3"
+#define SOUND_PWHIP    "assets/audio/player/whip.mp3"
+#define SOUND_PJUMP    "assets/audio/player/jump.mp3"
+#define SOUND_PSLURP   "assets/audio/player/slurp.mp3"
+#define SOUND_PBATR    "assets/audio/player/batr_whoosh.mp3"
+#define SOUND_PPAIN    "assets/audio/player/pain.mp3"
+#define SOUND_AGROWL   "assets/audio/aanam/growl.mp3"
+
 // Other Config
 #define MAX_BATRS (8)
 #define MAX_ORBS  (5)

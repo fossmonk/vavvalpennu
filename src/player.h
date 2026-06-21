@@ -51,6 +51,13 @@ typedef struct {
     anim_t anim_flash;
     anim_t anim_shock;
     anim_t anim_wlash;
+
+    // sounds
+    Sound whip;
+    Sound jump;
+    Sound slurp;
+    Sound batr_whoosh;
+    Sound hurt;
 } player_t;
 
 void player_init(player_t *p);

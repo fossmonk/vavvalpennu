@@ -23,6 +23,9 @@ void aanam_init(aanam_t *aana) {
     aana->obj.is_active = false;
     aana->is_dying = false;
     aana->hit_player = false;
+
+    // SOUND
+    aana->growl = LoadSound(SOUND_AGROWL);
 }
 
 void aanam_draw(aanam_t *aana) {

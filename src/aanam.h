@@ -11,6 +11,9 @@ typedef struct {
 
     // animations
     anim_t anim_run;
+
+    // sounds
+    Sound growl;
 } aanam_t;
 
 void aanam_init(aanam_t *aana);

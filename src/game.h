@@ -44,10 +44,16 @@ typedef struct {
 
     aanam_t aanas[MAX_AANAS];
 
+    // game fonts
     Font game_font;
+
+    // game textures
     Texture2D bg;
     Texture2D splash;
     Texture2D pausemenu;
+
+    // game sounds/music
+    Music bgmusic;
 } game_t;
 
 void game_init(RenderTexture2D *canvas);

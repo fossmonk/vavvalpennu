@@ -7,6 +7,7 @@
 #include <game.h>
 #include <menu.h>
 #include <collisions.h>
+#include <audio.h>
 
 // SOME CONSTANTS
 #define VY_RISE_VEL_X_0        (-3E2)
@@ -30,7 +31,7 @@
 #endif
 
 #define vec_equals(a, b) ((a).x == (b).x && (a).y == (b).y) ? true : false
-#define vec_magnitude(v) ((float)sqrt((v).x * (v).x + (v).y * (v).y))
+#define vec_magnitude(v) (sqrtf((v).x * (v).x + (v).y * (v).y))
 
 // GLOBALS
 // top level game object
@@ -55,11 +56,15 @@ void game_load_assets(void) {
     SetTextureFilter(g->game_font.texture, TEXTURE_FILTER_BILINEAR);
     // animation assets
     anim_asset_load_all();
+    // sound assets
+    g->bgmusic = LoadMusicStream(AUD_AMBIENT);
 }
 
 void game_init(RenderTexture2D *canvas) {
     // allocate memory first
     g = malloc(sizeof(*g));
+    // init audio engine
+    audio_init();
     // set canvas
     g->canvas = canvas;
     // kind of a hack, but makes stuff easy
@@ -112,10 +117,16 @@ void game_init(RenderTexture2D *canvas) {
     g->cam.zoom = 1;
     g->cam.target = obj_cxy(&g->p.obj);
     g->cam.offset = (Vector2){G_W/2, (GAME_GROUND_Y - g->p.obj.curr_anim->curr_frame.height/2)};
+
+    // START THE MUSIC
+    PlayMusicStream(g->bgmusic);
 }
 
 void _game_update(float dt) {
     if(dt > 0.1f)dt = 0.1f;
+
+    // update bgmusic
+    UpdateMusicStream(g->bgmusic);
 
     // handle inputs only when player is alive.
     if(!player_is_dying(&g->p) && !player_is_hurting(&g->p)) {
@@ -288,6 +299,7 @@ void _game_update(float dt) {
             vel.x = AANA_VEL_X;
             aana->obj.pos = pos;
             aana->obj.vel = vel;
+            PlaySound(aana->growl);
         }
     }
 
@@ -352,6 +364,7 @@ void _game_update(float dt) {
         if(k->obj.is_active && !obj_is_oob(&k->obj, COORDS_WORLD) && col_check_player_karikku(&g->p, k)) {
             k->obj.is_active = false;
             g->p.k_count++;
+            PlaySound(g->p.slurp);
         }
     }
     // HOSTILE ORB WITH VY
@@ -371,6 +384,7 @@ void _game_update(float dt) {
             if(col_check_player_aanam(&g->p, aana) && !aana->hit_player) {
                 aana->hit_player = true;
                 player_set_hurt_flash(&g->p);
+                PlaySound(g->p.hurt);
                 g->p.health -= 5;
                 hbar_update(&g->p.hbar, g->p.health, g->p.max_health);
             }
@@ -572,5 +586,8 @@ void game_start_main_loop(void) {
 }
 
 void game_deinit(void) {
+    // deinit audio engine
+    audio_deinit();
+    // free game object memory
     free(g);
 }

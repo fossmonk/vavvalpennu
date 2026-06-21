@@ -7,13 +7,23 @@
 #include <game.h>
 
 int main(void) {
+    // Seed the rand() function
     srand(time(NULL));
+
+    // Set log level
+    #ifndef DEBUG
+    SetTraceLogLevel(LOG_NONE);
+    #else
+    SetTraceLogLevel(LOG_DEBUG);
+    #endif
+
     // Init Window with our original dimensions
     InitWindow(G_W, G_H, G_TITLE);
     // Find out display resolutions
     int mon = GetCurrentMonitor();
     int sw = GetMonitorWidth(mon);
     int sh = GetMonitorHeight(mon);
+
     #ifndef DEBUG
     // Now reset the window size to screen size
     SetWindowSize(sw, sh);
@@ -26,6 +36,7 @@ int main(void) {
     (void)sh;
     SetWindowSize(G_W, G_H);
     #endif
+    
     // No exit keys, handle separately
     SetExitKey(KEY_NULL);
 

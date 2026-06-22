@@ -4,6 +4,7 @@
 
 // AANAMARUTHA ANIMATIONS
 extern anim_asset_t aanam_run;
+extern anim_asset_t aanam_death;
 
 void aanam_init(aanam_t *aana) {
     // ANIM
@@ -13,7 +14,12 @@ void aanam_init(aanam_t *aana) {
     aana->anim_run.asset = &aanam_run;
     aana->anim_run.timer = 0.0f;
     aana->anim_run.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
-
+    // die
+    dim = anim_asset_get_frame_dim(&aanam_death);
+    aana->anim_death.asset = &aanam_death;
+    aana->anim_death.timer = 0.0f;
+    aana->anim_death.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
+    
     // STATE
     aana->obj.curr_anim = &aana->anim_run;
     aana->obj.size = (Vector2){ 

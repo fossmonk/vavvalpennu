@@ -11,6 +11,7 @@ typedef struct {
 
     // animations
     anim_t anim_run;
+    anim_t anim_death;
 
     // sounds
     Sound growl;

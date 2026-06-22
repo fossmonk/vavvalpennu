@@ -100,6 +100,7 @@ void player_init(player_t *p) {
     p->health = p->max_health;
     p->actionmask = 0;
     p->k_count = 0;
+    p->score = 0;
 
     // init player healthbar
     hbar_init(&p->hbar, P_HBAR_POS, P_HBAR_MAXW, P_HBAR_HEIGHT, P_HBAR_SPACING);

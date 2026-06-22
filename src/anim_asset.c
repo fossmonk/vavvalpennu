@@ -29,6 +29,7 @@ anim_asset_t vy_shock;
 
 // AANAMARUTHA
 anim_asset_t aanam_run;
+anim_asset_t aanam_death;
 
 // EPECHI
 anim_asset_t epechi_roll;
@@ -75,6 +76,7 @@ void anim_asset_load_all(void) {
 
     // aanam assets
     anim_asset_load(ANIM_AANAM_RUN, &aanam_run);
+    anim_asset_load(ANIM_AANAM_DEATH, &aanam_death);
 
     // epechi assets
     anim_asset_load(ANIM_EPECHI_ROLL, &epechi_roll);

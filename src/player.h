@@ -37,6 +37,7 @@ typedef struct {
     int health;
     int max_health;
     int k_count;
+    int score;
     hbar_t hbar;
     Texture2D hbar_icon;
     Vector2 hbar_iconpos;

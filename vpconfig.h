@@ -60,6 +60,7 @@
 
 // AANAMARUTHA
 #define ANIM_AANAM_RUN    (anim_info_t){"assets/sprites/aanamarutha/run.png", "AANAM RUN", 16, 0.05f, true}
+#define ANIM_AANAM_DEATH  (anim_info_t){"assets/sprites/aanamarutha/die.png", "AANAM DEATH", 12, 0.05f, false}
 
 // EENAMPECHI
 #define ANIM_EPECHI_ROLL  (anim_info_t){"assets/sprites/epechi/roll.png", "EPECHI ROLL", 25, 0.04f, true}
@@ -75,6 +76,8 @@
 
 // AUDIO
 #define AUD_AMBIENT    "assets/audio/ambient.mp3"
+#define AUD_VY_LAUGH   "assets/audio/vy/laugh.mp3"
+#define SOUND_VY_HURT  "assets/audio/vy/hurt.mp3"
 #define SOUND_PWHIP    "assets/audio/player/whip.mp3"
 #define SOUND_PJUMP    "assets/audio/player/jump.mp3"
 #define SOUND_PSLURP   "assets/audio/player/slurp.mp3"

@@ -220,10 +220,12 @@ void _game_update(float dt) {
         if(!g->vy.obj.is_active) {
             g->vy.obj.is_active = true;
             g->is_boss_active = true;
+            PlayMusicStream(g->vy.laugh);
         } else {
             g->vy.obj.is_active = false;
             g->is_boss_active = false;
             g->vy.is_orbpos = false;
+            StopMusicStream(g->vy.laugh);
         }
         g->vy.obj.pos = GetScreenToWorld2D(vy_get_initial_spos(), g->cam);
         g->vy.obj.vel.x = VY_RISE_VEL_X_0;
@@ -231,6 +233,9 @@ void _game_update(float dt) {
     }
 
     if(g->vy.obj.is_active && !vy_is_dying(&g->vy)) {
+        if(!IsSoundPlaying(g->vy.hurt)) {
+            UpdateMusicStream(g->vy.laugh);
+        }
         Vector2 vy_sfinalpos = GetScreenToWorld2D(vy_get_final_spos(), g->cam);
         if(!g->vy.is_orbpos) {
             g->vy.obj.pos.x += g->vy.obj.vel.x * dt;
@@ -289,8 +294,10 @@ void _game_update(float dt) {
     for(int i = 0; i < MAX_AANAS; ++i) {
         aanam_t *aana = &g->aanas[i];
         if(!aana->obj.is_active && AANA_RAND_CHANCE && !g->is_boss_active) {
+            aana->is_dying = false;
             aana->obj.is_active = true;
             aana->hit_player = false;
+            aana->obj.curr_anim = &aana->anim_run;
             Vector2 pos, vel;
             pos.y = GAME_GROUND_Y - aana->obj.size.y;
             pos.x = G_W - aana->obj.size.x;
@@ -305,7 +312,7 @@ void _game_update(float dt) {
 
     for(int i = 0; i < MAX_AANAS; i++) {
         aanam_t *aana = &g->aanas[i];
-        if(aana->obj.is_active) {
+        if(aana->obj.is_active && !aana->is_dying) {
             // check for bounds
             if(obj_is_oob(&aana->obj, COORDS_WORLD)) {
                 aana->obj.is_active = false;
@@ -325,22 +332,29 @@ void _game_update(float dt) {
         for(int j = 0; j < MAX_ORBS; ++j) {
             batr_t *b = &g->batrs[i];
             orb_t *orb = &g->orbs[j];
-            if(b->obj.is_active && orb->obj.is_active) {
-                if(col_check_batr_orb(b, orb)) {
-                    // deactivate batr, change velocity of orb and aim it at vy
-                    b->obj.is_active = false;
-                    float v = vec_magnitude(b->obj.vel);
-                    orb->obj.vel = orb_get_hostile_vel(&g->vy, orb, v);
-                    // set orb as hostile
-                    orb->is_hostile = true;
-                }
+            bool b_conds = b->obj.is_active;
+            bool orb_conds = orb->obj.is_active;
+            bool col_conds = col_check_batr_orb(b, orb);
+            bool check = b_conds && orb_conds && col_conds;
+            if(check) {
+                // deactivate batr
+                b->obj.is_active = false;
+                // change velocity of orb and aim it at vy
+                float v = vec_magnitude(b->obj.vel);
+                orb->obj.vel = orb_get_hostile_vel(&g->vy, orb, v);
+                // set orb as hostile
+                orb->is_hostile = true;
             }
         }
     }
     // BATARANG WITH VY
     for(int i = 0; i < MAX_BATRS; ++i) {
         batr_t *b = &g->batrs[i];
-        if(b->obj.is_active && !vy_is_dying(&g->vy) && col_check_vy_batr(&g->vy, b)) {
+        bool b_conds = b->obj.is_active;
+        bool vy_conds = !vy_is_dying(&g->vy);
+        bool col_conds = col_check_vy_batr(&g->vy, b);
+        bool check = b_conds && vy_conds && col_conds;
+        if(check) {
             b->obj.is_active = false;
             g->vy.health -= VY_BATR_HEALTH_DECR;
             hbar_update(&g->vy.hbar, g->vy.health, g->vy.max_health);
@@ -349,39 +363,59 @@ void _game_update(float dt) {
     // ORB WITH PLAYER
     for(int i = 0; i < MAX_ORBS; ++i) {
         orb_t *orb = &g->orbs[i];
-        if(orb->obj.is_active && !player_is_dying(&g->p)) {
-            if(col_check_player_orb(&g->p, orb)) {
-                orb->obj.is_active = false;
-                player_set_hurt_shock(&g->p);
-                g->p.health -= PLAYER_ORB_HEALTH_DECR;
-                hbar_update(&g->p.hbar, g->p.health, g->p.max_health);
-            }
+        bool orb_conds = orb->obj.is_active && !orb->is_hostile;
+        bool player_conds = !player_is_dying(&g->p);
+        bool col_conds = col_check_player_orb(&g->p, orb);
+        bool check = orb_conds && player_conds && col_conds;
+        if(check) {
+            orb->obj.is_active = false;
+            player_set_hurt_shock(&g->p);
+            g->p.health -= PLAYER_ORB_HEALTH_DECR;
+            hbar_update(&g->p.hbar, g->p.health, g->p.max_health);
         }
     }
     // KARIKKU WITH PLAYER
     for(int i = 0; i < TOTAL_KARIKKU; ++i) {
         karikku_t *k = &g->karikku[i];
-        if(k->obj.is_active && !obj_is_oob(&k->obj, COORDS_WORLD) && col_check_player_karikku(&g->p, k)) {
+        bool k_conds = k->obj.is_active && !obj_is_oob(&k->obj, COORDS_WORLD);
+        bool player_conds = !player_is_dying(&g->p);
+        bool col_conds = col_check_player_karikku(&g->p, k);
+        bool check = k_conds && player_conds && col_conds;
+        if(check) {
             k->obj.is_active = false;
             g->p.k_count++;
+            g->p.score += 5;
             PlaySound(g->p.slurp);
         }
     }
     // HOSTILE ORB WITH VY
     for(int i = 0; i < MAX_ORBS; ++i) {
         orb_t *orb = &g->orbs[i];
-        if(orb->obj.is_active && orb->is_hostile && !vy_is_dying(&g->vy) && col_check_vy_orb(&g->vy, orb)) {
+        bool orb_conds = orb->obj.is_active && orb->is_hostile;
+        bool vy_conds = !vy_is_dying(&g->vy);
+        bool col_conds = col_check_vy_orb(&g->vy, orb);
+        bool check = orb_conds && vy_conds && col_conds;
+        if(check) {
             orb->obj.is_active = false;
             vy_set_hurt_shock(&g->vy);
             g->vy.health -= VY_BATR_HEALTH_DECR*5;
             hbar_update(&g->vy.hbar, g->vy.health, g->vy.max_health);
+            PlaySound(g->vy.hurt);
         }
     }
     // AANAM WITH PLAYER
     for(int i = 0; i < MAX_AANAS; ++i) {
         aanam_t *aana = &g->aanas[i];
-        if(aana->obj.is_active && !player_is_dying(&g->p)) {
-            if(col_check_player_aanam(&g->p, aana) && !aana->hit_player) {
+        bool aana_conds = aana->obj.is_active && !aana->is_dying && !aana->hit_player;
+        bool player_conds = !player_is_dying(&g->p);
+        bool col_conds = col_check_player_aanam(&g->p, aana);
+        bool check = aana_conds && player_conds && col_conds;
+        if(check) {
+            if(g->p.obj.curr_anim == &g->p.anim_wlash) {
+                // hit whip on aanam
+                aana->is_dying = true;
+                g->p.score += 50;
+            } else {
                 aana->hit_player = true;
                 player_set_hurt_flash(&g->p);
                 PlaySound(g->p.hurt);
@@ -390,6 +424,8 @@ void _game_update(float dt) {
             }
         }
     }
+
+    /// HANDLE SPECIAL ANIMATIONS ///
 
     // handle whiplash
     if(g->p.obj.curr_anim == &g->p.anim_wlash) {
@@ -416,6 +452,23 @@ void _game_update(float dt) {
             }
         }
         anim_advance(g->p.obj.curr_anim, dt);
+    }
+
+    // handle aanam death
+    for(int i = 0; i < MAX_AANAS; ++i) {
+        aanam_t *aana = &g->aanas[i];
+        if(aana->is_dying) {
+            if(aana->obj.curr_anim == &aana->anim_death) {
+                if(anim_is_lastframe(aana->obj.curr_anim)) {
+                    aana->obj.is_active = false;
+                    anim_reset(aana->obj.curr_anim);
+                } else {
+                    anim_advance(aana->obj.curr_anim, dt);
+                }
+            } else {
+                aana->obj.curr_anim = &aana->anim_death;
+            }
+        }
     }
 
     // handle vy hurting
@@ -562,6 +615,7 @@ void game_start_main_loop(void) {
             }
 
             DrawText(TextFormat("KARIKKU x %d", g->p.k_count), 0, 60, 30, WHITE);
+            DrawText(TextFormat("SCORE   : %d", g->p.score), 0, 90, 30, WHITE);
             
             EndTextureMode();
             game_draw_canvas_to_screen();

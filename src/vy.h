@@ -33,6 +33,10 @@ typedef struct {
     // animations
     anim_t anim_vy_rise;
     anim_t anim_vy_shock;
+
+    // audio
+    Sound hurt;
+    Music laugh;
 } vy_t;
 
 void vy_init(vy_t *vy);

@@ -22,6 +22,12 @@ void vy_init(vy_t *vy) {
     vy->anim_vy_shock.timer = 0.0f;
     vy->anim_vy_shock.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
 
+    // AUDIO
+    // laugh
+    vy->laugh = LoadMusicStream(AUD_VY_LAUGH);
+    // hurt
+    vy->hurt = LoadSound(SOUND_VY_HURT);
+
     // STATE
     vy->obj.curr_anim = &vy->anim_vy_rise;
     vy->obj.size = (Vector2){vy->obj.curr_anim->curr_frame.width, vy->obj.curr_anim->curr_frame.height};

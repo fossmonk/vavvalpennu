@@ -3,7 +3,16 @@
 #include <vpconfig.h>
 #include <hbar.h>
 
-void hbar_init(hbar_t *h, Vector2 pos, int max_w, int height, int spacing) {
+void hbar_init(hbar_t *h, 
+                Vector2 pos, 
+                int max_w, 
+                int height, 
+                int spacing,
+                const char* icon_fname,
+                Vector2 iconpos,
+                Color c,
+                int max_health
+                ) {
     // load shader
     h->shader = LoadShader(NULL, HBAR_SHADER);
     h->spacing = spacing;
@@ -11,6 +20,13 @@ void hbar_init(hbar_t *h, Vector2 pos, int max_w, int height, int spacing) {
     h->outer_rec.height = height;
     h->outer_rec.x = pos.x;
     h->outer_rec.y = pos.y;
+    h->max_health = max_health;
+    h->icon.id = 0xDEADBEEF;
+    if(icon_fname) {
+        h->icon = LoadTexture(icon_fname);
+    }
+    h->iconpos = iconpos;
+    h->c = c;
     
     h->max_inner_w = max_w - 2*h->spacing;
     h->inner_rec.x = pos.x + h->spacing;
@@ -26,17 +42,17 @@ void hbar_init(hbar_t *h, Vector2 pos, int max_w, int height, int spacing) {
     SetShaderValue(h->shader, win_height_loc, &win_h, SHADER_UNIFORM_FLOAT);
 }
 
-void hbar_update(hbar_t *h, int health, int max_health) {
-    int w = (health * h->max_inner_w) / max_health;
+void hbar_update(hbar_t *h, int health) {
+    int w = (health * h->max_inner_w) / h->max_health;
     h->inner_rec.width = w;
 }
 
-void hbar_draw(hbar_t *h, Texture2D* icon, Vector2 iconpos, Color c) {
+void hbar_draw(hbar_t *h) {
     DrawRectangleRounded(h->outer_rec, 1, 5, RAYWHITE);
     BeginShaderMode(h->shader);
-    DrawRectangleRounded(h->inner_rec, 1, 5, c);
+    DrawRectangleRounded(h->inner_rec, 1, 5, h->c);
     EndShaderMode();
-    if(icon) {
-        DrawTexture(*icon, iconpos.x, iconpos.y, WHITE);
+    if(h->icon.id != 0xDEADBEEF) {
+        DrawTexture(h->icon, h->iconpos.x, h->iconpos.y, WHITE);
     }
 }

@@ -12,6 +12,7 @@ typedef struct {
 } karikku_t;
 
 void karikku_init(karikku_t *k);
-void karikku_draw(karikku_t *k);
+void karikku_update_all(karikku_t *karikkus, float dt);
+void karikku_draw_all(karikku_t *karikkus);
 
 #endif

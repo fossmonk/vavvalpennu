@@ -1,6 +1,5 @@
 #include <raylib.h>
 #include <obj.h>
-#include <vy.h>
 
 #ifndef _ORB_H_
 #define _ORB_H_
@@ -18,9 +17,9 @@ typedef struct {
 } orb_t;
 
 void orb_init(orb_t *orb);
-void orb_draw(orb_t *orb);
+void orb_draw_all(orb_t *orbs);
 void orb_activate(orb_t *orb, float dt);
 void orb_update(orb_t *orb, float dt);
-Vector2 orb_get_hostile_vel(vy_t *vy, orb_t *orb, float v_mag);
+Vector2 orb_get_hostile_vel(Vector2 vypos, orb_t *orb, float v_mag);
 
 #endif

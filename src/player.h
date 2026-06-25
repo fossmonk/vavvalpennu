@@ -38,6 +38,7 @@ typedef struct {
     int max_health;
     int k_count;
     int score;
+    int curr_level;
     hbar_t hbar;
     Texture2D hbar_icon;
     Vector2 hbar_iconpos;
@@ -67,8 +68,8 @@ void player_activate_move_r(player_t *p, float dt);
 void player_activate_move_l(player_t *p, float dt);
 void player_activate_jump(player_t *p, float dt);
 void player_activate_hurting(player_t *p, float dt);
-void player_activate_whiplash(player_t *p, Vector2 mouse_pos, float dt);
-void player_activate_batr(player_t *p, batr_t *b, Vector2 pos, float dt);
+void player_activate_whiplash(player_t *p, Vector2 mouse_pos);
+void player_activate_batr(player_t *p, batr_t *b, Vector2 pos);
 void player_update(player_t *p, bool boss_active, float dt);
 
 #endif

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <raylib.h>
+#include <vpconfig.h>
 #include <batr.h>
 
 // BATARANG ANIMATIONS
@@ -38,10 +39,37 @@ void batr_update(batr_t *b, float dt) {
     }
 }
 
+void batr_update_all(batr_t *batrs, float dt) {
+    for(int i = 0; i < MAX_BATRS; ++i) {
+        if(batrs[i].obj.is_active) {
+            batr_update(&batrs[i], dt);
+        }
+    }
+}
+
+batr_t *batr_get_empty_slot(batr_t *batrs) {
+    batr_t *b = NULL;
+    for(int i = 0; i < MAX_BATRS; ++i) {
+        if(!batrs[i].obj.is_active) {
+            b = &batrs[i];
+            break;
+        }
+    }
+    return b;
+}
+
 void batr_draw(batr_t *b) {
     DrawTextureRec(
         b->obj.curr_anim->asset->texture,
         b->obj.curr_anim->curr_frame,
         b->obj.pos,
         WHITE);
+}
+
+void batr_draw_all(batr_t *batrs) {
+    for(int i = 0; i < MAX_BATRS; ++i) {
+        if(batrs[i].obj.is_active) {
+            batr_draw(&batrs[i]);
+        }
+    }
 }

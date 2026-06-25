@@ -2,6 +2,7 @@
 #include <vpconfig.h>
 #include <obj.h>
 #include <hbar.h>
+#include <orb.h>
 
 #ifndef _VY_H_
 #define _VY_H_
@@ -30,6 +31,9 @@ typedef struct {
     bool is_orbpos;
     bool in_hurt_anim;
 
+    // weapons
+    orb_t orbs[MAX_ORBS];
+
     // animations
     anim_t anim_vy_rise;
     anim_t anim_vy_shock;
@@ -40,15 +44,10 @@ typedef struct {
 } vy_t;
 
 void vy_init(vy_t *vy);
+void vy_activate(vy_t *vy);
+void vy_update(vy_t *vy, float dt);
 void vy_activate_hurting(vy_t *vy, float dt);
 void vy_draw(vy_t *vy);
 
-static inline Vector2 vy_get_initial_spos(void) {
-    return (Vector2){G_W-300, GAME_GROUND_Y-250};
-}
-
-static inline Vector2 vy_get_final_spos(void) {
-    return (Vector2){G_W/2 - 150, 40};
-}
 
 #endif

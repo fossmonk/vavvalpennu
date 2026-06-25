@@ -66,6 +66,15 @@ void ffly_activate(ffly_t *ff) {
     ff->obj.vel = ffly_get_vel(ff->prev, ff->next);
 }
 
+void ffly_activate_all(ffly_t *ffs) {
+    for(int i = 0; i < MAX_FFLY; ++i) {
+        ffly_t *ff = &ffs[i];
+        if(!ff->obj.is_active) {
+            ffly_activate(ff);
+        }
+    }
+}
+
 void ffly_update(ffly_t *ff, float dt) {
     if(obj_is_oob(&ff->obj, COORDS_WORLD)) {
         ff->obj.is_active = false;
@@ -94,10 +103,27 @@ void ffly_update(ffly_t *ff, float dt) {
     }
 }
 
+void ffly_update_all(ffly_t *ffs, float dt) {
+    for(int i = 0; i < MAX_FFLY; ++i) {
+        ffly_t *ff = &ffs[i];
+        if(ff->obj.is_active) {
+            ffly_update(ff, dt);
+        }
+    }
+}
+
 void ffly_draw(ffly_t *ff) {
     DrawTextureRec(
         ff->obj.curr_anim->asset->texture,
         ff->obj.curr_anim->curr_frame,
         ff->obj.pos,
         WHITE);
+}
+
+void ffly_draw_all(ffly_t *fflys) {
+    for(int i = 0; i < MAX_FFLY; ++i) {
+        if(fflys[i].obj.is_active) {
+            ffly_draw(&fflys[i]);
+        }
+    }
 }

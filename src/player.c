@@ -11,8 +11,8 @@
 #define PLAYER_VEL_Y_DECAY     (-2)
 #define PLAYER_CENTER_TO_CHEST (70.0f)
 #define JUMP_VEL_Y_0           (800.0f)
-#define ACCEL_PUSH             (4800.0f)
-#define P_HBAR_POS             (Vector2){12, 12}
+#define ACCEL_PUSH             (5800.0f)
+#define P_HBAR_POS             (Vector2){5, 5}
 #define P_HBAR_MAXW            300
 #define P_HBAR_HEIGHT          20
 #define P_HBAR_SPACING         1
@@ -101,14 +101,12 @@ void player_init(player_t *p) {
     p->actionmask = 0;
     p->k_count = 0;
     p->score = 0;
+    p->curr_level = 0;
 
     // init player healthbar
-    hbar_init(&p->hbar, P_HBAR_POS, P_HBAR_MAXW, P_HBAR_HEIGHT, P_HBAR_SPACING);
-    // load hbar icon
-    p->hbar_icon = LoadTexture(PLAYER_HBAR_ICON);
-    p->hbar_iconpos = P_HBAR_POS;
-    p->hbar_iconpos.x -= 7.0;
-    p->hbar_iconpos.y -= 7.0;
+    hbar_init(&p->hbar, 
+        P_HBAR_POS, P_HBAR_MAXW, P_HBAR_HEIGHT, P_HBAR_SPACING,
+        PLAYER_HBAR_ICON, P_HBAR_POS, RED, p->max_health);
 }
 
 void player_activate_move_r(player_t *p, float dt) {
@@ -168,7 +166,7 @@ void player_activate_hurting(player_t *p, float dt) {
     anim_reset(p->obj.curr_anim);
 }
 
-void player_activate_whiplash(player_t *p, Vector2 mouse_pos, float dt) {
+void player_activate_whiplash(player_t *p, Vector2 mouse_pos) {
     p->obj.curr_anim = &p->anim_wlash;
     float psx = obj_w2s_pos(p->obj.pos).x;
     if(mouse_pos.x > psx) {
@@ -182,7 +180,7 @@ void player_activate_whiplash(player_t *p, Vector2 mouse_pos, float dt) {
     PlaySound(p->whip);
 }
 
-void player_activate_batr(player_t *p, batr_t *b, Vector2 pos, float dt) {
+void player_activate_batr(player_t *p, batr_t *b, Vector2 pos) {
     b->obj.is_active = true;
     b->obj.curr_anim->curr_frame.x = 0;
     float delta = PLAYER_CENTER_TO_CHEST;
@@ -201,51 +199,73 @@ void player_activate_batr(player_t *p, batr_t *b, Vector2 pos, float dt) {
 }
 
 void player_update(player_t *p, bool boss_active, float dt) {
-    // store initial position
-    Vector2 initpos = p->obj.pos;
-    // decay player velocity
-    p->obj.vel.x *= expf(PLAYER_VEL_X_DECAY*dt);
-    p->obj.vel.y *= expf(PLAYER_VEL_Y_DECAY*dt);
-    // update yvel with gravity
-    p->obj.vel.y += ACCEL_G*dt;
-    // now update position
-    p->obj.pos.x += p->obj.vel.x*dt;
-    p->obj.pos.y += p->obj.vel.y*dt;
+    if(!player_is_hurting(p)) {
+        // store initial position
+        Vector2 initpos = p->obj.pos;
+        // decay player velocity
+        p->obj.vel.x *= expf(PLAYER_VEL_X_DECAY*dt);
+        p->obj.vel.y *= expf(PLAYER_VEL_Y_DECAY*dt);
+        // update yvel with gravity
+        p->obj.vel.y += ACCEL_G*dt;
+        // now update position
+        p->obj.pos.x += p->obj.vel.x*dt;
+        p->obj.pos.y += p->obj.vel.y*dt;
 
-    // clamp y
-    p->obj.pos.y = _min(p->obj.pos.y, GAME_GROUND_Y - p->obj.size.y);
+        // clamp y
+        p->obj.pos.y = _min(p->obj.pos.y, GAME_GROUND_Y - p->obj.size.y);
 
-    if(boss_active) {
-        // clamp x to screen boundaries if boss is active
-        // get world coordinates for screen x limits
-        Vector2 player_screen_pos = obj_w2s_pos(p->obj.pos);
-        player_screen_pos.x = _max(player_screen_pos.x, 0);
-        player_screen_pos.x = _min(player_screen_pos.x, G_W - p->obj.size.x);
-        p->obj.pos = obj_s2w_pos(player_screen_pos);
+        if(boss_active) {
+            // clamp x to screen boundaries if boss is active
+            // get world coordinates for screen x limits
+            Vector2 player_screen_pos = obj_w2s_pos(p->obj.pos);
+            player_screen_pos.x = _max(player_screen_pos.x, 0);
+            player_screen_pos.x = _min(player_screen_pos.x, G_W - p->obj.size.x);
+            p->obj.pos = obj_s2w_pos(player_screen_pos);
+        } else {
+            // clamp x with global limits
+            p->obj.pos.x = _max(p->obj.pos.x, WORLD_XL);
+            p->obj.pos.x = _min(p->obj.pos.x, WORLD_XR - p->obj.size.x);
+        }
+
+        // switch to idle animation if player is in ground
+        if(player_is_jumping(p) && (p->obj.pos.y >= (float)(GAME_GROUND_Y - p->obj.size.y))) {
+            player_clr_jump(p);
+        }
+
+        bool anim_check = (
+                        (p->obj.curr_anim == &p->anim_run_r) || 
+                        (p->obj.curr_anim == &p->anim_jump_r)
+                        );
+
+        if(!player_is_jumping(p) && anim_check && ((int)(p->obj.vel.x) == 0)) {
+            p->obj.curr_anim = &p->anim_idle_r;
+            // set direction for idle animation
+            p->obj.hdir == RIGHT ? anim_hflipr(p->obj.curr_anim) : anim_hflipl(p->obj.curr_anim);
+        }
+
+        // handle whiplash
+        if(p->obj.curr_anim == &p->anim_wlash) {
+            p->obj.pos.x = initpos.x;
+            if(anim_is_lastframe(p->obj.curr_anim)) {
+                p->obj.curr_anim = &p->anim_idle_r;
+            }
+        }
     } else {
-        // clamp x with global limits
-        p->obj.pos.x = _max(p->obj.pos.x, WORLD_XL);
-        p->obj.pos.x = _min(p->obj.pos.x, WORLD_XR - p->obj.size.x);
-    }
-
-    // switch to idle animation if player is in ground
-    if(player_is_jumping(p) && (p->obj.pos.y >= (float)(GAME_GROUND_Y - p->obj.size.y))) {
-        player_clr_jump(p);
-    }
-
-    bool anim_check = (
-                       (p->obj.curr_anim == &p->anim_run_r) || 
-                       (p->obj.curr_anim == &p->anim_jump_r)
-                      );
-
-    if(!player_is_jumping(p) && anim_check && ((int)(p->obj.vel.x) == 0)) {
-        p->obj.curr_anim = &p->anim_idle_r;
-        // set direction for idle animation
-        p->obj.hdir == RIGHT ? anim_hflipr(p->obj.curr_anim) : anim_hflipl(p->obj.curr_anim);
-    }
-    
-    if(p->obj.curr_anim == &p->anim_wlash) {
-        p->obj.pos.x = initpos.x;
+        // handle hurting
+        if(!p->in_hurt_anim) {
+            // switch to hurt animation
+            p->in_hurt_anim = true;
+            player_activate_hurting(p, dt);
+        } else {
+            // if hurt animation is over, switch to idle
+            if(anim_is_lastframe(p->obj.curr_anim)) {
+                p->in_hurt_anim = false;
+                player_clr_hurt_burn(p);
+                player_clr_hurt_shock(p);
+                player_clr_hurt_flash(p);
+                p->obj.curr_anim = &p->anim_idle_r;
+            }
+        }
     }
 
     // update animation

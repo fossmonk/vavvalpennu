@@ -78,6 +78,14 @@ void orb_draw(orb_t *orb) {
     EndShaderMode();
 }
 
+void orb_draw_all(orb_t *orbs) {
+    for(int i = 0; i < MAX_ORBS; ++i) {
+        if(orbs[i].obj.is_active) {
+            orb_draw(&orbs[i]);
+        }
+    }
+}
+
 void orb_activate(orb_t *orb, float dt) {
     orb->obj.is_active = true;
     orb->is_hostile = false;
@@ -109,9 +117,9 @@ void orb_update(orb_t *orb, float dt) {
     // there is no animation for orb, shader magic!
 }
 
-Vector2 orb_get_hostile_vel(vy_t *vy, orb_t *orb, float v_mag) {
+Vector2 orb_get_hostile_vel(Vector2 vypos, orb_t *orb, float v_mag) {
     Vector2 v;
-    Vector2 vyspos = obj_w2s_pos(vy->obj.pos);
+    Vector2 vyspos = obj_w2s_pos(vypos);
     float dx = vyspos.x - orb->obj.pos.x;
     float dy = vyspos.y - orb->obj.pos.y;
     float theta = atan2(dy, dx);

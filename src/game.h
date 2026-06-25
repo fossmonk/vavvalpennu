@@ -7,11 +7,9 @@
 #include <obj.h>
 #include <anim.h>
 #include <hbar.h>
-#include <orb.h>
 #include <batr.h>
-#include <vy.h>
+#include <boss.h>
 #include <aanam.h>
-#include <epechi.h>
 #include <player.h>
 #include <bonfire.h>
 #include <karikku.h>
@@ -37,12 +35,10 @@ typedef struct {
     karikku_t karikku[TOTAL_KARIKKU];
 
     // npcs and weapons
-    vy_t vy;
-    orb_t orbs[MAX_ORBS];
-    epechi_t ep;
-    
-
     aanam_t aanas[MAX_AANAS];
+
+    // reference to bosses
+    bosses* levelbosses;
 
     // game fonts
     Font game_font;
@@ -51,9 +47,13 @@ typedef struct {
     Texture2D bg;
     Texture2D splash;
     Texture2D pausemenu;
+    Texture2D ktex;
 
     // game sounds/music
     Music bgmusic;
+
+    // custom cursor
+    Texture2D cursor;
 } game_t;
 
 void game_init(RenderTexture2D *canvas);

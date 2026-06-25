@@ -40,7 +40,7 @@
 #define ANIM_P_HITHURT    (anim_info_t){"assets/sprites/player/hithurt.png", "P HITHURT", 25, 0.05f, false}
 #define ANIM_P_FLASH      (anim_info_t){"assets/sprites/player/flash.png", "P FLASH", 16, 0.01f, false}
 #define ANIM_P_SHOCK      (anim_info_t){"assets/sprites/player/shock.png", "P SHOCK", 16, 0.05f, false}
-#define ANIM_P_WLASH      (anim_info_t){"assets/sprites/player/whiplash.png", "P WLASH", 16, 0.1f, false}
+#define ANIM_P_WLASH      (anim_info_t){"assets/sprites/player/whiplash.png", "P WLASH", 16, 0.05f, false}
 
 // BONFIRE
 #define ANIM_BF_BURN      (anim_info_t){"assets/sprites/bonfire/burn.png", "BONFIRE BURN", 16, 0.07f, true}
@@ -69,6 +69,7 @@
 #define ORB_TEXTURE      "assets/textures/orb.png"
 #define PLAYER_HBAR_ICON "assets/textures/vp_head.png"
 #define VY_HBAR_ICON     "assets/textures/vy_head.png"
+#define KARIKKU_ICON     "assets/textures/karikku.png"
 
 // Shader files
 #define HBAR_SHADER    "shaders/hbar.fs"
@@ -84,6 +85,9 @@
 #define SOUND_PBATR    "assets/audio/player/batr_whoosh.mp3"
 #define SOUND_PPAIN    "assets/audio/player/pain.mp3"
 #define SOUND_AGROWL   "assets/audio/aanam/growl.mp3"
+
+// CURSOR
+#define BAT_CURSOR     "assets/textures/batcursor.png"
 
 // Other Config
 #define MAX_BATRS (8)

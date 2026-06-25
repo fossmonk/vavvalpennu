@@ -14,7 +14,8 @@ typedef struct {
 } batr_t;
 
 void batr_init(batr_t *b);
-void batr_update(batr_t *b, float dt);
-void batr_draw(batr_t *b);
+void batr_update_all(batr_t *batrs, float dt);
+batr_t *batr_get_empty_slot(batr_t *batrs);
+void batr_draw_all(batr_t *batrs);
 
 #endif

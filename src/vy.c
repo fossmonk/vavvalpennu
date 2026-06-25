@@ -1,7 +1,19 @@
+#include <stdlib.h>
 #include <raylib.h>
+#include <raymath.h>
 #include <vpconfig.h>
 #include <hbar.h>
 #include <vy.h>
+#include <orb.h>
+
+#define VY_INIT_POS ((Vector2){G_W-300, GAME_GROUND_Y-250})
+#define VY_INIT_VEL ((Vector2){-3E2, -2.5E2})
+
+#define VY_FINAL_POS ((Vector2){G_W/2 - 150, 40})
+
+#define VY_RISE_VEL_X_1        (2.5E2)
+
+#define ORB_RAND_CHANCE        ((rand() % 5557 == 0))
 
 // VADAYAKSHI ANIMATIONS
 extern anim_asset_t vy_rise;
@@ -38,14 +50,62 @@ void vy_init(vy_t *vy) {
     vy->health = vy->max_health;
 
     // init vy healthbar
-    Vector2 hbar_pos = (Vector2){60, G_H - 40};
-    hbar_init(&vy->hbar, hbar_pos, G_W - 120, 30, 2);
-    // load hbar icon texture
-    vy->hbar_icon = LoadTexture(VY_HBAR_ICON);
-    vy->hbar_iconpos = hbar_pos;
-    vy->hbar_iconpos.x -= 3.0;
-    vy->hbar_iconpos.y -= 20.0;
+    Vector2 hbar_pos = (Vector2){57, G_H - 60};
+    hbar_init(&vy->hbar, hbar_pos, G_W - 120, 30, 2, 
+        VY_HBAR_ICON, hbar_pos, RED, vy->max_health);
+
+    // init orbs
+    for(int i = 0; i < MAX_ORBS; ++i) {
+        orb_init(&vy->orbs[i]);
+    }
 }
+
+void vy_activate(vy_t *vy) {
+    vy->obj.is_active = true;
+    vy->is_orbpos = false;
+    vy->obj.pos = obj_s2w_pos(VY_INIT_POS);
+    vy->obj.vel = VY_INIT_VEL;
+    PlayMusicStream(vy->laugh);
+}
+
+void vy_update(vy_t *vy, float dt) {
+    if(vy->obj.is_active && !vy_is_dying(vy)) {
+        UpdateMusicStream(vy->laugh);
+        Vector2 vy_sfinalpos = obj_s2w_pos(VY_FINAL_POS);
+        if(!vy->is_orbpos) {
+            vy->obj.pos.x += vy->obj.vel.x * dt;
+            vy->obj.pos.y += vy->obj.vel.y * dt;
+            vy->obj.pos = Vector2Max(vy->obj.pos, vy_sfinalpos);
+            vy->is_orbpos = Vector2Equals(vy->obj.pos, vy_sfinalpos);
+        } else {
+            if(obj_w2s_pos(vy->obj.pos).x < 300) {
+                vy->obj.vel.x = VY_RISE_VEL_X_1;
+            }
+            if(obj_w2s_pos(vy->obj.pos).x > (G_W - 300)) {
+                vy->obj.vel.x = -VY_RISE_VEL_X_1;
+            }
+            vy->obj.pos.x += vy->obj.vel.x * dt;
+        }
+        anim_advance(vy->obj.curr_anim, dt);
+    }
+
+    if(vy->is_orbpos) {
+        for(int i = 0; i < MAX_ORBS; i++) {
+            orb_t *orb = &vy->orbs[i];
+            if(!orb->obj.is_active && ORB_RAND_CHANCE) {
+                orb_activate(orb, dt);
+            }
+        }
+    }
+
+    for(int i = 0; i < MAX_ORBS; i++) {
+        orb_t *orb = &vy->orbs[i];
+        if(orb->obj.is_active) {
+            orb_update(orb, dt);
+        }
+    }
+}
+
 void vy_activate_hurting(vy_t *vy, float dt) {
     bool act = true;
     if(vy->actionmask & VY_IS_HURTING_S) {

@@ -73,12 +73,30 @@ void karikku_init(karikku_t *k) {
     k->obj.pos = kpos[kcount++];
 }
 
+void karikku_update_all(karikku_t *karikkus, float dt) {
+    for(int i = 0; i < TOTAL_KARIKKU; ++i) {
+        karikku_t *k = &karikkus[i];
+        if(k->obj.is_active) {
+            anim_advance(k->obj.curr_anim, dt);
+        }
+    }
+}
+
 void karikku_draw(karikku_t *k) {
     DrawTextureRec(
         k->obj.curr_anim->asset->texture,
         k->obj.curr_anim->curr_frame,
         k->obj.pos,
         LIGHTGRAY);
+}
+
+void karikku_draw_all(karikku_t *karikkus) {
+    for(int i = 0; i < TOTAL_KARIKKU; ++i) {
+        karikku_t *k = &karikkus[i];
+        if(k->obj.is_active && !obj_is_oob(&k->obj, COORDS_WORLD)) {
+            karikku_draw(k);
+        }
+    }
 }
 
 

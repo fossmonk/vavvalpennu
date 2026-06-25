@@ -37,24 +37,5 @@ static inline Vector2 obj_cxy(obj_t *obj) {
     return (Vector2){(obj->pos.x + w/2) , (obj->pos.y + h/2)};
 } 
 
-// World X greater than Screen Limit
-static inline bool obj_wx_gt_s(obj_t *obj, float lim, Camera2D cam) {
-    return GetWorldToScreen2D(obj->pos, cam).x > lim;
-}
-
-// World X less than Screen Limit
-static inline bool obj_wx_lt_s(obj_t *obj, float lim, Camera2D cam) {
-    return GetWorldToScreen2D(obj->pos, cam).x < lim;
-}
-
-// World Y greater than Screen Limit
-static inline bool obj_wy_gt_s(obj_t *obj, float lim, Camera2D cam) {
-    return GetWorldToScreen2D(obj->pos, cam).y > lim;
-}
-
-// World Y less than Screen Limit
-static inline bool obj_wy_lt_s(obj_t *obj, float lim, Camera2D cam) {
-    return GetWorldToScreen2D(obj->pos, cam).y < lim;
-}
 
 #endif

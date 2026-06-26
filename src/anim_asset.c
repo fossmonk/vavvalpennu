@@ -27,6 +27,9 @@ anim_asset_t ff_fly;
 anim_asset_t vy_rise;
 anim_asset_t vy_shock;
 
+// KUTTICHATHAN
+anim_asset_t kchath_laugh;
+
 // AANAMARUTHA
 anim_asset_t aanam_run;
 anim_asset_t aanam_death;
@@ -73,6 +76,9 @@ void anim_asset_load_all(void) {
     //vy assets
     anim_asset_load(ANIM_VY_RISE, &vy_rise);
     anim_asset_load(ANIM_VY_SHOCK, &vy_shock);
+
+    // kch assets
+    anim_asset_load(ANIM_KCH_LAUGH, &kchath_laugh);
 
     // aanam assets
     anim_asset_load(ANIM_AANAM_RUN, &aanam_run);

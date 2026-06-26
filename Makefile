@@ -31,3 +31,7 @@ clean:
 debug:
 	@echo "Forwarding test to $(TARGET_MAKEFILE)..."
 	$(MAKE) -f $(TARGET_MAKEFILE) debug
+
+web:
+	@echo "Forwarding test to $(TARGET_MAKEFILE)..."
+	$(MAKE) -f $(TARGET_MAKEFILE) web

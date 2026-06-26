@@ -1,10 +1,10 @@
-#include <stdlib.h>
 #include <raylib.h>
 #include <raymath.h>
 #include <vpconfig.h>
 #include <hbar.h>
 #include <vy.h>
 #include <orb.h>
+#include <rand.h>
 
 #define VY_INIT_POS ((Vector2){G_W-300, GAME_GROUND_Y-250})
 #define VY_INIT_VEL ((Vector2){-3E2, -2.5E2})
@@ -13,7 +13,7 @@
 
 #define VY_RISE_VEL_X_1        (2.5E2)
 
-#define ORB_RAND_CHANCE        ((rand() % 5557 == 0))
+#define ORB_RAND_CHANCE        ((vp_rand() % 5557 == 0))
 
 // VADAYAKSHI ANIMATIONS
 extern anim_asset_t vy_rise;
@@ -46,7 +46,7 @@ void vy_init(vy_t *vy) {
     vy->obj.is_active = false;
     vy->actionmask = 0;
     vy->is_orbpos = false;
-    vy->max_health = 500;
+    vy->max_health = VY_MAX_HEALTH;
     vy->health = vy->max_health;
 
     // init vy healthbar

@@ -74,7 +74,11 @@ void menu_draw_text(const char* text, Vector2 position) {
 
 menu_action menu_get_action(void) {
     menu_action ma = MENU_NO_ACTION;
-    if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+    bool mousep = IsMouseButtonReleased(MOUSE_BUTTON_LEFT);
+    #ifdef __EMSCRIPTEN__
+    mousep = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+    #endif
+    if(mousep) {
         Vector2 mouse_pos = get_scaled_mouse_pos();
         if(point_in_rect(mouse_pos, start_bb)) ma = MENU_CLICK_START;
         else if(point_in_rect(mouse_pos, controls_bb)) ma = MENU_CLICK_CONTROLS;

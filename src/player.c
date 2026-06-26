@@ -6,6 +6,7 @@
 #include <anim.h>
 #include <batr.h>
 #include <obj.h>
+#include <levels.h>
 
 #define PLAYER_VEL_X_DECAY     (-12)
 #define PLAYER_VEL_Y_DECAY     (-2)
@@ -270,6 +271,17 @@ void player_update(player_t *p, bool boss_active, float dt) {
 
     // update animation
     anim_advance(p->obj.curr_anim, dt);
+}
+
+bool player_can_level_up(player_t *p) {
+    static const int l_up_scores[] = {
+        [VP_L0] = 500,
+        [VP_L1] = 1000,
+        [VP_L2] = 1500,
+        [VP_L3] = 2000
+    };
+
+    return (p->score > l_up_scores[p->curr_level]);
 }
 
 void player_draw(player_t *p) {

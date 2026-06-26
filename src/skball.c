@@ -1,0 +1,57 @@
+#include <stdlib.h>
+#include <raylib.h>
+#include <vpconfig.h>
+#include <obj.h>
+#include <skball.h>
+
+void skball_init(skball_t *skball) {
+    skball->skball_tex = LoadTexture(SKBALL_TEXTURE);
+    skball->shader     = LoadShader(NULL, SKBALL_SHADER);
+    skball->r = skball->skball_tex.width/2;
+    skball->time_loc = GetShaderLocation(skball->shader, "u_time");
+    skball->obj.is_active = false;
+    skball->id = GetRandomValue(1, 2);
+    skball->obj.size = (Vector2){skball->skball_tex.width, skball->skball_tex.height};
+}
+
+void skball_draw(skball_t *skball) {
+    float time = (float)GetTime();
+    SetShaderValue(skball->shader, skball->time_loc, &time, SHADER_UNIFORM_FLOAT);
+    BeginShaderMode(skball->shader);
+    Rectangle src = {0.0f, 0.0f, (float)skball->skball_tex.width, (float)skball->skball_tex.height};
+    Rectangle dst = {skball->obj.pos.x, skball->obj.pos.y, 100.0f, 100.0f};
+    DrawTexturePro(skball->skball_tex, src, dst, (Vector2){0.0f, 0.0f}, 0.0f, RED);
+    EndShaderMode();
+}
+
+void skball_draw_all(skball_t *skballs) {
+    for(int i = 0; i < MAX_SKBALLS; ++i) {
+        if(skballs[i].obj.is_active) {
+            skball_draw(&skballs[i]);
+        }
+    }
+}
+
+void skball_activate(skball_t *skball) {
+    skball->obj.is_active = true;
+    skball->obj.pos.y = GAME_GROUND_Y - skball->obj.size.y;
+    skball->obj.vel.y = 0;
+
+    // if skball id is even, go left to right. odd => right to left
+    if(skball->id % 2 == 0) {
+        skball->obj.pos.x = 0;
+        skball->obj.vel.x = 2.5E2;
+    } else {
+        skball->obj.pos.x = G_W - skball->obj.size.x;
+        skball->obj.vel.x = -2.5E2;
+    }
+}
+
+void skball_update(skball_t *skball, float dt) {
+    if(obj_is_oob(&skball->obj, COORDS_SCREEN)) {
+        skball->obj.is_active = false;
+    } else {
+        skball->obj.pos.x += skball->obj.vel.x * dt;
+    }
+    // no animation, shader magic!
+}

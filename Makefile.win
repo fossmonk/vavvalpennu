@@ -3,7 +3,7 @@ INC_PATH=-I$(USERPROFILE)\raylib\include -I. -Isrc
 LIB_PATH=-L $(USERPROFILE)\raylib\lib
 LIBS=-lm -lraylib -lgdi32 -lwinmm
 C_OPTS=-Wall -Werror -pedantic -std=c11
-OPT_FLAGS=-O3
+OPT_FLAGS=-O2
 CFLAGS=$(C_OPTS) $(INC_PATH) $(LIB_PATH) $(LIBS)
 CFLAGS_DEBUG=-g -glldb -O0 -DDEBUG
 CC=cc
@@ -19,3 +19,17 @@ debug:
 clean:
 	@del $(BUILD_DIR)\$(APP).exe
 	@del $(BUILD_DIR)\$(APP)_debug.exe
+
+web:
+	emcc -o index.html $(SRCS) \
+    -Wall -Werror -pedantic -std=c11 \
+    -I$(USERPROFILE)\raylibweb\include -I. -Isrc \
+    -L$(USERPROFILE)\raylibweb\lib -lraylib \
+    -O2 -sSTACK_SIZE=1048576\
+    -s USE_GLFW=3 \
+    -s ASYNCIFY \
+	-s ASYNCIFY_STACK_SIZE=1048576 \
+    -s ALLOW_MEMORY_GROWTH=1 \
+    -s INITIAL_MEMORY=67108864 \
+    --preload-file assets \
+    -DPLATFORM_WEB

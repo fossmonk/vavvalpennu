@@ -8,6 +8,7 @@
 
 int main(void) {
     srand(time(NULL));
+    SetRandomSeed(time(NULL));
 
     #ifndef DEBUG
     SetTraceLogLevel(LOG_NONE);

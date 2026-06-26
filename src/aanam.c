@@ -1,9 +1,9 @@
-#include <stdlib.h>
 #include <raylib.h>
 #include <vpconfig.h>
 #include <aanam.h>
+#include <rand.h>
 
-#define AANA_RAND_CHANCE       ((rand() % 12283 == 0))
+#define AANA_RAND_CHANCE       ((vp_rand() % 12283 == 0))
 #define AANA_VEL_X             (-400.0f)
 
 // AANAMARUTHA ANIMATIONS

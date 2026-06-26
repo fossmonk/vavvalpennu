@@ -1,21 +1,13 @@
-#include <stdlib.h>
 #include <raylib.h>
 #include <vpconfig.h>
 #include <obj.h>
 #include <orb.h>
 #include <vy.h>
-
-#include <stdio.h>
+#include <rand.h>
 
 static float g_orb_xpos[MAX_ORBS];
 bool xpos_init_done = false;
 int g_orbcount = 0;
-
-static int rand_lim(int min, int max) {
-    int z = 0;
-    if(min != max) z = (min + (rand() % (max - min)));
-    return z;
-}
 
 static void swap(float *a, float *b) {
     float temp = *a; *a = *b; *b = temp;
@@ -23,7 +15,7 @@ static void swap(float *a, float *b) {
 
 static void _arr_shuffle(float *arr, int sz) {
     for(int i = sz-2; i > 0 ; --i) {
-        int ridx = rand_lim(0, i);
+        int ridx = vp_rand_lim(0, i);
         swap(&arr[ridx], &arr[i+1]);
     }
 }
@@ -49,14 +41,14 @@ void orb_init(orb_t *orb) {
     SetTextureWrap(orb->noise_tex, TEXTURE_WRAP_REPEAT);
     UnloadImage(noise_img);
     orb->orb_tex = LoadTexture(ORB_TEXTURE);
-    orb->shader = LoadShader(NULL, ORB_SHADER);
+    orb->shader = LoadShader(0, ORB_SHADER);
     orb->r = orb->orb_tex.width/2;
     orb->time_loc = GetShaderLocation(orb->shader, "u_time");
     orb->shade_loc = GetShaderLocation(orb->shader, "u_shade");
     int noise_tex_loc = GetShaderLocation(orb->shader, "u_noiseTex");
     SetShaderValueTexture(orb->shader, noise_tex_loc, orb->noise_tex);
     orb->obj.is_active = false;
-    orb->obj.size = (Vector2){orb->orb_tex.width, orb->orb_tex.width};
+    orb->obj.size = (Vector2){orb->orb_tex.width, orb->orb_tex.height};
     orb->is_hostile = false;
     orb->xpos = g_orb_xpos[g_orbcount++];
     // purposely don't set pos and vel.

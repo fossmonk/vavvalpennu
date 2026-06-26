@@ -1,7 +1,7 @@
-#include <stdlib.h>
 #include <raylib.h>
 #include <vpconfig.h>
 #include <karikku.h>
+#include <rand.h>
 
 extern anim_asset_t karikku_rotate;
 
@@ -21,7 +21,7 @@ void karikku_randomize_pos(void) {
 
         float h1 = GAME_GROUND_Y - dim.y - 10.0f;
         float h2 = h1 - 180.0f;
-        int first_n = 1 + rand() % (MAX_KARIKKU - 1);
+        int first_n = 1 + vp_rand() % (MAX_KARIKKU - 1);
     
         // Set ypos
         for(int i = 0; i < first_n; ++i) {
@@ -38,13 +38,13 @@ void karikku_randomize_pos(void) {
         float eq_w = G_W/dim.x;
     
         // choose first one as ∈ [eq_w, 2*eq_w]
-        float x0 = (float)xl + eq_w + (float)(rand() % ((int)eq_w));
+        float x0 = (float)xl + eq_w + (float)(vp_rand() % ((int)eq_w));
         kpos[offset].x = x0;
     
         for(int i = 1; i < MAX_KARIKKU; i++) {
             int idx = offset + i;
             if(idx >= TOTAL_KARIKKU) break;
-            kpos[idx].x = kpos[idx - 1].x + dim.x + (float)(rand() % ((int)dim.x));
+            kpos[idx].x = kpos[idx - 1].x + dim.x + (float)(vp_rand() % ((int)dim.x));
         }
     }
 }

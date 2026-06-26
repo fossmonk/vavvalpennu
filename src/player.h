@@ -3,6 +3,7 @@
 #include <obj.h>
 #include <batr.h>
 #include <hbar.h>
+#include <levels.h>
 
 #ifndef _PLAYER_H_
 #define _PLAYER_H_
@@ -38,7 +39,7 @@ typedef struct {
     int max_health;
     int k_count;
     int score;
-    int curr_level;
+    vplevel curr_level;
     hbar_t hbar;
     Texture2D hbar_icon;
     Vector2 hbar_iconpos;
@@ -64,6 +65,7 @@ typedef struct {
 
 void player_init(player_t *p);
 void player_draw(player_t *p);
+bool player_can_level_up(player_t *p);
 void player_activate_move_r(player_t *p, float dt);
 void player_activate_move_l(player_t *p, float dt);
 void player_activate_jump(player_t *p, float dt);

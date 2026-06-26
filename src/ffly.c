@@ -1,24 +1,16 @@
-#include <stdlib.h>
 #include <raylib.h>
 #include <math.h>
 #include <ffly.h>
+#include <rand.h>
 
 extern anim_asset_t ff_fly;
 
 #define Y_L (150)
 #define Y_H (G_H/2)
 #define XDIV (10)
-#define FFLY_VEL (100 + (rand() % 50))
+#define FFLY_VEL (100 + (vp_rand() % 50))
 
 const float dec_x = (float)(G_W)/(float)(XDIV);
-
-int randintlim(int ll, int rl) {
-    int ret = 0;
-    if(rl > ll) {
-        ret = ll + (rand() % (rl - ll));
-    }
-    return ret;
-}
 
 #include <stdio.h>
 Vector2 ffly_get_vel(Vector2 prev, Vector2 next) {
@@ -55,10 +47,10 @@ void ffly_init(ffly_t *ff) {
 }
 
 void ffly_activate(ffly_t *ff) {
-    ff->prev.y = randintlim(Y_L, Y_H);
+    ff->prev.y = vp_rand_lim(Y_L, Y_H);
     ff->prev.x = G_W - ff->obj.size.x;
     ff->prev = obj_s2w_pos(ff->prev);
-    ff->next.y = randintlim(Y_L, Y_H);
+    ff->next.y = vp_rand_lim(Y_L, Y_H);
     ff->next.x = ff->prev.x - dec_x;
     ff->reached_target = false;
     ff->obj.pos = ff->prev;
@@ -83,7 +75,7 @@ void ffly_update(ffly_t *ff, float dt) {
             Vector2 temp = ff->prev;
             ff->prev = ff->next;
             ff->next.x = temp.x - dec_x;
-            ff->next.y = randintlim(Y_L, Y_H);
+            ff->next.y = vp_rand_lim(Y_L, Y_H);
             ff->obj.vel = ffly_get_vel(ff->prev, ff->next);
             ff->reached_target = false;
         } else {

@@ -29,18 +29,22 @@
 // top level game object
 static game_t *g;
 
-int g_levelup_scores[] = {
-    [0] = 1000,
-    [1] = 2000,
-    [2] = 3500,
-    [3] = 5000 
-};
-
 Vector2 game_get_scaled_mouse_pos(void) {
     Vector2 mouseScalePos = GetMousePosition();
     mouseScalePos.x = (mouseScalePos.x / GetScreenWidth()) * G_W;
     mouseScalePos.y = (mouseScalePos.y / GetScreenHeight()) * G_H;
     return mouseScalePos;
+}
+
+Color game_get_overlay(vplevel l) {
+    static const Color overlay_colors[] = {
+        [VP_L0] = (Color){0xFF, 0xC1, 0x07, 0x10},
+        [VP_L1] = (Color){0x21, 0x96, 0xF3, 0x10},
+        [VP_L2] = (Color){0x4C, 0xAF, 0x50, 0x10},
+        [VP_L3] = (Color){0xE3, 0x42, 0x34, 0x10},
+    };
+
+    return overlay_colors[l];
 }
 
 void game_load_assets(void) {
@@ -141,11 +145,21 @@ void _game_update(float dt) {
             player_activate_move_l(&g->p, dt);
         }
 
-        if(IsKeyPressed(KEY_SPACE) && !player_is_jumping(&g->p)) {
+        bool spcp = IsKeyPressed(KEY_SPACE);
+        #ifdef __EMSCRIPTEN__
+        spcp = IsKeyDown(KEY_SPACE);
+        #endif
+
+        if(spcp && !player_is_jumping(&g->p)) {
             player_activate_jump(&g->p, dt);
         }
 
-        if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+        bool mouserp = IsMouseButtonPressed(MOUSE_BUTTON_RIGHT);
+        #ifdef __EMSCRIPTEN__
+        mouserp = IsMouseButtonDown(MOUSE_BUTTON_RIGHT);
+        #endif
+
+        if(mouserp) {
             Vector2 mouse_pos = game_get_scaled_mouse_pos();
             // check for empty slot
             batr_t *b = batr_get_empty_slot(g->batrs);
@@ -154,7 +168,12 @@ void _game_update(float dt) {
             }
         }
 
-        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        bool mouselp = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+        #ifdef __EMSCRIPTEN__
+        mouselp = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+        #endif
+
+        if(mouselp) {
             Vector2 mouse_pos = game_get_scaled_mouse_pos();
             player_activate_whiplash(&g->p, mouse_pos);
         }
@@ -203,12 +222,13 @@ void _game_update(float dt) {
     ////////// BOSS //////////////
     //////////////////////////////
 
-    if(g->p.score >= g_levelup_scores[g->p.curr_level] && !g->is_boss_active) {
-        boss_set(VADAYAKSHI);
+    if(player_can_level_up(&g->p) && !g->is_boss_active) {
+        boss_set(g->p.curr_level);
         boss_activate();
         g->is_boss_active = true;
     }
 
+    // active check happens inside update call
     boss_update(dt);
 
     if(boss_is_dead()) {
@@ -357,14 +377,23 @@ void _game_update(float dt) {
     if(g->p.health <= 0) {
         player_set_die(&g->p);
     }
+
+    if(g->levelbosses->vy.health <= 0) {
+        g->levelbosses->vy.health = 0;
+        g->levelbosses->vy.obj.is_active = 0;
+    }
 }
 
 // pause wrapper
 void game_update(float dt) {
-    if(!IsKeyPressed(KEY_ESCAPE) && !g->is_game_paused) {
+    bool escp = IsKeyPressed(KEY_ESCAPE);
+    #ifdef __EMSCRIPTEN__
+    escp = IsKeyDown(KEY_ESCAPE);
+    #endif
+    if(!escp && !g->is_game_paused) {
         _game_update(dt);
     } else {
-        if(IsKeyPressed(KEY_ESCAPE)) {
+        if(escp) {
             g->is_game_paused = !g->is_game_paused;
         }
     }
@@ -389,8 +418,21 @@ void game_draw_inf_bg(void) {
 //////// SCENES //////////////
 //////////////////////////////
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
+void game_yield_frame(void) {
+#ifdef __EMSCRIPTEN__
+    // This tells the browser: "Pause this C loop, draw the frame, and come back to me in 2ms"
+    emscripten_sleep(0); 
+#else
+    // Desktop fallback just handles standard frame pacing
+#endif
+}
+
 void game_draw_canvas_to_screen(void) {
-    Color overlay = (Color){ 50, 50, 250, 15 };
+    Color overlay = game_get_overlay(g->p.curr_level);
     Vector2 mpos = GetMousePosition();
     BeginDrawing();
     ClearBackground(BLACK);
@@ -409,6 +451,9 @@ void game_start_scene(void) {
     bool game_quit = false;
     menu_action m_act = MENU_NO_ACTION;
     while(!game_start && !g->is_game_wclosed) {
+        #ifdef __EMSCRIPTEN__
+        PollInputEvents();
+        #endif
         BeginTextureMode(*g->canvas);
         DrawTexture(g->splash, 0, 0, DARKGRAY);
         menu_draw(m_act, MENU_START);
@@ -420,11 +465,15 @@ void game_start_scene(void) {
         game_start = (m_act == MENU_CLICK_START);
         game_quit = (m_act == MENU_CLICK_QUIT);
         g->is_game_wclosed = WindowShouldClose() || game_quit;
+        game_yield_frame();
     }
 }
 
 void game_start_main_loop(void) {
     while(!g->is_game_wclosed && !g->is_gameover) {
+        #ifdef __EMSCRIPTEN__
+        PollInputEvents();
+        #endif
         game_update(GetFrameTime());
 
         if(!g->is_game_paused) {
@@ -444,14 +493,23 @@ void game_start_main_loop(void) {
             if(g->levelbosses->vy.obj.is_active) {
                 vy_draw(&g->levelbosses->vy);
             }
+            // Draw KCH
+            if(g->levelbosses->kch.obj.is_active) {
+                kchath_draw(&g->levelbosses->kch);
+            }
+
             // Draw EPECHI
             // TODO
             EndMode2D();
             
             // Draw everything that doesn't move with camera
             orb_draw_all(g->levelbosses->vy.orbs);
+            skball_draw_all(g->levelbosses->kch.skballs);
             if(g->levelbosses->vy.obj.is_active) {
                 hbar_draw(&g->levelbosses->vy.hbar);
+            }
+            if(g->levelbosses->kch.obj.is_active) {
+                hbar_draw(&g->levelbosses->kch.hbar);
             }
             hud_draw(g->ktex, &g->p);
 
@@ -474,6 +532,7 @@ void game_start_main_loop(void) {
             g->is_game_wclosed = WindowShouldClose() || game_quit;
             g->is_game_paused = !game_resumed;
         }
+        game_yield_frame();
     }
 }
 

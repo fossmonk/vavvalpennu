@@ -46,6 +46,12 @@ void aanam_init(aanam_t *aana) {
     aana->growl = LoadSound(SOUND_AGROWL);
 }
 
+void aanam_init_all(aanam_t *aanams) {
+    for(int i = 0; i < MAX_AANAS; ++i) {
+        aanam_init(&aanams[i]);
+    }
+}
+
 void aanam_activate(aanam_t *aana) {
     aana->is_dying = false;
     aana->obj.is_active = true;
@@ -107,6 +113,10 @@ void aanam_draw(aanam_t *aana) {
         aana->obj.pos,
         WHITE
     );
+
+    #ifdef DEBUG
+    bbox_draw(aana->obj.curr_anim->asset->bbox, aana->obj.pos, RED);
+    #endif
 }
 
 void aanam_draw_all(aanam_t *aanas) {

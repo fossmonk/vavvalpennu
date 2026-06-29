@@ -52,6 +52,12 @@ void ffly_init(ffly_t *ff) {
     ff->obj.is_active = false;
 }
 
+void ffly_init_all(ffly_t *fflys) {
+    for(int i = 0; i < MAX_FFLY; ++i) {
+        ffly_init(&fflys[i]);
+    }
+}
+
 void ffly_activate(ffly_t *ff) {
     ff->prev.y = vp_rand_lim(Y_L, Y_H);
     ff->prev.x = G_W - ff->obj.size.x;

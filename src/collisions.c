@@ -77,7 +77,7 @@ static bool col_check_c2r(obj_t *c_obj, coord_sys cs_c, obj_t *r_obj, coord_sys 
     */
     if(c_x < r_x) test_x = r_x;
     else if(c_x > (r_x + RECT_BBOX(r_obj).width)) test_x = (r_x + RECT_BBOX(r_obj).width);
-    else if(c_y < r_y) test_y = r_y;
+    if(c_y < r_y) test_y = r_y;
     else if(c_y > (r_y + RECT_BBOX(r_obj).height)) test_y = (r_y + RECT_BBOX(r_obj).height);
 
     float dist_x = c_x - test_x;

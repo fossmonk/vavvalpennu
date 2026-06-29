@@ -11,7 +11,7 @@ typedef struct {
     anim_t anim_rotate;
 } karikku_t;
 
-void karikku_init(karikku_t *k);
+void karikku_init_all(karikku_t *karikkus);
 void karikku_update_all(karikku_t *karikkus, float dt);
 void karikku_draw_all(karikku_t *karikkus);
 

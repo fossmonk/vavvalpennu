@@ -304,4 +304,8 @@ void player_draw(player_t *p) {
         p->obj.pos,
         WHITE
     );
+
+    #ifdef DEBUG
+    bbox_draw(p->obj.curr_anim->asset->bbox, p->obj.pos, WHITE);
+    #endif
 }

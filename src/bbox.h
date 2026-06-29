@@ -22,5 +22,6 @@ typedef struct {
 } bbox_t;
 
 bbox_t bbox_parse(const char* bbox_fname);
+void bbox_draw(bbox_t bbox, Vector2 objpos, Color color);
 
 #endif

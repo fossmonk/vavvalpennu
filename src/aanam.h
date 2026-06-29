@@ -17,7 +17,7 @@ typedef struct {
     Sound growl;
 } aanam_t;
 
-void aanam_init(aanam_t *aana);
+void aanam_init_all(aanam_t *aanams);
 void aanam_activate_all(aanam_t *aanas, bool boss_active, float dt);
 void aanam_update_all(aanam_t *aanas, float dt);
 void aanam_draw_all(aanam_t *aanas);

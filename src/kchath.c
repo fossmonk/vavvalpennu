@@ -95,4 +95,7 @@ void kchath_draw(kchath_t *kch) {
         kch->obj.curr_anim->curr_frame, kch->obj.pos, 
         WHITE
     );
+    #ifdef DEBUG
+    bbox_draw(kch->obj.curr_anim->asset->bbox, kch->obj.pos, RED);
+    #endif
 }

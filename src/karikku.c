@@ -78,6 +78,12 @@ void karikku_init(karikku_t *k) {
     k->obj.pos = kpos[kcount++];
 }
 
+void karikku_init_all(karikku_t *karikkus) {
+    for(int i = 0; i < TOTAL_KARIKKU; ++i) {
+        karikku_init(&karikkus[i]);
+    }
+}
+
 void karikku_update_all(karikku_t *karikkus, float dt) {
     for(int i = 0; i < TOTAL_KARIKKU; ++i) {
         karikku_t *k = &karikkus[i];
@@ -93,6 +99,10 @@ void karikku_draw(karikku_t *k) {
         k->obj.curr_anim->curr_frame,
         k->obj.pos,
         LIGHTGRAY);
+    
+    #ifdef DEBUG
+    bbox_draw(k->obj.curr_anim->asset->bbox, k->obj.pos, RED);
+    #endif
 }
 
 void karikku_draw_all(karikku_t *karikkus) {

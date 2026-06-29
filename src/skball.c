@@ -6,10 +6,10 @@
 #include <skball.h>
 #include <shader.h>
 
+static int id = 1;
 int get_id(void) {
-    static int id = 1;
     int k = id;
-    id = 2;
+    id = 3 - id;
     return k;
 }
 
@@ -28,7 +28,7 @@ void skball_draw(skball_t *skball) {
     SetShaderValue(skball->shader, skball->time_loc, &time, SHADER_UNIFORM_FLOAT);
     BeginShaderMode(skball->shader);
     Rectangle src = {0.0f, 0.0f, (float)skball->skball_tex.width, (float)skball->skball_tex.height};
-    Rectangle dst = {skball->obj.pos.x, skball->obj.pos.y, 100.0f, 100.0f};
+    Rectangle dst = {skball->obj.pos.x, skball->obj.pos.y, (float)skball->skball_tex.width, (float)skball->skball_tex.height};
     DrawTexturePro(skball->skball_tex, src, dst, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
     EndShaderMode();
 }

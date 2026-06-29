@@ -35,3 +35,27 @@ bbox_t bbox_parse(const char* bbox_fname) {
     UnloadFileText(bbox_text);
     return b;
 }
+
+// for debug purposes
+void bbox_draw(bbox_t bbox, Vector2 objpos, Color color) {
+    float cx, cy, r, x, y, w, h;
+    switch (bbox.type)
+    {
+    case CIRCLE:
+        cx = bbox.bbox.circle.cx + objpos.x;
+        cy = bbox.bbox.circle.cy + objpos.y;
+        r = bbox.bbox.circle.r;
+        DrawCircleLines(cx, cy, r, RED);
+        break;
+    case RECTANGLE:
+        x = bbox.bbox.rect.x + objpos.x;
+        y = bbox.bbox.rect.y + objpos.y;
+        w = bbox.bbox.rect.width;
+        h = bbox.bbox.rect.height;
+        DrawRectangleLines(x, y, w, h, color);
+        break;
+    
+    default:
+        break;
+    }
+}

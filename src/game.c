@@ -30,17 +30,6 @@
 // top level game object
 static game_t *g;
 
-Color game_get_overlay(vplevel l) {
-    static const Color overlay_colors[] = {
-        [VP_L0] = (Color){0xFF, 0xC1, 0x07, 0x10},
-        [VP_L1] = (Color){0x21, 0x96, 0xF3, 0x10},
-        [VP_L2] = (Color){0x4C, 0xAF, 0x50, 0x10},
-        [VP_L3] = (Color){0xE3, 0x42, 0x34, 0x10},
-    };
-
-    return overlay_colors[l];
-}
-
 void game_load_assets(void) {
     // background texture
     g->bg = LoadTexture(BACKGROUND);
@@ -74,37 +63,21 @@ void game_init(RenderTexture2D *canvas) {
     menu_init();
     // initialize player
     player_init(&g->p);
-    
     // init all bosses
     boss_init_bosses();
-
     g->levelbosses = boss_get_bosses();
-
     // initialize environment stuff
     // BONFIRE
     // TODO bf_init(&g->bonfire);
-
     // KARIKKU
-    for(int i = 0; i < TOTAL_KARIKKU; ++i) {
-        karikku_init(&g->karikku[i]);
-    }
-    
+    karikku_init_all(g->karikku);
     // FIREFLY
-    for(int i = 0; i < MAX_FFLY; ++i) {
-        ffly_init(&g->ffly[i]);
-    }
-
+    ffly_init_all(g->ffly);
     // initialize other actors/sprites
-    
     // BATARANGS
-    for(int i = 0; i < MAX_BATRS; ++i) {
-        batr_init(&g->batrs[i]);
-    }
-
+    batr_init_all(g->batrs);
     // AANAMARUTHAS
-    for(int i = 0; i < MAX_AANAS; ++i) {
-        aanam_init(&g->aanas[i]);
-    }
+    aanam_init_all(g->aanas);
     // initialize generic game object stuff
     g->is_gameover = false;
     g->is_game_wclosed = false;
@@ -114,17 +87,14 @@ void game_init(RenderTexture2D *canvas) {
     g->cam.zoom = 1;
     g->cam.target = obj_cxy(&g->p.obj);
     g->cam.offset = (Vector2){G_W/2, (GAME_GROUND_Y - g->p.obj.curr_anim->curr_frame.height/2)};
-
     // START THE MUSIC
     PlayMusicStream(g->bgmusic);
 }
 
 void _game_update(float dt) {
     if(dt > 0.1f)dt = 0.1f;
-
     // update bgmusic
     UpdateMusicStream(g->bgmusic);
-
     // PLAYER
     // handle inputs and execute player actions
     // handle inputs only if player is not hurting
@@ -408,7 +378,7 @@ void game_yield_frame(void) {
 }
 
 void game_draw_canvas_to_screen(void) {
-    Color overlay = game_get_overlay(g->p.curr_level);
+    Color overlay = (Color){ 255, 203, 0, 10};
     Vector2 mpos = GetMousePosition();
     BeginDrawing();
     ClearBackground(BLACK);

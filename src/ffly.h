@@ -17,7 +17,7 @@ typedef struct {
     anim_t anim_fly;
 } ffly_t;
 
-void ffly_init(ffly_t *ff);
+void ffly_init_all(ffly_t *fflys);
 void ffly_activate_all(ffly_t *ffs);
 void ffly_update_all(ffly_t *ffs, float dt);
 void ffly_draw_all(ffly_t *fflys);

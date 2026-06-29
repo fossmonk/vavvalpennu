@@ -30,6 +30,12 @@ void batr_init(batr_t *b) {
     // this has to be init'ed when spawned.
 }
 
+void batr_init_all(batr_t *batrs) {
+    for(int i = 0; i < MAX_BATRS; ++i) {
+        batr_init(&batrs[i]);
+    }
+}
+
 void batr_update(batr_t *b, float dt) {
     // check for bounds
     if(obj_is_oob(&b->obj, COORDS_WORLD)) {
@@ -69,6 +75,9 @@ void batr_draw(batr_t *b) {
         b->obj.curr_anim->curr_frame,
         b->obj.pos,
         WHITE);
+    #ifdef DEBUG
+    bbox_draw(b->obj.curr_anim->asset->bbox, b->obj.pos, GREEN);
+    #endif
 }
 
 void batr_draw_all(batr_t *batrs) {

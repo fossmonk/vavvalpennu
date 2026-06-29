@@ -53,7 +53,7 @@ HUD is currently WIP, but it shows your healthbar, score and collected `karikku`
 
 ### Demo video
 
-![](./demo/demo_gh.mp4)
+https://github.com/user-attachments/assets/28c5a5f3-ffa1-4701-b0ff-c621f84142ea
 
 ## Building and Running VavvalPennu
 

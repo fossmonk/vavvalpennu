@@ -3,7 +3,9 @@
 #include <karikku.h>
 #include <rand.h>
 
-extern anim_asset_t karikku_rotate;
+anim_asset_t karikku_rotate;
+
+static bool g_anim_asset_loaded = false;
 
 Vector2 kpos[TOTAL_KARIKKU];
 static bool kposinit = false;
@@ -50,6 +52,9 @@ void karikku_randomize_pos(void) {
 }
 
 void karikku_init(karikku_t *k) {
+    if(!g_anim_asset_loaded) {
+        anim_asset_load(ANIM_KARIKKU, &karikku_rotate);
+    }
     if(!kposinit) {
         karikku_randomize_pos();
         kposinit = true;

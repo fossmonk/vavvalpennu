@@ -16,11 +16,18 @@
 #define ORB_RAND_CHANCE        ((vp_rand() % 5557 == 0))
 
 // VADAYAKSHI ANIMATIONS
-extern anim_asset_t vy_rise;
-extern anim_asset_t vy_shock;
+anim_asset_t vy_rise;
+anim_asset_t vy_shock;
+
+static bool g_anim_asset_loaded = false;
 
 void vy_init(vy_t *vy) {
     // ANIM
+    if(!g_anim_asset_loaded) {
+        // load animation assets
+        anim_asset_load(ANIM_VY_RISE, &vy_rise);
+        anim_asset_load(ANIM_VY_SHOCK, &vy_shock);
+    }
     Vector2 dim;
     // idle
     // rise

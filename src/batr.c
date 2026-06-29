@@ -4,10 +4,15 @@
 #include <batr.h>
 
 // BATARANG ANIMATIONS
-extern anim_asset_t batr_rotate;
+anim_asset_t batr_rotate;
+
+static bool g_anim_asset_loaded = false;
 
 void batr_init(batr_t *b) {
     // ANIM
+    if(!g_anim_asset_loaded) {
+        anim_asset_load(ANIM_BATARANG, &batr_rotate);
+    }
     Vector2 dim;
     dim = anim_asset_get_frame_dim(&batr_rotate);
     b->anim_rotate.asset = &batr_rotate;

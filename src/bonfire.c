@@ -2,10 +2,15 @@
 #include <vpconfig.h>
 #include <bonfire.h>
 
-extern anim_asset_t bonfire_burn;
+anim_asset_t bonfire_burn;
+
+static bool g_anim_asset_loaded = false;
 
 void bf_init(bf_t *bf) {
     // ANIM
+    if(!g_anim_asset_loaded) {
+        anim_asset_load(ANIM_BF_BURN, &bonfire_burn);
+    }
     Vector2 dim;
     dim = anim_asset_get_frame_dim(&bonfire_burn);
     bf->anim_burn.asset = &bonfire_burn;

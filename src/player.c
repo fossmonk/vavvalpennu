@@ -26,16 +26,29 @@
 #endif
 
 // PLAYER ANIMATIONS
-extern anim_asset_t player_run;
-extern anim_asset_t player_idle;
-extern anim_asset_t player_jump;
-extern anim_asset_t player_hithurt;
-extern anim_asset_t player_flash;
-extern anim_asset_t player_shock;
-extern anim_asset_t player_wlash;
+anim_asset_t player_run;
+anim_asset_t player_idle;
+anim_asset_t player_jump;
+anim_asset_t player_hithurt;
+anim_asset_t player_flash;
+anim_asset_t player_shock;
+anim_asset_t player_wlash;
+
+static bool g_anim_asset_loaded = false;
 
 void player_init(player_t *p) {
     // ANIM
+    if(!g_anim_asset_loaded) {
+        // load animation assets
+        anim_asset_load(ANIM_P_RUN, &player_run);
+        anim_asset_load(ANIM_P_IDLE, &player_idle);
+        anim_asset_load(ANIM_P_JUMP, &player_jump);
+        anim_asset_load(ANIM_P_HITHURT, &player_hithurt);
+        anim_asset_load(ANIM_P_FLASH, &player_flash);
+        anim_asset_load(ANIM_P_SHOCK, &player_shock);
+        anim_asset_load(ANIM_P_WLASH, &player_wlash);
+    }
+
     Vector2 dim;
     // idle
     dim = anim_asset_get_frame_dim(&player_idle);

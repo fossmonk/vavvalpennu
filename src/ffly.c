@@ -3,7 +3,9 @@
 #include <ffly.h>
 #include <rand.h>
 
-extern anim_asset_t ff_fly;
+anim_asset_t ff_fly;
+
+static bool g_anim_asset_loaded = false;
 
 #define Y_L (150)
 #define Y_H (G_H/2)
@@ -30,7 +32,11 @@ Vector2 ffly_get_vel(Vector2 prev, Vector2 next) {
 }
 
 void ffly_init(ffly_t *ff) {
-    // anim
+    // ANIM
+    if(!g_anim_asset_loaded) {
+        // load animation assets
+        anim_asset_load(ANIM_FIREFLY, &ff_fly);
+    }
     Vector2 dim;
     dim = anim_asset_get_frame_dim(&ff_fly);
     ff->anim_fly.asset = &ff_fly;

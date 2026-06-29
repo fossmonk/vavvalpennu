@@ -1,7 +1,6 @@
-#version 330
-
 in vec4 fragColor;
 out vec4 finalColor;
+
 
 // Uniforms from C code
 uniform float u_topY;

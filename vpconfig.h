@@ -34,43 +34,44 @@
 
 // Animation assets
 // PLAYER
-#define ANIM_P_IDLE       (anim_info_t){"assets/sprites/player/idle.png", "P IDLE", 16, 0.07f, true}
-#define ANIM_P_RUN        (anim_info_t){"assets/sprites/player/run.png", "P RUN", 16, 0.07f, true}
-#define ANIM_P_JUMP       (anim_info_t){"assets/sprites/player/jump.png", "P JUMP", 8, 0.07f, false}
-#define ANIM_P_HITHURT    (anim_info_t){"assets/sprites/player/hithurt.png", "P HITHURT", 25, 0.05f, false}
-#define ANIM_P_FLASH      (anim_info_t){"assets/sprites/player/flash.png", "P FLASH", 16, 0.01f, false}
-#define ANIM_P_SHOCK      (anim_info_t){"assets/sprites/player/shock.png", "P SHOCK", 16, 0.05f, false}
-#define ANIM_P_WLASH      (anim_info_t){"assets/sprites/player/whiplash.png", "P WLASH", 16, 0.05f, false}
+#define ANIM_P_IDLE       (anim_info_t){"assets/sprites/player/idle.png", "assets/sprites/player/idle.bbox", "P IDLE", 16, 0.07f, true}
+#define ANIM_P_RUN        (anim_info_t){"assets/sprites/player/run.png", "assets/sprites/player/run.bbox", "P RUN", 16, 0.07f, true}
+#define ANIM_P_JUMP       (anim_info_t){"assets/sprites/player/jump.png", "assets/sprites/player/jump.bbox", "P JUMP", 8, 0.07f, false}
+#define ANIM_P_HITHURT    (anim_info_t){"assets/sprites/player/hithurt.png", "assets/sprites/player/hithurt.bbox", "P HITHURT", 25, 0.05f, false}
+#define ANIM_P_FLASH      (anim_info_t){"assets/sprites/player/flash.png", "assets/sprites/player/flash.bbox", "P FLASH", 16, 0.01f, false}
+#define ANIM_P_SHOCK      (anim_info_t){"assets/sprites/player/shock.png", "assets/sprites/player/shock.bbox", "P SHOCK", 16, 0.05f, false}
+#define ANIM_P_WLASH      (anim_info_t){"assets/sprites/player/whiplash.png", "assets/sprites/player/whiplash.bbox", "P WLASH", 16, 0.05f, false}
 
 // BONFIRE
-#define ANIM_BF_BURN      (anim_info_t){"assets/sprites/bonfire/burn.png", "BONFIRE BURN", 16, 0.07f, true}
+#define ANIM_BF_BURN      (anim_info_t){"assets/sprites/bonfire/burn.png", "assets/sprites/bonfire/burn.bbox", "BONFIRE BURN", 16, 0.07f, true}
 
 // BATARANG
-#define ANIM_BATARANG     (anim_info_t){"assets/sprites/batarang/batarang_rotate.png", "BATARANG", 8, 0.1f, true}
+#define ANIM_BATARANG     (anim_info_t){"assets/sprites/batarang/batarang_rotate.png", "assets/sprites/batarang/batarang_rotate.bbox", "BATARANG", 8, 0.1f, true}
 
 // KARIKKU
-#define ANIM_KARIKKU     (anim_info_t){"assets/sprites/karikku/rotate.png", "KARIKKU", 25, 0.07f, true}
+#define ANIM_KARIKKU     (anim_info_t){"assets/sprites/karikku/rotate.png", "assets/sprites/karikku/rotate.bbox", "KARIKKU", 25, 0.07f, true}
 
 // FIREFLY
-#define ANIM_FIREFLY     (anim_info_t){"assets/sprites/firefly/fly.png", "FF FLY", 25, 0.005f, true}
+#define ANIM_FIREFLY     (anim_info_t){"assets/sprites/firefly/fly.png", "assets/sprites/firefly/fly.bbox", "FF FLY", 25, 0.005f, true}
 
 // VADAYAKSHI
-#define ANIM_VY_RISE      (anim_info_t){"assets/sprites/vadayakshi/rise.png", "VY RISE", 25, 0.07f, true}
-#define ANIM_VY_SHOCK     (anim_info_t){"assets/sprites/vadayakshi/shock.png", "VY SHOCK", 25, 0.07f, false}
+#define ANIM_VY_RISE      (anim_info_t){"assets/sprites/vadayakshi/rise.png", "assets/sprites/vadayakshi/rise.bbox", "VY RISE", 25, 0.07f, true}
+#define ANIM_VY_SHOCK     (anim_info_t){"assets/sprites/vadayakshi/shock.png", "assets/sprites/vadayakshi/shock.bbox", "VY SHOCK", 25, 0.07f, false}
 
 // KUTTICHATHAN
-#define ANIM_KCH_LAUGH     (anim_info_t){"assets/sprites/kchath/laugh.png", "KCH LAUGH", 25, 0.07f, true}
+#define ANIM_KCH_LAUGH     (anim_info_t){"assets/sprites/kchath/laugh.png", "assets/sprites/kchath/laugh.bbox", "KCH LAUGH", 25, 0.07f, true}
 
 
 // AANAMARUTHA
-#define ANIM_AANAM_RUN    (anim_info_t){"assets/sprites/aanamarutha/run.png", "AANAM RUN", 16, 0.05f, true}
-#define ANIM_AANAM_DEATH  (anim_info_t){"assets/sprites/aanamarutha/die.png", "AANAM DEATH", 12, 0.05f, false}
+#define ANIM_AANAM_RUN    (anim_info_t){"assets/sprites/aanamarutha/run.png", "assets/sprites/aanamarutha/run.bbox", "AANAM RUN", 16, 0.05f, true}
+#define ANIM_AANAM_DEATH  (anim_info_t){"assets/sprites/aanamarutha/die.png", "assets/sprites/aanamarutha/die.bbox", "AANAM DEATH", 12, 0.05f, false}
 
 // EENAMPECHI
-#define ANIM_EPECHI_ROLL  (anim_info_t){"assets/sprites/epechi/roll.png", "EPECHI ROLL", 25, 0.04f, true}
+#define ANIM_EPECHI_ROLL  (anim_info_t){"assets/sprites/epechi/roll.png", "assets/sprites/epechi/roll.bbox", "EPECHI ROLL", 25, 0.04f, true}
 
 // Textures
 #define ORB_TEXTURE      "assets/textures/orb.png"
+#define ORB_BBOX         "assets/textures/orb.bbox"
 #define SKBALL_TEXTURE   "assets/textures/skball.png"
 #define PLAYER_HBAR_ICON "assets/textures/vp_head.png"
 #define VY_HBAR_ICON     "assets/textures/vy_head.png"
@@ -79,7 +80,7 @@
 // Shader files
 #define HBAR_SHADER    "shaders/hbar.fs"
 #define ORB_SHADER     "shaders/orb.fs"
-#define SKBALL_SHADER     "shaders/skball.fs"
+#define SKBALL_SHADER  "shaders/skball.fs"
 
 // AUDIO
 #define AUD_AMBIENT    "assets/audio/ambient.mp3"

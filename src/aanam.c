@@ -3,15 +3,23 @@
 #include <aanam.h>
 #include <rand.h>
 
-#define AANA_RAND_CHANCE       ((vp_rand() % 12283 == 0))
-#define AANA_VEL_X             (-400.0f)
+#define AANA_SPAWN_COOLDOWN_TIME (3.0f)
+#define AANA_VEL_X (-400.0f)
+
+static float g_aanam_spawn_timer = 0.0f;
 
 // AANAMARUTHA ANIMATIONS
-extern anim_asset_t aanam_run;
-extern anim_asset_t aanam_death;
+anim_asset_t aanam_run;
+anim_asset_t aanam_death;
+
+static bool g_anim_asset_loaded = false;
 
 void aanam_init(aanam_t *aana) {
     // ANIM
+    if(!g_anim_asset_loaded) {
+        anim_asset_load(ANIM_AANAM_RUN, &aanam_run);
+        anim_asset_load(ANIM_AANAM_DEATH, &aanam_death);
+    }
     Vector2 dim;
     // run
     dim = anim_asset_get_frame_dim(&aanam_run);
@@ -54,10 +62,21 @@ void aanam_activate(aanam_t *aana) {
     PlaySound(aana->growl);
 }
 
-void aanam_activate_all(aanam_t *aanas, bool boss_active) {
-    for(int i = 0; i < MAX_AANAS; ++i) {
-        if(!aanas[i].obj.is_active && AANA_RAND_CHANCE && !boss_active) {
-            aanam_activate(&aanas[i]);
+void aanam_activate_all(aanam_t *aanas, bool boss_active, float dt) {
+    if(boss_active) return;
+
+    g_aanam_spawn_timer += dt;
+
+    if (g_aanam_spawn_timer >= AANA_SPAWN_COOLDOWN_TIME) {
+        // Reset timer
+        g_aanam_spawn_timer -= AANA_SPAWN_COOLDOWN_TIME;
+
+        // Find the inactive aanam
+        for(int i = 0; i < MAX_AANAS; ++i) {
+            if(!aanas[i].obj.is_active) {
+                aanam_activate(&aanas[i]);
+                break;
+            }
         }
     }
 }

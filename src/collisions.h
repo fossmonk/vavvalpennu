@@ -6,11 +6,6 @@
 #include <vy.h>
 #include <batr.h>
 
-bool col_check_vy_batr(vy_t *vy, batr_t *b);
-bool col_check_vy_orb(vy_t *vy, orb_t *orb);
-bool col_check_player_orb(player_t *p, orb_t *orb);
-bool col_check_player_aanam(player_t *p, aanam_t *aana);
-bool col_check_batr_orb(batr_t *b, orb_t *orb);
-bool col_check_player_karikku(player_t *p, karikku_t *k);
+bool col_check_bbox(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2);
 
 #endif

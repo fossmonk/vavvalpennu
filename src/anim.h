@@ -1,6 +1,7 @@
 #include <raylib.h>
 #include <anim_asset.h>
 #include <math.h>
+#include <bbox.h>
 
 #ifndef _ANIM_H_
 #define _ANIM_H_
@@ -9,6 +10,7 @@ typedef struct {
     anim_asset_t *asset;
     float timer;
     Rectangle curr_frame;
+    bbox_t hitbox;
 } anim_t;
 
 void anim_advance(anim_t *anim, float dt);

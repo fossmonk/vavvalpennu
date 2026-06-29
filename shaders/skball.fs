@@ -1,5 +1,3 @@
-#version 330
-
 in vec2 fragTexCoord;
 out vec4 finalColor;
 
@@ -33,5 +31,5 @@ void main() {
 
     float mask = smoothstep(0.5, 0.495, dist);
 
-    finalColor = vec4(texColor.rgb, texColor.a * mask);
+    finalColor = vec4(texColor.rgb * vec3(1.0, 0.0, 0.0), texColor.a * mask);
 }

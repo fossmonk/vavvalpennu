@@ -1,6 +1,9 @@
 {
     "editor.defaultFormatter": "ms-vscode.cpptools-extension-pack",
-    "editor.fontFamily": "'Intel One Mono'",
+    "editor.fontFamily": "'Monaspace Xenon NF', monospace",
+    "editor.fontLigatures": "'calt', 'liga', 'ss01', 'ss02', 'ss03', 'ss04', 'ss05', 'ss06', 'ss07', 'ss08', 'ss09'",
     "editor.fontSize": 18,
-    "lldb.showDisassembly": "never"
+    "lldb.showDisassembly": "never",
+    "workbench.colorTheme": "Alt Catppuccin Macchiato",
+    "editor.mouseWheelZoom": true
 }

@@ -11,6 +11,7 @@
 #include <audio.h>
 #include <hud.h>
 #include <boss.h>
+#include <input.h>
 
 // SOME CONSTANTS
 
@@ -28,13 +29,6 @@
 // GLOBALS
 // top level game object
 static game_t *g;
-
-Vector2 game_get_scaled_mouse_pos(void) {
-    Vector2 mouseScalePos = GetMousePosition();
-    mouseScalePos.x = (mouseScalePos.x / GetScreenWidth()) * G_W;
-    mouseScalePos.y = (mouseScalePos.y / GetScreenHeight()) * G_H;
-    return mouseScalePos;
-}
 
 Color game_get_overlay(vplevel l) {
     static const Color overlay_colors[] = {
@@ -61,8 +55,6 @@ void game_load_assets(void) {
     // fonts
     g->game_font = LoadFontEx(MAIN_FONT, 96, NULL, 0);
     SetTextureFilter(g->game_font.texture, TEXTURE_FILTER_BILINEAR);
-    // animation assets
-    anim_asset_load_all();
     // sound assets
     g->bgmusic = LoadMusicStream(AUD_AMBIENT);
 }
@@ -137,30 +129,20 @@ void _game_update(float dt) {
     // handle inputs and execute player actions
     // handle inputs only if player is not hurting
     if(!player_is_dying(&g->p) && !player_is_hurting(&g->p)) {
-        if(IsKeyDown(KEY_D)) {
+        if(input_iskeydown(KEY_D)) {
             player_activate_move_r(&g->p, dt);
         }
 
-        if(IsKeyDown(KEY_A)) {
+        if(input_iskeydown(KEY_A)) {
             player_activate_move_l(&g->p, dt);
         }
 
-        bool spcp = IsKeyPressed(KEY_SPACE);
-        #ifdef __EMSCRIPTEN__
-        spcp = IsKeyDown(KEY_SPACE);
-        #endif
-
-        if(spcp && !player_is_jumping(&g->p)) {
+        if(input_iskeypressed(KEY_SPACE) && !player_is_jumping(&g->p)) {
             player_activate_jump(&g->p, dt);
         }
 
-        bool mouserp = IsMouseButtonPressed(MOUSE_BUTTON_RIGHT);
-        #ifdef __EMSCRIPTEN__
-        mouserp = IsMouseButtonDown(MOUSE_BUTTON_RIGHT);
-        #endif
-
-        if(mouserp) {
-            Vector2 mouse_pos = game_get_scaled_mouse_pos();
+        if(input_ismousepressed(MOUSE_BUTTON_RIGHT)) {
+            Vector2 mouse_pos = input_get_mouse_pos();
             // check for empty slot
             batr_t *b = batr_get_empty_slot(g->batrs);
             if(b) {
@@ -168,13 +150,8 @@ void _game_update(float dt) {
             }
         }
 
-        bool mouselp = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-        #ifdef __EMSCRIPTEN__
-        mouselp = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
-        #endif
-
-        if(mouselp) {
-            Vector2 mouse_pos = game_get_scaled_mouse_pos();
+        if(input_ismousepressed(MOUSE_BUTTON_LEFT)) {
+            Vector2 mouse_pos = input_get_mouse_pos();
             player_activate_whiplash(&g->p, mouse_pos);
         }
 
@@ -213,7 +190,7 @@ void _game_update(float dt) {
     ffly_update_all(g->ffly, dt);
 
     // aanams: activate empty slots
-    aanam_activate_all(g->aanas, g->is_boss_active);
+    aanam_activate_all(g->aanas, g->is_boss_active, dt);
 
     // aanams: update active ones
     aanam_update_all(g->aanas, dt);
@@ -246,7 +223,7 @@ void _game_update(float dt) {
             orb_t *orb = &g->levelbosses->vy.orbs[j];
             bool b_conds = b->obj.is_active;
             bool orb_conds = orb->obj.is_active;
-            bool col_conds = col_check_batr_orb(b, orb);
+            bool col_conds = col_check_bbox(&b->obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN);
             bool check = b_conds && orb_conds && col_conds;
             if(check) {
                 // deactivate batr
@@ -264,7 +241,7 @@ void _game_update(float dt) {
         batr_t *b = &g->batrs[i];
         bool b_conds = b->obj.is_active;
         bool vy_conds = !vy_is_dying(&g->levelbosses->vy);
-        bool col_conds = col_check_vy_batr(&g->levelbosses->vy, b);
+        bool col_conds = col_check_bbox(&g->levelbosses->vy.obj, COORDS_WORLD, &b->obj, COORDS_WORLD);
         bool check = b_conds && vy_conds && col_conds;
         if(check) {
             b->obj.is_active = false;
@@ -277,7 +254,7 @@ void _game_update(float dt) {
         orb_t *orb = &g->levelbosses->vy.orbs[i];
         bool orb_conds = orb->obj.is_active && !orb->is_hostile;
         bool player_conds = !player_is_dying(&g->p);
-        bool col_conds = col_check_player_orb(&g->p, orb);
+        bool col_conds = col_check_bbox(&g->p.obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN);
         bool check = orb_conds && player_conds && col_conds;
         if(check) {
             orb->obj.is_active = false;
@@ -291,7 +268,7 @@ void _game_update(float dt) {
         karikku_t *k = &g->karikku[i];
         bool k_conds = k->obj.is_active && !obj_is_oob(&k->obj, COORDS_WORLD);
         bool player_conds = !player_is_dying(&g->p);
-        bool col_conds = col_check_player_karikku(&g->p, k);
+        bool col_conds = col_check_bbox(&g->p.obj, COORDS_WORLD, &k->obj, COORDS_WORLD);
         bool check = k_conds && player_conds && col_conds;
         if(check) {
             k->obj.is_active = false;
@@ -305,7 +282,7 @@ void _game_update(float dt) {
         orb_t *orb = &g->levelbosses->vy.orbs[i];
         bool orb_conds = orb->obj.is_active && orb->is_hostile;
         bool vy_conds = !vy_is_dying(&g->levelbosses->vy);
-        bool col_conds = col_check_vy_orb(&g->levelbosses->vy, orb);
+        bool col_conds = col_check_bbox(&g->levelbosses->vy.obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN);
         bool check = orb_conds && vy_conds && col_conds;
         if(check) {
             orb->obj.is_active = false;
@@ -320,7 +297,7 @@ void _game_update(float dt) {
         aanam_t *aana = &g->aanas[i];
         bool aana_conds = aana->obj.is_active && !aana->is_dying && !aana->hit_player;
         bool player_conds = !player_is_dying(&g->p);
-        bool col_conds = col_check_player_aanam(&g->p, aana);
+        bool col_conds = col_check_bbox(&g->p.obj, COORDS_WORLD, &aana->obj, COORDS_WORLD);
         bool check = aana_conds && player_conds && col_conds;
         if(check) {
             if(g->p.obj.curr_anim == &g->p.anim_wlash) {
@@ -338,7 +315,6 @@ void _game_update(float dt) {
     }
 
     /// HANDLE SPECIAL ANIMATIONS ///
-
     // handle aanam death
     for(int i = 0; i < MAX_AANAS; ++i) {
         aanam_t *aana = &g->aanas[i];
@@ -471,10 +447,13 @@ void game_start_scene(void) {
 
 void game_start_main_loop(void) {
     while(!g->is_game_wclosed && !g->is_gameover) {
+        float dt = GetFrameTime();
         #ifdef __EMSCRIPTEN__
         PollInputEvents();
+        dt = 1.0f/60.0f;
         #endif
-        game_update(GetFrameTime());
+        
+        game_update(dt);
 
         if(!g->is_game_paused) {
             BeginTextureMode(*g->canvas);

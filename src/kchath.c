@@ -9,10 +9,15 @@
 #define KCH_INIT_POS              ((Vector2){G_W/2, G_H/2})
 #define KCH_POS_CHANGE_CHANCE     (rand() % 423 == 0)
 
-extern anim_asset_t kchath_laugh;
+anim_asset_t kchath_laugh;
+
+static bool g_anim_asset_loaded = false;
 
 void kchath_init(kchath_t* kch) {
     // ANIM
+    if(!g_anim_asset_loaded) {
+        anim_asset_load(ANIM_KCH_LAUGH, &kchath_laugh);
+    }
     Vector2 dim;
     // die
     // laugh

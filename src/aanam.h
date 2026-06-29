@@ -18,7 +18,7 @@ typedef struct {
 } aanam_t;
 
 void aanam_init(aanam_t *aana);
-void aanam_activate_all(aanam_t *aanas, bool boss_active);
+void aanam_activate_all(aanam_t *aanas, bool boss_active, float dt);
 void aanam_update_all(aanam_t *aanas, float dt);
 void aanam_draw_all(aanam_t *aanas);
 

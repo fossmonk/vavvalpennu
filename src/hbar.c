@@ -2,6 +2,7 @@
 #include <raylib.h>
 #include <vpconfig.h>
 #include <hbar.h>
+#include <shader.h>
 
 void hbar_init(hbar_t *h, 
                 Vector2 pos, 
@@ -14,7 +15,7 @@ void hbar_init(hbar_t *h,
                 int max_health
                 ) {
     // load shader
-    h->shader = LoadShader(NULL, HBAR_SHADER);
+    h->shader = shader_load_custom(NULL, HBAR_SHADER);
     h->spacing = spacing;
     h->outer_rec.width = max_w;
     h->outer_rec.height = height;

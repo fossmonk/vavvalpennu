@@ -1,16 +1,25 @@
 #include <stdlib.h>
+#include <string.h>
 #include <raylib.h>
 #include <vpconfig.h>
 #include <obj.h>
 #include <skball.h>
+#include <shader.h>
+
+int get_id(void) {
+    static int id = 1;
+    int k = id;
+    id = 2;
+    return k;
+}
 
 void skball_init(skball_t *skball) {
     skball->skball_tex = LoadTexture(SKBALL_TEXTURE);
-    skball->shader     = LoadShader(NULL, SKBALL_SHADER);
+    skball->shader     = shader_load_custom(NULL, SKBALL_SHADER);
     skball->r = skball->skball_tex.width/2;
     skball->time_loc = GetShaderLocation(skball->shader, "u_time");
     skball->obj.is_active = false;
-    skball->id = GetRandomValue(1, 2);
+    skball->id = get_id();
     skball->obj.size = (Vector2){skball->skball_tex.width, skball->skball_tex.height};
 }
 
@@ -20,7 +29,7 @@ void skball_draw(skball_t *skball) {
     BeginShaderMode(skball->shader);
     Rectangle src = {0.0f, 0.0f, (float)skball->skball_tex.width, (float)skball->skball_tex.height};
     Rectangle dst = {skball->obj.pos.x, skball->obj.pos.y, 100.0f, 100.0f};
-    DrawTexturePro(skball->skball_tex, src, dst, (Vector2){0.0f, 0.0f}, 0.0f, RED);
+    DrawTexturePro(skball->skball_tex, src, dst, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
     EndShaderMode();
 }
 

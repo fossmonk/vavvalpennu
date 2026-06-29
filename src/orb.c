@@ -4,10 +4,15 @@
 #include <orb.h>
 #include <vy.h>
 #include <rand.h>
+#include <shader.h>
+#include <bbox.h>
 
 static float g_orb_xpos[MAX_ORBS];
 bool xpos_init_done = false;
 int g_orbcount = 0;
+
+anim_t dummy_anim;
+anim_asset_t dummy_anim_asset;
 
 static void swap(float *a, float *b) {
     float temp = *a; *a = *b; *b = temp;
@@ -41,7 +46,7 @@ void orb_init(orb_t *orb) {
     SetTextureWrap(orb->noise_tex, TEXTURE_WRAP_REPEAT);
     UnloadImage(noise_img);
     orb->orb_tex = LoadTexture(ORB_TEXTURE);
-    orb->shader = LoadShader(0, ORB_SHADER);
+    orb->shader = shader_load_custom(0, ORB_SHADER);
     orb->r = orb->orb_tex.width/2;
     orb->time_loc = GetShaderLocation(orb->shader, "u_time");
     orb->shade_loc = GetShaderLocation(orb->shader, "u_shade");
@@ -51,6 +56,12 @@ void orb_init(orb_t *orb) {
     orb->obj.size = (Vector2){orb->orb_tex.width, orb->orb_tex.height};
     orb->is_hostile = false;
     orb->xpos = g_orb_xpos[g_orbcount++];
+
+    // setup a dummy animation for bbox
+    dummy_anim_asset.texture = orb->orb_tex;
+    dummy_anim_asset.bbox = bbox_parse(ORB_BBOX);
+    dummy_anim.asset = &dummy_anim_asset;
+    orb->obj.curr_anim = &dummy_anim;
     // purposely don't set pos and vel.
     // this has to be init'ed when spawned.
 }

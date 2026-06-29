@@ -3,10 +3,15 @@
 #include <epechi.h>
 
 // EENAMPECHI ANIMATION EXTERNS
-extern anim_asset_t epechi_roll;
+anim_asset_t epechi_roll;
+
+static bool g_anim_asset_loaded = false;
 
 void epechi_init(epechi_t *ep) {
     // ANIM
+    if(!g_anim_asset_loaded) {
+        anim_asset_load(ANIM_EPECHI_ROLL, &epechi_roll);
+    }
     Vector2 dim;
     // idle
     // roll

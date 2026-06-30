@@ -4,6 +4,22 @@
 #include <assert.h>
 #include <stdio.h>
 
+static void bbox_parse_poly_v(char * poly_params, polygon_t *p) {
+    if(p->n > MAX_POLY_N) return;
+
+    int idx = 0;
+    while(poly_params[idx] != '[')idx++;
+    char *ptr = &poly_params[idx+1];
+
+    for(int i = 0; i < p->n; i++) {
+        int x, y, count;
+        sscanf(ptr, "%d,%d,%n", &x, &y, &count);
+        p->v[i].x = x;
+        p->v[i].y = y;
+        ptr += count;
+    }
+}
+
 bbox_t bbox_parse(const char* bbox_fname) {
     bbox_t b;
     char *bbox_text = LoadFileText(bbox_fname);
@@ -29,6 +45,17 @@ bbox_t bbox_parse(const char* bbox_fname) {
         sscanf(secondline, fstr_circle, &cx, &cy, &r);
         b.type = CIRCLE;
         b.bbox.circle = (circle_t){cx, cy, r};
+    } else if(strncmp("polygon", btype, 14) == 0) {
+        char *fstr_polyn = "bbox_poly_n=%d";
+        int n;
+        sscanf(secondline, fstr_polyn, &n);
+        b.type = POLYGON;
+        b.bbox.poly.n = n;
+        char *thirdline = NULL;
+        int idx = 0;
+        while(secondline[idx] != '\n')idx++;
+        thirdline = &secondline[idx+1];
+        bbox_parse_poly_v(thirdline, &b.bbox.poly);
     } else {
         b.type = INVALID_BBOX_TYPE;
     }

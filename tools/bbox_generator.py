@@ -5,7 +5,53 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk, ImageDraw
 
-def calculate_best_fit_bbox(image_path, num_frames, frame_width, include_flipped=False):
+def calculate_best_fit_polygon(all_relative_pixels, num_vertices):
+    """
+    Calculates a best-fit convex n-gon bounding box by sampling maximum pixel
+    extents across evenly distributed angular sectors around the centroid.
+    """
+    if not all_relative_pixels:
+        return []
+        
+    # Find center of gravity / centroid of the pixel footprint
+    cx = sum(p[0] for p in all_relative_pixels) / len(all_relative_pixels)
+    cy = sum(p[1] for p in all_relative_pixels) / len(all_relative_pixels)
+    
+    # Track maximum distance in each of the n angular sectors
+    max_distances = [0.0] * num_vertices
+    best_pixels = [(cx, cy)] * num_vertices
+    
+    sector_angle = (2 * math.pi) / num_vertices
+    
+    for px, py in all_relative_pixels:
+        dx = px - cx
+        dy = py - cy
+        dist = math.hypot(dx, dy)
+        if dist == 0:
+            continue
+            
+        # Get angle in range [0, 2*pi]
+        angle = math.atan2(dy, dx)
+        if angle < 0:
+            angle += 2 * math.pi
+            
+        # Determine which sector this pixel belongs to
+        sector_idx = int(angle / sector_angle) % num_vertices
+        
+        # Keep the furthest pixel in this sector to ensure outer boundary coverage
+        if dist > max_distances[sector_idx]:
+            max_distances[sector_idx] = dist
+            best_pixels[sector_idx] = (px, py)
+            
+    # Flatten the collected vertices into an array configuration [x1, y1, x2, y2, ...]
+    poly_params = []
+    for px, py in best_pixels:
+        poly_params.append(int(round(px)))
+        poly_params.append(int(round(py)))
+        
+    return poly_params
+
+def calculate_best_fit_bbox(image_path, num_frames, frame_width, include_flipped=False, target_frame=None):
     if not os.path.exists(image_path):
         raise FileNotFoundError(f"Could not find the image at {image_path}")
         
@@ -22,6 +68,10 @@ def calculate_best_fit_bbox(image_path, num_frames, frame_width, include_flipped
     all_relative_pixels = []
 
     for f in range(num_frames):
+        # If a specific target frame is requested, skip all other frames
+        if target_frame is not None and f != target_frame:
+            continue
+            
         box = (f * frame_width, 0, (f + 1) * frame_width, height)
         frame = img.crop(box)
         
@@ -33,14 +83,13 @@ def calculate_best_fit_bbox(image_path, num_frames, frame_width, include_flipped
                 if alpha_pixels[x, y] > 0:
                     all_relative_pixels.append((x, y))
                     if include_flipped:
-                        # Include the mirror position relative to the individual frame width
                         all_relative_pixels.append((frame_width - 1 - x, y))
 
     if not all_relative_pixels:
-        print("No non-transparent pixels found in the spritesheet.")
-        return "rectangle", [0, 0, frame_width, height]
+        print("No non-transparent pixels found in the spritesheet scope.")
+        return "rectangle", [0, 0, frame_width, height], all_relative_pixels
 
-    # Calculate bounding envelope from the full pixel list
+    # Calculate bounding envelope
     min_x = min(p[0] for p in all_relative_pixels)
     max_x = max(p[0] for p in all_relative_pixels)
     min_y = min(p[1] for p in all_relative_pixels)
@@ -67,19 +116,19 @@ def calculate_best_fit_bbox(image_path, num_frames, frame_width, include_flipped
     circle_area = math.pi * (circle_r ** 2)
 
     if rect_area <= circle_area:
-        return "rectangle", [int(rect_x), int(rect_y), int(rect_w), int(rect_h)]
+        return "rectangle", [int(rect_x), int(rect_y), int(rect_w), int(rect_h)], all_relative_pixels
     else:
-        return "circle", [int(round(center_x)), int(round(center_y)), int(circle_r)]
+        return "circle", [int(round(center_x)), int(round(center_y)), int(circle_r)], all_relative_pixels
 
 
 class InteractiveBBoxEditor:
-    def __init__(self, image_path, num_frames, frame_width, initial_type, initial_params, output_path, start_flipped=False):
+    def __init__(self, image_path, num_frames, frame_width, initial_type, initial_params, output_path, start_flipped=False, initial_superimpose=False, initial_poly_n=None):
         self.image_path = image_path
         self.num_frames = num_frames
         self.frame_width = frame_width
         self.output_path = output_path
+        self.initial_poly_n = initial_poly_n
         
-        # Load and process individual frames
         img = Image.open(image_path).convert("RGBA")
         self.frame_height = img.height
         
@@ -89,23 +138,19 @@ class InteractiveBBoxEditor:
             box = (f * frame_width, 0, (f + 1) * frame_width, self.frame_height)
             cropped = img.crop(box)
             self.frames.append(cropped)
-            # Pre-calculate horizontally mirrored variants
             self.flipped_frames.append(cropped.transpose(Image.FLIP_LEFT_RIGHT))
             
-        # Create the superimposed frames (normal & flipped)
         self.superimposed_frame = Image.new("RGBA", (frame_width, self.frame_height), (0, 0, 0, 0))
         for f in self.frames:
             self.superimposed_frame = Image.alpha_composite(self.superimposed_frame, f)
             
         self.superimposed_flipped_frame = self.superimposed_frame.transpose(Image.FLIP_LEFT_RIGHT)
             
-        # State variables
         self.current_frame_index = 0  
         self.bbox_type = initial_type
         self.polygon_points = []
         self.zoom_factor = 4 
         
-        # Parse initial parameters
         self.rect_x, self.rect_y, self.rect_w, self.rect_h = 0, 0, frame_width, self.frame_height
         self.circle_x, self.circle_y, self.circle_r = int(frame_width/2), int(self.frame_height/2), int(frame_width/4)
         
@@ -113,17 +158,16 @@ class InteractiveBBoxEditor:
             self.rect_x, self.rect_y, self.rect_w, self.rect_h = initial_params
         elif initial_type == "circle":
             self.circle_x, self.circle_y, self.circle_r = initial_params
+        elif initial_type == "polygon":
+            self.polygon_points = initial_params
 
-        # Build GUI Window
         self.root = tk.Tk()
         self.root.title("Vavvalpennu BBox Editor")
         
-        # Enable Window Resizing and Expansion
         self.root.resizable(True, True)
         self.root.columnconfigure(1, weight=1)
         self.root.rowconfigure(0, weight=1)
         
-        # Main Layout Frame Splitting using Grids
         control_frame = ttk.Frame(self.root, padding=10)
         control_frame.grid(row=0, column=0, sticky="ns")
         
@@ -132,7 +176,6 @@ class InteractiveBBoxEditor:
         canvas_container.columnconfigure(0, weight=1)
         canvas_container.rowconfigure(0, weight=1)
         
-        # BBox Type Panel 
         ttk.Label(control_frame, text="Bounding Box Type:", font=('Helvetica', 10, 'bold')).pack(anchor=tk.W, pady=5)
         self.type_var = tk.StringVar(value=self.bbox_type)
         for t in ["rectangle", "circle", "polygon"]:
@@ -140,7 +183,6 @@ class InteractiveBBoxEditor:
             
         ttk.Separator(control_frame, orient='horizontal').pack(fill='x', pady=10)
         
-        # Frame Navigation Controls
         ttk.Label(control_frame, text="Frame Controls:", font=('Helvetica', 10, 'bold')).pack(anchor=tk.W, pady=5)
         nav_button_frame = ttk.Frame(control_frame)
         nav_button_frame.pack(fill=tk.X, pady=2)
@@ -154,12 +196,11 @@ class InteractiveBBoxEditor:
         self.btn_next = ttk.Button(nav_button_frame, text="▶", width=4, command=self.next_frame)
         self.btn_next.pack(side=tk.LEFT, padx=2)
         
-        self.superimpose_var = tk.BooleanVar(value=False)
+        self.superimpose_var = tk.BooleanVar(value=initial_superimpose)
         self.chk_superimpose = ttk.Checkbutton(control_frame, text="Superimpose All Frames",
                                                variable=self.superimpose_var, command=self.toggle_superimpose)
         self.chk_superimpose.pack(anchor=tk.W, pady=5, padx=5)
         
-        # Horizontally Flipped Toggle Functionality
         self.flip_var = tk.BooleanVar(value=start_flipped)
         self.chk_flip = ttk.Checkbutton(control_frame, text="Include Horizontally Flipped",
                                         variable=self.flip_var, command=self.render_preview)
@@ -167,7 +208,6 @@ class InteractiveBBoxEditor:
         
         ttk.Separator(control_frame, orient='horizontal').pack(fill='x', pady=10)
 
-        # Canvas Zoom Scale Dropdown
         ttk.Label(control_frame, text="Display Zoom Scaling:", font=('Helvetica', 10, 'bold')).pack(anchor=tk.W, pady=5)
         self.zoom_var = tk.StringVar(value="4x")
         self.zoom_combo = ttk.Combobox(control_frame, textvariable=self.zoom_var, values=["1x", "2x", "4x", "6x", "8x", "10x"], state="readonly", width=10)
@@ -176,7 +216,6 @@ class InteractiveBBoxEditor:
         
         ttk.Separator(control_frame, orient='horizontal').pack(fill='x', pady=10)
         
-        # Parameters Configuration Panel
         self.param_frame = ttk.LabelFrame(control_frame, text=" Parameters (Original Pixels) ", padding=10)
         self.param_frame.pack(fill=tk.X, pady=5)
         self.entries = {}
@@ -186,7 +225,6 @@ class InteractiveBBoxEditor:
         
         ttk.Button(control_frame, text="Save & Close", command=self.save_and_exit).pack(fill=tk.X, side=tk.BOTTOM, pady=5)
         
-        # Interactive Canvas Viewport and Scrollbars
         xscroll = ttk.Scrollbar(canvas_container, orient=tk.HORIZONTAL)
         xscroll.grid(row=1, column=0, sticky="ew")
         yscroll = ttk.Scrollbar(canvas_container, orient=tk.VERTICAL)
@@ -198,11 +236,8 @@ class InteractiveBBoxEditor:
         xscroll.config(command=self.canvas.xview)
         yscroll.config(command=self.canvas.yview)
         
-        # Bind Canvas Mouse Actions
         self.canvas.bind("<Button-1>", self.on_canvas_click)
         self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
-        
-        # Adjust scrolling region when layout configuration changes
         self.canvas.bind("<Configure>", lambda event: self.resize_canvas_dimensions())
 
         self.update_frame_label()
@@ -266,7 +301,7 @@ class InteractiveBBoxEditor:
         else: # Polygon
             self.instruction_label.config(text="💡 Left-Click to drop sequential points.\nRight-Click anywhere to reset points.")
             fields = []
-            ttk.Label(self.param_frame, text=f"Points Added: {len(self.polygon_points)}").pack()
+            ttk.Label(self.param_frame, text=f"Points Added: {len(self.polygon_points) // 2}").pack()
             self.root.bind("<Button-3>", self.clear_polygon)
             
         for label_text, val in fields:
@@ -295,7 +330,6 @@ class InteractiveBBoxEditor:
             pass
 
     def get_unscaled_coordinates(self, event):
-        # Maps coordinates back down to native resolution
         canvas_x = self.canvas.canvasx(event.x)
         canvas_y = self.canvas.canvasy(event.y)
         
@@ -337,16 +371,13 @@ class InteractiveBBoxEditor:
         self.render_preview()
 
     def render_preview(self):
-        # Determine the correct configuration blend
         if self.superimpose_var.get():
             base_frame = self.superimposed_frame.copy()
             if self.flip_var.get():
-                # Blend superimposed normal sprites with superimposed flipped sprites
                 base_frame = Image.alpha_composite(base_frame, self.superimposed_flipped_frame)
         else:
             base_frame = self.frames[self.current_frame_index].copy()
             if self.flip_var.get():
-                # Blend individual frame with its corresponding flipped frame
                 base_frame = Image.alpha_composite(base_frame, self.flipped_frames[self.current_frame_index])
             
         draw = ImageDraw.Draw(base_frame)
@@ -362,8 +393,6 @@ class InteractiveBBoxEditor:
             
         scaled_w = self.frame_width * self.zoom_factor
         scaled_h = self.frame_height * self.zoom_factor
-        
-        # Pixels remain sharp (nearest-neighbor) regardless of frame size
         zoomed_preview = base_frame.resize((scaled_w, scaled_h), Image.NEAREST)
             
         self.tk_img = ImageTk.PhotoImage(zoomed_preview)
@@ -375,28 +404,43 @@ class InteractiveBBoxEditor:
             final_params = [int(self.rect_x), int(self.rect_y), int(self.rect_w), int(self.rect_h)]
         elif self.bbox_type == "circle":
             final_params = [int(self.circle_x), int(self.circle_y), int(self.circle_r)]
-        else: # Polygon
+        else:
             if len(self.polygon_points) < 6:
                 messagebox.showerror("Error", "A polygon requires at least 3 points (6 coordinate positions).")
                 return
             final_params = [int(p) for p in self.polygon_points]
+            export_polygon_sample_image(self.superimposed_frame, self.superimposed_flipped_frame, final_params, self.flip_var.get())
 
         with open(self.output_path, "w") as f:
             f.write(f"bbox_type={self.bbox_type}\n")
+            if self.bbox_type == "polygon" and self.initial_poly_n is not None:
+                f.write(f"bbox_poly_n={self.initial_poly_n}\n")
             f.write(f"bbox_params={final_params}\n")
             
         print(f"Successfully saved configuration: {self.output_path}")
-        print(f"Result: bbox_type={self.bbox_type} | bbox_params={final_params}")
         self.root.destroy()
 
     def run(self):
         self.root.mainloop()
 
 
+def export_polygon_sample_image(img_base, flipped_base, points, include_flipped):
+    """Generates sample.png showing the n-gon bounding overlay."""
+    sample_img = img_base.copy()
+    if include_flipped and flipped_base is not None:
+        sample_img = Image.alpha_composite(sample_img, flipped_base)
+        
+    draw = ImageDraw.Draw(sample_img)
+    pts_pairs = [(points[i], points[i+1]) for i in range(0, len(points), 2)]
+    draw.polygon(pts_pairs, outline=(0, 255, 0, 255), width=1)
+    
+    sample_img.save("sample.png")
+    print("Exported validation visualization layer to: sample.png")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate a best-fit bounding box or circle configuration from an RGBA PNG spritesheet strip.")
     
-    # Arguments
     parser.add_argument("image", type=str, help="Path to the horizontal spritesheet PNG image file")
     parser.add_argument("count", type=int, help="Number of sprite frames inside the sheet")
     parser.add_argument("width", type=int, help="Width of an individual sprite frame in pixels")
@@ -406,6 +450,10 @@ def main():
                         help="Launch visual window workspace to manually adjust parameters or draw polygons")
     parser.add_argument("-f", "--flipped", action="store_true",
                         help="Include horizontally flipped versions of frames when auto-calculating best fit boundaries")
+    parser.add_argument("--poly", type=int, default=None, metavar="N",
+                        help="Auto-calculate a best fit convex polygon bounding box with exactly N vertices")
+    parser.add_argument("--poly-frame", type=int, default=None, metavar="INDEX",
+                        help="Specify a 0-based frame index to calculate the polygon against a single frame instead of superimposing all")
 
     args = parser.parse_args()
 
@@ -415,22 +463,56 @@ def main():
     else:
         output_filename = args.output
 
+    if args.poly_frame is not None and (args.poly_frame < 0 or args.poly_frame >= args.count):
+        print(f"Error: --poly-frame must be between 0 and {args.count - 1}")
+        return
+
     try:
-        result = calculate_best_fit_bbox(args.image, args.count, args.width, include_flipped=args.flipped)
-        if result:
-            bbox_type, bbox_params = result
+        if args.poly is not None:
+            if args.poly < 3:
+                raise ValueError("A polygon bounding configuration requires --poly to be 3 or higher.")
+                
+            _, _, all_relative_pixels = calculate_best_fit_bbox(
+                args.image, args.count, args.width, include_flipped=args.flipped, target_frame=args.poly_frame
+            )
+            bbox_type = "polygon"
+            bbox_params = calculate_best_fit_polygon(all_relative_pixels, args.poly)
+        else:
+            bbox_type, bbox_params, all_relative_pixels = calculate_best_fit_bbox(
+                args.image, args.count, args.width, include_flipped=args.flipped
+            )
             
-            if args.interactive:
-                print("Launching interactive editor workspace...")
-                editor = InteractiveBBoxEditor(args.image, args.count, args.width, bbox_type, bbox_params, output_filename, start_flipped=args.flipped)
-                editor.run()
-            else:
-                with open(output_filename, "w") as f:
-                    f.write(f"bbox_type={bbox_type}\n")
-                    f.write(f"bbox_params={bbox_params}\n")
+        if args.interactive:
+            print("Launching interactive editor workspace...")
+            use_superimpose_default = (args.poly is not None and args.poly_frame is None)
+            editor = InteractiveBBoxEditor(args.image, args.count, args.width, bbox_type, bbox_params, output_filename, start_flipped=args.flipped, initial_superimpose=use_superimpose_default, initial_poly_n=args.poly)
+            editor.run()
+        else:
+            with open(output_filename, "w") as f:
+                f.write(f"bbox_type={bbox_type}\n")
+                if bbox_type == "polygon" and args.poly is not None:
+                    f.write(f"bbox_poly_n={args.poly}\n")
+                f.write(f"bbox_params={bbox_params}\n")
+                
+            print(f"Successfully evaluated footprint. Configuration written to: {output_filename}")
+            print(f"Result: bbox_type={bbox_type} | bbox_params={bbox_params}")
+            
+            if bbox_type == "polygon":
+                img = Image.open(args.image).convert("RGBA")
+                frame_height = img.height
+                
+                if args.poly_frame is not None:
+                    box = (args.poly_frame * args.width, 0, (args.poly_frame + 1) * args.width, frame_height)
+                    base_view = img.crop(box)
+                    flipped_view = base_view.transpose(Image.FLIP_LEFT_RIGHT) if args.flipped else None
+                else:
+                    base_view = Image.new("RGBA", (args.width, frame_height), (0, 0, 0, 0))
+                    for f in range(args.count):
+                        box = (f * args.width, 0, (f + 1) * args.width, frame_height)
+                        base_view = Image.alpha_composite(base_view, img.crop(box))
+                    flipped_view = base_view.transpose(Image.FLIP_LEFT_RIGHT) if args.flipped else None
                     
-                print(f"Successfully evaluated footprint. Configuration written to: {output_filename}")
-                print(f"Result: bbox_type={bbox_type} | bbox_params={bbox_params}")
+                export_polygon_sample_image(base_view, flipped_view, bbox_params, args.flipped)
             
     except Exception as e:
         print(f"Error processing parameters: {e}")

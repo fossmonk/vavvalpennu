@@ -13,6 +13,7 @@ u32 vp_rand(void) {
     return (u32)(gseed / 65536) % 32768;
 }
 
+// includes min, doesn't include max
 u32 vp_rand_lim(unsigned int min, unsigned int max) {
     u32 res = min;
     if(min != max) {

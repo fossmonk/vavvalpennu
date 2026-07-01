@@ -12,6 +12,7 @@
 #include <hud.h>
 #include <boss.h>
 #include <input.h>
+#include <puzzle.h>
 
 // SOME CONSTANTS
 
@@ -61,6 +62,8 @@ void game_init(RenderTexture2D *canvas) {
     game_load_assets();
     // initialize menu
     menu_init();
+    // initialize puzzle
+    puzzle_init();
     // initialize player
     player_init(&g->p);
     // init all bosses

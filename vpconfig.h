@@ -28,6 +28,7 @@
 // Asset files
 #define MAIN_FONT      "assets/fonts/StackSansTextB.ttf"
 #define MENU_FONT      "assets/fonts/AladinR.ttf"
+#define PUZZLE_FONT    "assets/fonts/Celtica-BoldOblique.ttf"
 #define BACKGROUND     "assets/backdrop/keralabackdrop.png"
 #define SPLASH_BG      "assets/backdrop/splash.png"
 #define PAUSEMENU_BG   "assets/backdrop/pausemenu.png"
@@ -72,6 +73,8 @@
 // Textures
 #define ORB_TEXTURE      "assets/textures/orb.png"
 #define ORB_BBOX         "assets/textures/orb.bbox"
+#define SCROLL_TEXTURE   "assets/textures/scroll.png"
+#define SCROLL_BBOX      "assets/textures/scroll.bbox"
 #define SKBALL_TEXTURE   "assets/textures/skball.png"
 #define PLAYER_HBAR_ICON "assets/textures/vp_head.png"
 #define VY_HBAR_ICON     "assets/textures/vy_head.png"

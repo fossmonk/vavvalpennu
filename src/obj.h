@@ -18,9 +18,9 @@ typedef struct {
     Vector2 pos;
     Vector2 vel;
     Vector2 size;
-    bool is_active;
     anim_t *curr_anim;
     hdir_t hdir;
+    bool is_active;
 } obj_t;
 
 void obj_global_set_cam2d(Camera2D *camref);

@@ -22,22 +22,20 @@
 
 typedef struct {
     obj_t obj;
-    int health;
-    int max_health;
-    hbar_t hbar;
-    unsigned char actionmask;
-    bool in_hurt_anim;
-
-    // weapons
-    skball_t skballs[MAX_SKBALLS];
-
     // animations
     anim_t anim_laugh;
     anim_t anim_hurt;
-
     // audio
     Sound hurt;
     Music laugh;
+    // weapons
+    skball_t skballs[MAX_SKBALLS];
+    // misc
+    hbar_t hbar;
+    int health;
+    int max_health;
+    unsigned char actionmask;
+    bool in_hurt_anim;
 } kchath_t;
 
 

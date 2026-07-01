@@ -35,17 +35,6 @@
 
 typedef struct {
     obj_t obj;
-    int health;
-    int max_health;
-    int k_count;
-    int score;
-    vplevel curr_level;
-    hbar_t hbar;
-    Texture2D hbar_icon;
-    Vector2 hbar_iconpos;
-    unsigned char actionmask;
-    bool in_hurt_anim;
-
     // animations
     anim_t anim_run_r;
     anim_t anim_idle_r;
@@ -54,13 +43,23 @@ typedef struct {
     anim_t anim_flash;
     anim_t anim_shock;
     anim_t anim_wlash;
-
     // sounds
     Sound whip;
     Sound jump;
     Sound slurp;
     Sound batr_whoosh;
     Sound hurt;
+    // misc
+    vplevel curr_level;
+    hbar_t hbar;
+    Texture2D hbar_icon;
+    Vector2 hbar_iconpos;
+    int health;
+    int max_health;
+    int k_count;
+    int score;
+    unsigned char actionmask;
+    bool in_hurt_anim;
 } player_t;
 
 void player_init(player_t *p);

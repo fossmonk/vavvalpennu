@@ -82,10 +82,14 @@ void game_init(RenderTexture2D *canvas) {
     // AANAMARUTHAS
     aanam_init_all(g->aanas);
     // initialize generic game object stuff
+    g->t_ptr = 0;
+    memset(g->typebuffer, 0, TYPEBUFFER_SIZE);
     g->is_gameover = false;
     g->is_game_wclosed = false;
     g->is_game_paused = false;
     g->is_boss_active = false;
+    g->is_type_mode = false;
+    g->is_type_buffer_done = false;
     g->cam.rotation = 0;
     g->cam.zoom = 1;
     g->cam.target = obj_cxy(&g->p.obj);
@@ -98,10 +102,31 @@ void _game_update(float dt) {
     if(dt > 0.1f)dt = 0.1f;
     // update bgmusic
     UpdateMusicStream(g->bgmusic);
+    // If game is in type mode, mostly because of puzzles,
+    // our only job is to get the keypressed and put it into a buffer
+    if(g->is_type_mode) {
+        int key = GetKeyPressed();
+        while(key > 0) {
+            // only space and numbers allowed
+            // using key type is not correct, but since raylib numbers
+            // match with unicode this is a convenience to detect enter key
+            // as well.
+            if(key == KEY_SPACE || (key >= KEY_A && key <= KEY_Z)) {
+                g->typebuffer[g->t_ptr] = key;
+                g->t_ptr = (g->t_ptr + 1) % TYPEBUFFER_SIZE;
+            } else if(key == KEY_ENTER) {
+                g->is_type_buffer_done = true;
+            }
+            key = GetKeyPressed();
+        }
+    }
     // PLAYER
     // handle inputs and execute player actions
     // handle inputs only if player is not hurting
-    if(!player_is_dying(&g->p) && !player_is_hurting(&g->p)) {
+    bool player_move_conditions = !player_is_dying(&g->p) &&
+        !player_is_hurting(&g->p) && !g->is_type_mode;
+    
+    if(player_move_conditions) {
         if(input_iskeydown(KEY_D)) {
             player_activate_move_r(&g->p, dt);
         }
@@ -163,16 +188,20 @@ void _game_update(float dt) {
     ffly_update_all(g->ffly, dt);
 
     // aanams: activate empty slots
-    aanam_activate_all(g->aanas, g->is_boss_active, dt);
+    // if game is in type mode, do not init new aanams
+    if(!g->is_type_mode) {
+        aanam_activate_all(g->aanas, g->is_boss_active, dt);
+    }
 
-    // aanams: update active ones
+    // aanams: update active ones anyway
     aanam_update_all(g->aanas, dt);
 
     //////////////////////////////
     ////////// BOSS //////////////
     //////////////////////////////
-
-    if(player_can_level_up(&g->p) && !g->is_boss_active) {
+    bool boss_activate_conditions = player_can_level_up(&g->p) && 
+        !g->is_boss_active && !g->is_type_mode;
+    if(boss_activate_conditions) {
         boss_set(g->p.curr_level);
         boss_activate();
         g->is_boss_active = true;

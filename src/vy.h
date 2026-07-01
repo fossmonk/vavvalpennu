@@ -22,25 +22,24 @@
 
 typedef struct {
     obj_t obj;
-    int health;
-    int max_health;
-    hbar_t hbar;
-    Texture2D hbar_icon;
-    Vector2 hbar_iconpos;
-    unsigned char actionmask;
-    bool is_orbpos;
-    bool in_hurt_anim;
-
-    // weapons
-    orb_t orbs[MAX_ORBS];
-
     // animations
     anim_t anim_vy_rise;
     anim_t anim_vy_shock;
-
     // audio
     Sound hurt;
     Music laugh;
+    // weapons
+    orb_t orbs[MAX_ORBS];
+
+    // misc
+    hbar_t hbar;
+    Texture2D hbar_icon;
+    Vector2 hbar_iconpos;
+    int health;
+    int max_health;
+    unsigned char actionmask;
+    bool is_orbpos;
+    bool in_hurt_anim;
 } vy_t;
 
 void vy_init(vy_t *vy);

@@ -4,14 +4,14 @@
 #define _HBAR_H_
 
 typedef struct {
-    int max_inner_w;
-    int spacing;
     Rectangle outer_rec;
     Rectangle inner_rec;
     Shader shader;
     Texture2D icon;
     Vector2 iconpos;
     Color c;
+    int max_inner_w;
+    int spacing;
     int max_health;
 } hbar_t;
 

@@ -13,6 +13,7 @@
 #include <boss.h>
 #include <input.h>
 #include <puzzle.h>
+#include <textengine.h>
 
 // SOME CONSTANTS
 
@@ -102,6 +103,9 @@ void _game_update(float dt) {
     if(dt > 0.1f)dt = 0.1f;
     // update bgmusic
     UpdateMusicStream(g->bgmusic);
+    if(IsKeyPressed(KEY_CAPS_LOCK)) {
+        g->is_type_mode = true;
+    }
     // If game is in type mode, mostly because of puzzles,
     // our only job is to get the keypressed and put it into a buffer
     if(g->is_type_mode) {
@@ -116,8 +120,16 @@ void _game_update(float dt) {
                 g->t_ptr = (g->t_ptr + 1) % TYPEBUFFER_SIZE;
             } else if(key == KEY_ENTER) {
                 g->is_type_buffer_done = true;
+                g->is_type_mode = false;
+                printf("%s\n", g->typebuffer);
             }
             key = GetKeyPressed();
+        }
+        if(IsKeyPressed(KEY_BACKSPACE))
+        {
+            g->t_ptr--;
+            if (g->t_ptr < 0) g->t_ptr = 0;
+            g->typebuffer[g->t_ptr] = '\0';
         }
     }
     // PLAYER
@@ -488,6 +500,19 @@ void game_start_main_loop(void) {
             // Draw EPECHI
             // TODO
             EndMode2D();
+
+            // TEST
+            if(g->is_type_mode) {
+                DrawRectangleLines(300, 10, 500, 40, BLACK);
+                DrawRectangle(300+2, 10+2, 500-4, 40-4, LIGHTGRAY);
+                Rectangle r = {300+2, 10+2, 500-4, 40-4};
+                if(g->is_type_buffer_done) {
+                    printf("%s\n", g->typebuffer);
+                    memset(g->typebuffer, 0, TYPEBUFFER_SIZE);
+                } else {
+                    te_draw_inside_rect(g->typebuffer, g->game_font, 30, r);
+                }
+            }
             
             // Draw everything that doesn't move with camera
             orb_draw_all(g->levelbosses->vy.orbs);
@@ -498,7 +523,7 @@ void game_start_main_loop(void) {
             if(g->levelbosses->kch.obj.is_active) {
                 hbar_draw(&g->levelbosses->kch.hbar);
             }
-            hud_draw(g->ktex, &g->p);
+            hud_draw(&g->p);
 
             EndTextureMode();
             game_draw_canvas_to_screen();

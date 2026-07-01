@@ -4,6 +4,7 @@
 #ifndef _HUD_H_
 #define _HUD_H_
 
-void hud_draw(Texture2D ktex, player_t *p);
+void hud_init(void);
+void hud_draw(player_t *p);
 
 #endif

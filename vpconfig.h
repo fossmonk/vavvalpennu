@@ -23,10 +23,11 @@
 
 // Max Healths
 #define PLAYER_MAX_HEALTH_INITIAL (100)
-#define VY_MAX_HEALTH             (50)
+#define VY_MAX_HEALTH             (250)
 
 // Asset files
-#define MAIN_FONT      "assets/fonts/StackSansTextB.ttf"
+#define MAIN_FONT      "assets/fonts/Almendra-Bold.ttf"
+#define HUD_FONT       "assets/fonts/Almendra-Bold.ttf"
 #define MENU_FONT      "assets/fonts/AladinR.ttf"
 #define PUZZLE_FONT    "assets/fonts/Celtica-BoldOblique.ttf"
 #define BACKGROUND     "assets/backdrop/keralabackdrop.png"
@@ -75,6 +76,10 @@
 #define ORB_BBOX         "assets/textures/orb.bbox"
 #define SCROLL_TEXTURE   "assets/textures/scroll.png"
 #define SCROLL_BBOX      "assets/textures/scroll.bbox"
+#define K_HUD_TEXTURE    "assets/textures/karikku_hud.png"
+#define K_HUD_BBOX       "assets/textures/karikku_hud.bbox"
+#define A_HUD_TEXTURE    "assets/textures/artifact_hud.png"
+#define A_HUD_BBOX       "assets/textures/artifact_hud.bbox"
 #define SKBALL_TEXTURE   "assets/textures/skball.png"
 #define PLAYER_HBAR_ICON "assets/textures/vp_head.png"
 #define VY_HBAR_ICON     "assets/textures/vy_head.png"

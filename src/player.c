@@ -7,6 +7,7 @@
 #include <batr.h>
 #include <obj.h>
 #include <levels.h>
+#include <hud.h>
 
 #define PLAYER_VEL_X_DECAY     (-12)
 #define PLAYER_VEL_Y_DECAY     (-2)
@@ -114,6 +115,7 @@ void player_init(player_t *p) {
     p->health = p->max_health;
     p->actionmask = 0;
     p->k_count = 0;
+    p->a_count = 0;
     p->score = 0;
     p->curr_level = 0;
 
@@ -121,6 +123,8 @@ void player_init(player_t *p) {
     hbar_init(&p->hbar, 
         P_HBAR_POS, P_HBAR_MAXW, P_HBAR_HEIGHT, P_HBAR_SPACING,
         PLAYER_HBAR_ICON, P_HBAR_POS, RED, p->max_health);
+    // init player hud
+    hud_init();
 }
 
 void player_activate_move_r(player_t *p, float dt) {

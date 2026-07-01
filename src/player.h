@@ -57,6 +57,7 @@ typedef struct {
     int health;
     int max_health;
     int k_count;
+    int a_count;
     int score;
     unsigned char actionmask;
     bool in_hurt_anim;

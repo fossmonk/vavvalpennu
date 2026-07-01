@@ -14,6 +14,7 @@ typedef struct {
 } anim_t;
 
 void anim_advance(anim_t *anim, float dt);
+int anim_get_curr_frame_idx(anim_t *anim);
 bool anim_is_lastframe(anim_t *anim);
 void anim_reset(anim_t *anim);
 

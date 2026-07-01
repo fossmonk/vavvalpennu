@@ -302,7 +302,12 @@ void _game_update(float dt) {
         bool col_conds = col_check_bbox(&g->p.obj, COORDS_WORLD, &aana->obj, COORDS_WORLD);
         bool check = aana_conds && player_conds && col_conds;
         if(check) {
-            if(g->p.obj.curr_anim == &g->p.anim_wlash) {
+            bool anim_cond = g->p.obj.curr_anim == &g->p.anim_wlash;
+            int curr_f_idx = anim_get_curr_frame_idx(g->p.obj.curr_anim);
+            bool frame_cond = (curr_f_idx >= 2 && curr_f_idx <= 7);
+            bool pos_cond = ((g->p.obj.hdir == RIGHT) && (aana->obj.pos.x > g->p.obj.pos.x)) ||
+                            ((g->p.obj.hdir == LEFT) && (aana->obj.pos.x < g->p.obj.pos.x));
+            if(anim_cond && frame_cond && pos_cond) {
                 // hit whip on aanam
                 aana->is_dying = true;
                 g->p.score += 50;
@@ -330,6 +335,7 @@ void _game_update(float dt) {
                 }
             } else {
                 aana->obj.curr_anim = &aana->anim_death;
+                aana->obj.curr_anim->curr_frame.x = 0;
             }
         }
     }

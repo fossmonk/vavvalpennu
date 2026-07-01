@@ -184,8 +184,10 @@ void player_activate_whiplash(player_t *p, Vector2 mouse_pos) {
     p->obj.curr_anim = &p->anim_wlash;
     float psx = obj_w2s_pos(p->obj.pos).x;
     if(mouse_pos.x > psx) {
+        p->obj.hdir = RIGHT;
         anim_hflipr(p->obj.curr_anim);
     } else {
+        p->obj.hdir = LEFT;
         anim_hflipl(p->obj.curr_anim);
     }
     // reset current animation to start

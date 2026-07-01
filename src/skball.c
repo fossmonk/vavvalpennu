@@ -6,6 +6,9 @@
 #include <skball.h>
 #include <shader.h>
 
+static anim_t dummy_anim;
+static anim_asset_t dummy_anim_asset;
+
 static int id = 1;
 int get_id(void) {
     int k = id;
@@ -21,6 +24,12 @@ void skball_init(skball_t *skball) {
     skball->obj.is_active = false;
     skball->id = get_id();
     skball->obj.size = (Vector2){skball->skball_tex.width, skball->skball_tex.height};
+
+    // setup a dummy animation for bbox
+    dummy_anim_asset.texture = skball->skball_tex;
+    dummy_anim_asset.bbox = bbox_parse(SKBALL_BBOX);
+    dummy_anim.asset = &dummy_anim_asset;
+    skball->obj.curr_anim = &dummy_anim;
 }
 
 void skball_draw(skball_t *skball) {

@@ -294,10 +294,10 @@ void player_update(player_t *p, bool boss_active, float dt) {
 
 bool player_can_level_up(player_t *p) {
     static const int l_up_scores[] = {
-        [VP_L0] = 500,
-        [VP_L1] = 1000,
-        [VP_L2] = 1500,
-        [VP_L3] = 2000
+        [VP_L0] = 1000,
+        [VP_L1] = 2500,
+        [VP_L2] = 4000,
+        [VP_L3] = 5500
     };
 
     return (p->score > l_up_scores[p->curr_level]);

@@ -55,6 +55,8 @@ void kchath_activate(kchath_t *kch) {
     kch->obj.is_active = true;
     kch->obj.pos = obj_s2w_pos(KCH_INIT_POS);
     kch->obj.vel = (Vector2){0, 0};
+    kch->health = kch->max_health;
+    kch->actionmask = 0;
     PlayMusicStream(kch->laugh);
 }
 

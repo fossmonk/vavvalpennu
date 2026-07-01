@@ -18,7 +18,9 @@
 // SOME CONSTANTS
 
 #define VY_BATR_HEALTH_DECR    (1)
+#define KCH_BATR_HEALTH_DECR   (5)
 #define PLAYER_ORB_HEALTH_DECR (20)
+#define PLAYER_SKBALL_HEALTH_DECR (5)
 
 // SOME MACRO FUNCTIONS
 #ifndef _max
@@ -220,12 +222,12 @@ void _game_update(float dt) {
     }
 
     // active check happens inside update call
-    boss_update(dt);
-
-    if(boss_is_dead()) {
+    if(g->is_boss_active && boss_is_dead()) {
         g->is_boss_active = false;
         g->p.curr_level++;
     }
+    
+    boss_update(dt);
 
     /////////////////////////////////////////////////
     //////////// COLLISION DETECTION ////////////////
@@ -254,13 +256,26 @@ void _game_update(float dt) {
     for(int i = 0; i < MAX_BATRS; ++i) {
         batr_t *b = &g->batrs[i];
         bool b_conds = b->obj.is_active;
-        bool vy_conds = !vy_is_dying(&g->levelbosses->vy);
+        bool vy_conds = g->levelbosses->vy.obj.is_active && !vy_is_dying(&g->levelbosses->vy);
         bool col_conds = col_check_bbox(&g->levelbosses->vy.obj, COORDS_WORLD, &b->obj, COORDS_WORLD);
         bool check = b_conds && vy_conds && col_conds;
         if(check) {
             b->obj.is_active = false;
             g->levelbosses->vy.health -= VY_BATR_HEALTH_DECR;
             hbar_update(&g->levelbosses->vy.hbar, g->levelbosses->vy.health);
+        }
+    }
+    // BATARANG WITH KCHATHAN
+    for(int i = 0; i < MAX_BATRS; ++i) {
+        batr_t *b = &g->batrs[i];
+        bool b_conds = b->obj.is_active;
+        bool kch_conds = g->levelbosses->kch.obj.is_active && !kch_is_dying(&g->levelbosses->kch);
+        bool col_conds = col_check_bbox(&g->levelbosses->kch.obj, COORDS_WORLD, &b->obj, COORDS_WORLD);
+        bool check = b_conds && kch_conds && col_conds;
+        if(check) {
+            b->obj.is_active = false;
+            g->levelbosses->kch.health -= KCH_BATR_HEALTH_DECR;
+            hbar_update(&g->levelbosses->kch.hbar, g->levelbosses->kch.health);
         }
     }
     // ORB WITH PLAYER
@@ -274,6 +289,20 @@ void _game_update(float dt) {
             orb->obj.is_active = false;
             player_set_hurt_shock(&g->p);
             g->p.health -= PLAYER_ORB_HEALTH_DECR;
+            hbar_update(&g->p.hbar, g->p.health);
+        }
+    }
+    // SKBALL WITH PLAYER
+    for(int i = 0; i < MAX_SKBALLS; ++i) {
+        skball_t *skb = &g->levelbosses->kch.skballs[i];
+        bool skb_conds = skb->obj.is_active;
+        bool player_conds = !player_is_dying(&g->p);
+        bool col_conds = col_check_bbox(&g->p.obj, COORDS_WORLD, &skb->obj, COORDS_SCREEN);
+        bool check = skb_conds && player_conds && col_conds;
+        if(check) {
+            skb->obj.is_active = false;
+            player_set_hurt_shock(&g->p);
+            g->p.health -= PLAYER_SKBALL_HEALTH_DECR;
             hbar_update(&g->p.hbar, g->p.health);
         }
     }
@@ -377,6 +406,11 @@ void _game_update(float dt) {
     if(g->levelbosses->vy.health <= 0) {
         g->levelbosses->vy.health = 0;
         g->levelbosses->vy.obj.is_active = 0;
+    }
+
+    if(g->levelbosses->kch.health <= 0) {
+        g->levelbosses->kch.health = 0;
+        g->levelbosses->kch.obj.is_active = false;
     }
 }
 

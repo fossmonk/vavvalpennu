@@ -81,6 +81,7 @@
 #define A_HUD_TEXTURE    "assets/textures/artifact_hud.png"
 #define A_HUD_BBOX       "assets/textures/artifact_hud.bbox"
 #define SKBALL_TEXTURE   "assets/textures/skball.png"
+#define SKBALL_BBOX      "assets/textures/skball.bbox"
 #define PLAYER_HBAR_ICON "assets/textures/vp_head.png"
 #define VY_HBAR_ICON     "assets/textures/vy_head.png"
 #define KARIKKU_ICON     "assets/textures/karikku.png"

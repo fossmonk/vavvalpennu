@@ -11,8 +11,8 @@ static float g_orb_xpos[MAX_ORBS];
 bool xpos_init_done = false;
 int g_orbcount = 0;
 
-anim_t dummy_anim;
-anim_asset_t dummy_anim_asset;
+static anim_t dummy_anim;
+static anim_asset_t dummy_anim_asset;
 
 static void swap(float *a, float *b) {
     float temp = *a; *a = *b; *b = temp;

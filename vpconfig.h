@@ -29,7 +29,7 @@
 #define MAIN_FONT      "assets/fonts/Almendra-Bold.ttf"
 #define HUD_FONT       "assets/fonts/Almendra-Bold.ttf"
 #define MENU_FONT      "assets/fonts/AladinR.ttf"
-#define PUZZLE_FONT    "assets/fonts/Celtica-BoldOblique.ttf"
+#define PUZZLE_FONT    "assets/fonts/DesMalers.ttf"
 #define BACKGROUND     "assets/backdrop/keralabackdrop.png"
 #define SPLASH_BG      "assets/backdrop/splash.png"
 #define PAUSEMENU_BG   "assets/backdrop/pausemenu.png"
@@ -125,6 +125,7 @@
 #define SOUND_C_APPEAR       "assets/audio/crate/appear.mp3"
 #define SOUND_C_BREAK        "assets/audio/crate/break.mp3"
 #define SOUND_A_ACHIEVE      "assets/audio/crate/achieve.mp3"
+#define SOUND_A_WRONG        "assets/audio/crate/wrong.mp3"
 #define SOUND_T_DRINK        "assets/audio/crate/drink.mp3"
 
 // CURSOR

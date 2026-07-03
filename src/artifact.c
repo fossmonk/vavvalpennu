@@ -30,6 +30,7 @@ void artifact_init(artifact_t *artif) {
     artifact_get_texbbox_fname(&tex_fname, &bbox_fname);
     artif->artifact_tex = LoadTexture(tex_fname);
     artif->terminal_y = GAME_GROUND_Y - (artif->artifact_tex.height);
+    artif->gravity = true;
 
     // load dummy animation for collision bbox
     dummy_anim_asset.texture = artif->artifact_tex;
@@ -42,14 +43,16 @@ void artifact_activate_at(artifact_t *artif, Vector2 pos, float dt) {
     artif->obj.is_active = true;
     artif->obj.pos = pos;
     artif->obj.vel = (Vector2){0,0};
-    if(pos.y != GAME_GROUND_Y) {
+    if(pos.y != GAME_GROUND_Y && artif->gravity) {
         artif->obj.vel.y = ACCEL_G * dt;
     }
 }
 
 void artifact_update(artifact_t* artif, float dt) {
     if(artif->obj.is_active) {
-        artif->obj.vel.y += (ACCEL_G * dt);
+        if(artif->gravity) {
+            artif->obj.vel.y += (ACCEL_G * dt);
+        }
         artif->obj.pos.y += (artif->obj.vel.y * dt);
         // clamp if reached ground
         if(artif->obj.pos.y >= artif->terminal_y) {

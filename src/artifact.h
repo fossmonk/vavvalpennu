@@ -9,6 +9,7 @@ typedef struct {
     Texture2D artifact_tex;
     bool is_won;
     float terminal_y;
+    bool gravity;
 } artifact_t;
 
 void artifact_init(artifact_t *artif);

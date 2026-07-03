@@ -22,6 +22,8 @@ Font puzzlefont;
 Vector2 scroll_pos;
 Texture2D scroll_tex;
 Rectangle scroll_write_rect;
+Sound puzzle_solved;
+Sound puzzle_wrong;
 
 static puzzle_t g_puzzles[PUZZLE_COUNT] = {
     {
@@ -56,6 +58,8 @@ void puzzle_init(void) {
     scroll_write_rect = bbox_parse(SCROLL_BBOX).bbox.rect;
     puzzlefont = LoadFontEx(PUZZLE_FONT, 96, NULL, 0);
     SetTextureFilter(puzzlefont.texture, TEXTURE_FILTER_BILINEAR);
+    puzzle_solved = LoadSound(SOUND_A_ACHIEVE);
+    puzzle_wrong = LoadSound(SOUND_A_WRONG);
 }
 
 int puzzle_get(void) {
@@ -74,8 +78,20 @@ int puzzle_get(void) {
     return curr_puzzle_idx;
 }
 
+Vector2 puzzle_get_pos(void) {
+    return scroll_pos;
+}
+
+void puzzle_play_solved(void) {
+    PlaySound(puzzle_solved);
+}
+
+void puzzle_play_wrong(void) {
+    PlaySound(puzzle_wrong);
+}
+
 #define MAX_ANSWER_SZ (16)
-bool puzzle_check(char *user_ans) {
+bool puzzle_check(char *user_ans, int id) {
     if(user_ans == NULL)  return false;
 
     bool ret = false;
@@ -86,11 +102,11 @@ bool puzzle_check(char *user_ans) {
     for(int i = 0; i < MAX_ANSWER_SZ; ++i) {
         if(user_ans[i] == '\n' || user_ans[i] == '0' || user_ans[i] == '\r')break;
         if(isspace(user_ans[i])) continue;
-        if(isalnum(user_ans[i])) ans_sbuf[i] = user_ans[i];
+        if(isalnum(user_ans[i])) ans_sbuf[i] = tolower(user_ans[i]);
     }
 
     for(int i = 0; i < 3; ++i) {
-        char *ans = g_puzzles[curr_puzzle_idx].a[i];
+        char *ans = g_puzzles[id].a[i];
         if(ans != NULL && (strncmp(ans_sbuf, ans, MAX_ANSWER_SZ) == 0)) {
             ret = true;
         }
@@ -100,14 +116,29 @@ bool puzzle_check(char *user_ans) {
 
 void puzzle_draw_q(int puzzle_id) {
     char *question = g_puzzles[puzzle_id].q;
-    Vector2 scroll_spos = obj_s2w_pos(scroll_pos);
     Rectangle r;
     r.width = scroll_write_rect.width;
     r.height = scroll_write_rect.height;
-    r.x = scroll_write_rect.x + scroll_spos.x;
-    r.y = scroll_write_rect.y + scroll_spos.y;
+    r.x = scroll_write_rect.x + scroll_pos.x;
+    r.y = scroll_write_rect.y + scroll_pos.y;
     // Draw the scroll
-    DrawTexture(scroll_tex, scroll_spos.x, scroll_spos.y, WHITE);
+    DrawTexture(scroll_tex, scroll_pos.x, scroll_pos.y, WHITE);
     // Draw the text
     te_draw_inside_rect(question, puzzlefont, 40, r);
+}
+
+void puzzle_draw_textbox(char *typebuffer) {
+    int len = 0;
+    char tempbuf[66] = { 0 };
+    for(int i = 0; (i < 64) && typebuffer[i] != '\0'; ++i) {
+        tempbuf[i] = tolower(typebuffer[i]);
+        len++;
+    }
+    tempbuf[len] = '_';
+
+    float width = 500, height = 40;
+    DrawRectangleLines(G_W/2 - width/2, GAME_GROUND_Y, width, height, RED);
+    DrawRectangle((G_W/2 - width/2)+2, GAME_GROUND_Y+2, width-4, height-4, BLACK);
+    Vector2 pos = {(G_W/2 - width/2)+2, GAME_GROUND_Y+2};
+    DrawTextEx(puzzlefont, tempbuf, pos, 30, 1, WHITE);
 }

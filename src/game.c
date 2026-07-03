@@ -35,7 +35,7 @@
 // top level game object
 static game_t *g;
 
-void game_load_assets(void) {
+static void game_load_assets(void) {
     // background texture
     g->bg = LoadTexture(BACKGROUND);
     // splash screen texture
@@ -53,6 +53,12 @@ void game_load_assets(void) {
     g->bgmusic = LoadMusicStream(AUD_AMBIENT);
 }
 
+static void game_reset_typebuffer(void) {
+    g->is_type_buffer_done = false;
+    memset(g->typebuffer, 0, TYPEBUFFER_SIZE);
+    g->t_ptr = 0;
+}
+
 void game_init(RenderTexture2D *canvas) {
     // allocate memory first
     g = malloc(sizeof(*g));
@@ -68,6 +74,7 @@ void game_init(RenderTexture2D *canvas) {
     menu_init();
     // initialize puzzle
     puzzle_init();
+    g->curr_puzzle = -1;
     // initialize player
     player_init(&g->p);
     // init all bosses
@@ -108,9 +115,6 @@ void _game_update(float dt) {
     if(dt > 0.1f)dt = 0.1f;
     // update bgmusic
     UpdateMusicStream(g->bgmusic);
-    if(IsKeyPressed(KEY_CAPS_LOCK)) {
-        g->is_type_mode = true;
-    }
     // If game is in type mode, mostly because of puzzles,
     // our only job is to get the keypressed and put it into a buffer
     if(g->is_type_mode) {
@@ -124,9 +128,8 @@ void _game_update(float dt) {
                 g->typebuffer[g->t_ptr] = key;
                 g->t_ptr = (g->t_ptr + 1) % TYPEBUFFER_SIZE;
             } else if(key == KEY_ENTER) {
+                g->typebuffer[g->t_ptr] = '\0';
                 g->is_type_buffer_done = true;
-                g->is_type_mode = false;
-                printf("%s\n", g->typebuffer);
             }
             key = GetKeyPressed();
         }
@@ -214,7 +217,8 @@ void _game_update(float dt) {
 
     // aanams: activate empty slots
     // if game is in type mode, do not init new aanams
-    if(!g->is_type_mode) {
+    bool aanam_ban = g->is_type_mode || (g->crate.is_open && g->crate.content.type == ARTIFACT);
+    if(!aanam_ban) {
         aanam_activate_all(g->aanas, g->is_boss_active, dt);
     }
 
@@ -322,7 +326,6 @@ void _game_update(float dt) {
             orb->obj.is_active = false;
             player_set_hurt_shock(&g->p);
             g->p.health -= PLAYER_ORB_HEALTH_DECR;
-            hbar_update(&g->p.hbar, g->p.health);
         }
     }
     // SKBALL WITH PLAYER
@@ -338,7 +341,6 @@ void _game_update(float dt) {
             skb->obj.is_active = false;
             player_set_hurt_shock(&g->p);
             g->p.health -= PLAYER_SKBALL_HEALTH_DECR;
-            hbar_update(&g->p.hbar, g->p.health);
         }
     }
     // KARIKKU WITH PLAYER
@@ -362,17 +364,61 @@ void _game_update(float dt) {
         crate_t *cr = &g->crate;
         player_t *p = &g->p;
 
-        if(p->obj.curr_anim == &p->anim_wlash) {
+        bool crate_cond = cr->obj.is_active && !cr->is_broken && (cr->obj.pos.y == (GAME_GROUND_Y - cr->crate_tex.height));
+        
+        if(crate_cond && (p->obj.curr_anim == &p->anim_wlash)) {
             int curr_f_idx = anim_get_curr_frame_idx(g->p.obj.curr_anim);
             bool frame_cond = (curr_f_idx >= 2 && curr_f_idx <= 7);
-            bool crate_cond = cr->obj.is_active && !cr->is_broken && (cr->obj.pos.y == (GAME_GROUND_Y - cr->crate_tex.height));
-            if(frame_cond && crate_cond) {
+            if(frame_cond) {
                 if(col_check_bbox(&p->obj, COORDS_WORLD, &cr->obj, COORDS_WORLD)) {
                     g->crate.is_broken = true;
                 }
             }
         }
+        if(cr->is_open) {
+            // check for collision with artifact
+            bool content_on_ground = false;
+            if(cr->content.type == ARTIFACT && CR_ARTIF(cr).obj.is_active && (g->curr_puzzle < 0)) {
+                content_on_ground = (CR_ARTIF(cr).obj.pos.y == CR_ARTIF(cr).terminal_y);
+                bool col_check = col_check_bbox(&p->obj, COORDS_WORLD, &CR_ARTIF(cr).obj, COORDS_WORLD);
+                if(content_on_ground && col_check && !g->is_type_mode) {
+                    g->is_type_mode = true;
+                    g->curr_puzzle = puzzle_get();
+                    // set artifact position to above the puzzle, centered
+                    Vector2 puzzle_pos = puzzle_get_pos();
+                    CR_ARTIF(cr).obj.pos.y = puzzle_pos.y - CR_ARTIF(cr).artifact_tex.height;
+                    CR_ARTIF(cr).obj.pos.x = G_W/2 - CR_ARTIF(cr).artifact_tex.width/2;
+                    CR_ARTIF(cr).obj.pos = obj_s2w_pos(CR_ARTIF(cr).obj.pos);
+                    CR_ARTIF(cr).obj.vel.y = 0;
+                    // make it stay there
+                    CR_ARTIF(cr).gravity = false;
+                }
+            } else if(cr->content.type == TODDY && CR_TODDY(cr).obj.is_active) {
+                content_on_ground = (CR_TODDY(cr).obj.pos.y == CR_TODDY(cr).terminal_y);
+                if(content_on_ground && col_check_bbox(&p->obj, COORDS_WORLD, &CR_TODDY(cr).obj, COORDS_WORLD)) {
+                    // pick up toddy
+                    CR_TODDY(cr).obj.is_active = false;
+                    p->health += 10;
+                    p->health = _min(p->health, p->max_health);
+                }
+            }
+            if(g->is_type_mode && g->is_type_buffer_done && (g->curr_puzzle >= 0)) {
+                bool answered = puzzle_check(g->typebuffer, g->curr_puzzle);
+                if(answered) {
+                    g->curr_puzzle = -1;
+                    g->is_type_mode = false;
+                    CR_ARTIF(cr).is_won = true;
+                    CR_ARTIF(cr).obj.is_active = false;
+                    p->a_count++;
+                    puzzle_play_solved();
+                } else {
+                    puzzle_play_wrong();
+                }
+                game_reset_typebuffer();
+            }
+        }
     }
+    // KARIKKU WITH PLAYER
     for(int i = 0; i < TOTAL_KARIKKU; ++i) {
         karikku_t *k = &g->karikku[i];
         bool k_conds = k->obj.is_active && !obj_is_oob(&k->obj, COORDS_WORLD);
@@ -429,7 +475,6 @@ void _game_update(float dt) {
                 player_set_hurt_flash(&g->p);
                 PlaySound(g->p.hurt);
                 g->p.health -= 5;
-                hbar_update(&g->p.hbar, g->p.health);
             }
         }
     }
@@ -611,17 +656,9 @@ void game_start_main_loop(void) {
             // TODO
             EndMode2D();
 
-            // TEST
-            if(g->is_type_mode) {
-                DrawRectangleLines(300, 10, 500, 40, BLACK);
-                DrawRectangle(300+2, 10+2, 500-4, 40-4, LIGHTGRAY);
-                Rectangle r = {300+2, 10+2, 500-4, 40-4};
-                if(g->is_type_buffer_done) {
-                    printf("%s\n", g->typebuffer);
-                    memset(g->typebuffer, 0, TYPEBUFFER_SIZE);
-                } else {
-                    te_draw_inside_rect(g->typebuffer, g->game_font, 30, r);
-                }
+            if(g->curr_puzzle >= 0) {
+                puzzle_draw_q(g->curr_puzzle);
+                puzzle_draw_textbox(g->typebuffer);
             }
             
             // Draw everything that doesn't move with camera

@@ -3,6 +3,15 @@
 #include <string.h>
 #include <stdio.h>
 
+static int te_extract_word(char *line, char* word) {
+    int i = 0;
+    while(line[i] != ' ' && line[i] != '\0') {
+        word[i] = line[i];
+        ++i;
+    }
+    return i;
+}
+
 void te_draw_inside_rect(char *text, Font font, float font_size, Rectangle rect) {
     // shrink rectangle
     float margin = 2.0f;
@@ -15,15 +24,18 @@ void te_draw_inside_rect(char *text, Font font, float font_size, Rectangle rect)
     char *p = text;
     char wordbuf[32] = { 0 };
 
+    // handle special cases
+    if(p == NULL) return;
+
     int offset = 0;
     Vector2 pos;
     while(*p != '\0') {
-        sscanf(p, "%s %n", wordbuf, &offset);
-
-        if(*(p + offset) != '\0') {
-            wordbuf[offset-1] = ' ';
-            wordbuf[offset] = '\0';
+        offset = te_extract_word(p, wordbuf);
+        if(p[offset] != '\0') {
+            wordbuf[offset] = ' ';
+            wordbuf[offset+1] = '\0';
         }
+        if(p[offset] == ' ')offset++;
         
         Vector2 w_sz = MeasureTextEx(font, wordbuf, font_size, 1);
         

@@ -41,13 +41,13 @@ void hud_draw(player_t *p) {
     Rectangle rk = k_hud_bbox.bbox.rect;
     rk.x += kpos_x;
     rk.y += kpos_y;
-    te_draw_inside_rect((char *)TextFormat("%03d", p->k_count), hudfont, 35, rk);
+    DrawTextEx(hudfont, TextFormat("%03d", p->k_count), (Vector2){rk.x, rk.y}, 35, 1, WHITE);
     // artifact count
     DrawTexture(a_hud_tex, apos_x, apos_y, WHITE);
     Rectangle ra = a_hud_bbox.bbox.rect;
     ra.x += apos_x;
     ra.y += apos_y;
-    te_draw_inside_rect((char *)TextFormat("%02d", p->a_count), hudfont, 35, ra);
+    DrawTextEx(hudfont, TextFormat("%02d", p->a_count), (Vector2){ra.x, ra.y}, 35, 1, WHITE);
     DrawTextEx(hudfont, TextFormat("SCORE : %05d", p->score), (Vector2){0, 40}, 35, 1, WHITE);
     DrawTextEx(hudfont, TextFormat("LEVEL : %01d", p->curr_level), (Vector2){0, 80}, 35, 1, WHITE);
 }

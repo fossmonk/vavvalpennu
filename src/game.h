@@ -51,6 +51,7 @@ typedef struct {
     Texture2D cursor;
     // type pointer, to be used with typebuffer
     int t_ptr;
+    int curr_puzzle;
     // game boolean states
     bool is_gameover;
     bool is_game_wclosed;

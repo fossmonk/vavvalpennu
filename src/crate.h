@@ -7,6 +7,9 @@
 #include <artifact.h>
 #include <toddy.h>
 
+#define CR_ARTIF(p_cr) (cr->content.content.artifact)
+#define CR_TODDY(p_cr) (cr->content.content.toddy)
+
 typedef enum {
     TODDY,
     ARTIFACT

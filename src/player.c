@@ -288,6 +288,8 @@ void player_update(player_t *p, bool boss_active, float dt) {
         }
     }
 
+    hbar_update(&p->hbar, p->health);
+
     // update animation
     anim_advance(p->obj.curr_anim, dt);
 }

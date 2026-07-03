@@ -26,8 +26,6 @@ Vector2 ffly_get_vel(Vector2 prev, Vector2 next) {
     v.x = speed * (dx/d);
     v.y = speed * (dy/d);
 
-    if(v.x > 0) printf("PROBLEM");
-
     return v;
 }
 

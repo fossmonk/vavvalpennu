@@ -47,6 +47,9 @@
 // BONFIRE
 #define ANIM_BF_BURN      (anim_info_t){"assets/sprites/bonfire/burn.png", "assets/sprites/bonfire/burn.bbox", "BONFIRE BURN", 16, 0.07f, true}
 
+// CRATE
+#define ANIM_CRATE_BURST  (anim_info_t){"assets/sprites/crate/burst.png", ((void *)0), "CRATE BURST", 12, 0.04f, false}
+
 // BATARANG
 #define ANIM_BATARANG     (anim_info_t){"assets/sprites/batarang/batarang_rotate.png", "assets/sprites/batarang/batarang_rotate.bbox", "BATARANG", 8, 0.1f, true}
 
@@ -74,6 +77,10 @@
 // Textures
 #define ORB_TEXTURE      "assets/textures/orb.png"
 #define ORB_BBOX         "assets/textures/orb.bbox"
+#define CRATE_TEXTURE    "assets/sprites/crate/tex.png"
+#define CRATE_BBOX       "assets/sprites/crate/tex.bbox"
+#define TODDY_TEXTURE   "assets/textures/toddy.png"
+#define TODDY_BBOX      "assets/textures/toddy.bbox"
 #define SCROLL_TEXTURE   "assets/textures/scroll.png"
 #define SCROLL_BBOX      "assets/textures/scroll.bbox"
 #define K_HUD_TEXTURE    "assets/textures/karikku_hud.png"
@@ -85,25 +92,40 @@
 #define PLAYER_HBAR_ICON "assets/textures/vp_head.png"
 #define VY_HBAR_ICON     "assets/textures/vy_head.png"
 #define KARIKKU_ICON     "assets/textures/karikku.png"
+#define ARTIF_TEXTURE0   "assets/textures/chathan.png"
+#define ARTIF_TEXTURE1   "assets/textures/bhagavathy.png"
+#define ARTIF_TEXTURE2   "assets/textures/karimkali.png"
+#define ARTIF_TEXTURE3   "assets/textures/yakshi.png"
+#define ARTIF_TEXTURE4   "assets/textures/theyyam.png"
+#define ARTIF_BBOX0      "assets/textures/chathan.bbox"
+#define ARTIF_BBOX1      "assets/textures/bhagavathy.bbox"
+#define ARTIF_BBOX2      "assets/textures/karimkali.bbox"
+#define ARTIF_BBOX3      "assets/textures/yakshi.bbox"
+#define ARTIF_BBOX4      "assets/textures/theyyam.bbox"
 
 // Shader files
 #define HBAR_SHADER    "shaders/hbar.fs"
 #define ORB_SHADER     "shaders/orb.fs"
 #define SKBALL_SHADER  "shaders/skball.fs"
+#define SPARKLE_SHADER  "shaders/sparkle.fs"
 
 // AUDIO
-#define AUD_AMBIENT    "assets/audio/ambient.mp3"
-#define AUD_VY_LAUGH   "assets/audio/vy/laugh.mp3"
-#define SOUND_VY_HURT  "assets/audio/vy/hurt.mp3"
-#define AUD_KCH_LAUGH  "assets/audio/kch/laugh.mp3"
-#define SOUND_KCH_HURT "assets/audio/kch/hurt.mp3" 
-#define SOUND_VY_HURT  "assets/audio/vy/hurt.mp3"
-#define SOUND_PWHIP    "assets/audio/player/whip.mp3"
-#define SOUND_PJUMP    "assets/audio/player/jump.mp3"
-#define SOUND_PSLURP   "assets/audio/player/slurp.mp3"
-#define SOUND_PBATR    "assets/audio/player/batr_whoosh.mp3"
-#define SOUND_PPAIN    "assets/audio/player/pain.mp3"
-#define SOUND_AGROWL   "assets/audio/aanam/growl.mp3"
+#define AUD_AMBIENT          "assets/audio/ambient.mp3"
+#define AUD_VY_LAUGH         "assets/audio/vy/laugh.mp3"
+#define SOUND_VY_HURT        "assets/audio/vy/hurt.mp3"
+#define AUD_KCH_LAUGH        "assets/audio/kch/laugh.mp3"
+#define SOUND_KCH_HURT       "assets/audio/kch/hurt.mp3" 
+#define SOUND_VY_HURT        "assets/audio/vy/hurt.mp3"
+#define SOUND_PWHIP          "assets/audio/player/whip.mp3"
+#define SOUND_PJUMP          "assets/audio/player/jump.mp3"
+#define SOUND_PSLURP         "assets/audio/player/slurp.mp3"
+#define SOUND_PBATR          "assets/audio/player/batr_whoosh.mp3"
+#define SOUND_PPAIN          "assets/audio/player/pain.mp3"
+#define SOUND_AGROWL         "assets/audio/aanam/growl.mp3"
+#define SOUND_C_APPEAR       "assets/audio/crate/appear.mp3"
+#define SOUND_C_BREAK        "assets/audio/crate/break.mp3"
+#define SOUND_A_ACHIEVE      "assets/audio/crate/achieve.mp3"
+#define SOUND_T_DRINK        "assets/audio/crate/drink.mp3"
 
 // CURSOR
 #define BAT_CURSOR     "assets/textures/batcursor.png"
@@ -117,6 +139,11 @@
 #define MAX_FFLY (5)
 #define MAX_KARIKKU (8) // per screen width count?
 #define TOTAL_KARIKKU (MAX_KARIKKU * (WORLD_XR / G_W))
+
+// Some helpful macro functions
+// use very carefully
+#define SPREAD_VEC(v) v.x, v.y
+#define SPREAD_RECT(r) r.x, r.y, r.width, r.height 
 
 
 #endif /* _VPCONFIG_H_ */

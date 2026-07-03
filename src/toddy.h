@@ -6,14 +6,14 @@
 
 typedef struct {
     obj_t obj;
-    Shader shader;
     Texture2D toddy_tex;
-    int time_loc;
     bool is_won;
+    float terminal_y;
 } toddy_t;
 
-void toddy_init(void);
-void toddy_update(void);
-void toddy_draw(void);
+void toddy_init(toddy_t *toddy);
+void toddy_activate_at(toddy_t *toddy, Vector2 pos, float dt);
+void toddy_update(toddy_t *toddy, float dt);
+void toddy_draw(toddy_t *toddy);
 
 #endif

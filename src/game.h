@@ -14,6 +14,7 @@
 #include <bonfire.h>
 #include <karikku.h>
 #include <ffly.h>
+#include <crate.h>
 
 #define TYPEBUFFER_SIZE (64)
 
@@ -22,6 +23,7 @@ typedef struct {
     player_t p;
     batr_t batrs[MAX_BATRS];
     // environment
+    crate_t crate;
     bf_t bonfire[MAX_BONFIRES];
     ffly_t ffly[MAX_FFLY];
     // pickups

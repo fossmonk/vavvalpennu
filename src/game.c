@@ -14,6 +14,7 @@
 #include <input.h>
 #include <puzzle.h>
 #include <textengine.h>
+#include <crate.h>
 
 // SOME CONSTANTS
 
@@ -75,6 +76,8 @@ void game_init(RenderTexture2D *canvas) {
     // initialize environment stuff
     // BONFIRE
     // TODO bf_init(&g->bonfire);
+    // CRATE
+    crate_init(&g->crate);
     // KARIKKU
     karikku_init_all(g->karikku);
     // FIREFLY
@@ -192,6 +195,14 @@ void _game_update(float dt) {
     // BONFIRE
     // TODO
 
+    // CRATE
+    crate_activate(&g->crate);
+    crate_update(&g->crate, dt);
+
+    if(g->crate.is_open) {
+        crate_content_update(&g->crate, dt);
+    }
+
     // karikkus: already activated, just update
     karikku_update_all(g->karikku, dt);
 
@@ -239,8 +250,10 @@ void _game_update(float dt) {
             orb_t *orb = &g->levelbosses->vy.orbs[j];
             bool b_conds = b->obj.is_active;
             bool orb_conds = orb->obj.is_active;
-            bool col_conds = col_check_bbox(&b->obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN);
-            bool check = b_conds && orb_conds && col_conds;
+            bool check = false;
+            if(b_conds && orb_conds) {
+                check = col_check_bbox(&b->obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN);
+            }
             if(check) {
                 // deactivate batr
                 b->obj.is_active = false;
@@ -257,8 +270,10 @@ void _game_update(float dt) {
         batr_t *b = &g->batrs[i];
         bool b_conds = b->obj.is_active;
         bool vy_conds = g->levelbosses->vy.obj.is_active && !vy_is_dying(&g->levelbosses->vy);
-        bool col_conds = col_check_bbox(&g->levelbosses->vy.obj, COORDS_WORLD, &b->obj, COORDS_WORLD);
-        bool check = b_conds && vy_conds && col_conds;
+        bool check = false;
+        if(b_conds && vy_conds) {
+            check = col_check_bbox(&g->levelbosses->vy.obj, COORDS_WORLD, &b->obj, COORDS_WORLD); 
+        }
         if(check) {
             b->obj.is_active = false;
             g->levelbosses->vy.health -= VY_BATR_HEALTH_DECR;
@@ -270,12 +285,28 @@ void _game_update(float dt) {
         batr_t *b = &g->batrs[i];
         bool b_conds = b->obj.is_active;
         bool kch_conds = g->levelbosses->kch.obj.is_active && !kch_is_dying(&g->levelbosses->kch);
-        bool col_conds = col_check_bbox(&g->levelbosses->kch.obj, COORDS_WORLD, &b->obj, COORDS_WORLD);
-        bool check = b_conds && kch_conds && col_conds;
+        bool check = false;
+        if(b_conds && kch_conds) {
+            check = col_check_bbox(&g->levelbosses->kch.obj, COORDS_WORLD, &b->obj, COORDS_WORLD);
+        }
         if(check) {
             b->obj.is_active = false;
             g->levelbosses->kch.health -= KCH_BATR_HEALTH_DECR;
             hbar_update(&g->levelbosses->kch.hbar, g->levelbosses->kch.health);
+        }
+    }
+    // BATARANG WITH CRATE
+    for(int i = 0; i < MAX_BATRS; ++i) {
+        batr_t *b = &g->batrs[i];
+        bool b_conds = b->obj.is_active;
+        bool crate_conds = g->crate.obj.is_active && !g->crate.is_broken && (g->crate.obj.pos.y != (GAME_GROUND_Y - g->crate.crate_tex.height));
+        bool check = false;
+        if(b_conds && crate_conds) {
+            check = col_check_bbox(&g->crate.obj, COORDS_WORLD, &b->obj, COORDS_WORLD);
+        }
+        if(check) {
+            b->obj.is_active = false;
+            g->crate.is_broken = true;
         }
     }
     // ORB WITH PLAYER
@@ -283,8 +314,10 @@ void _game_update(float dt) {
         orb_t *orb = &g->levelbosses->vy.orbs[i];
         bool orb_conds = orb->obj.is_active && !orb->is_hostile;
         bool player_conds = !player_is_dying(&g->p);
-        bool col_conds = col_check_bbox(&g->p.obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN);
-        bool check = orb_conds && player_conds && col_conds;
+        bool check = false;
+        if(orb_conds && player_conds) {
+            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN);
+        }
         if(check) {
             orb->obj.is_active = false;
             player_set_hurt_shock(&g->p);
@@ -297,8 +330,10 @@ void _game_update(float dt) {
         skball_t *skb = &g->levelbosses->kch.skballs[i];
         bool skb_conds = skb->obj.is_active;
         bool player_conds = !player_is_dying(&g->p);
-        bool col_conds = col_check_bbox(&g->p.obj, COORDS_WORLD, &skb->obj, COORDS_SCREEN);
-        bool check = skb_conds && player_conds && col_conds;
+        bool check = false;
+        if(skb_conds && player_conds) {
+            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &skb->obj, COORDS_SCREEN);
+        }
         if(check) {
             skb->obj.is_active = false;
             player_set_hurt_shock(&g->p);
@@ -311,8 +346,41 @@ void _game_update(float dt) {
         karikku_t *k = &g->karikku[i];
         bool k_conds = k->obj.is_active && !obj_is_oob(&k->obj, COORDS_WORLD);
         bool player_conds = !player_is_dying(&g->p);
-        bool col_conds = col_check_bbox(&g->p.obj, COORDS_WORLD, &k->obj, COORDS_WORLD);
-        bool check = k_conds && player_conds && col_conds;
+        bool check = false;
+        if(k_conds && player_conds) {
+            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &k->obj, COORDS_WORLD);
+        }
+        if(check) {
+            k->obj.is_active = false;
+            g->p.k_count++;
+            g->p.score += 5;
+            PlaySound(g->p.slurp);
+        }
+    }
+    // CRATE WITH PLAYER
+    {
+        crate_t *cr = &g->crate;
+        player_t *p = &g->p;
+
+        if(p->obj.curr_anim == &p->anim_wlash) {
+            int curr_f_idx = anim_get_curr_frame_idx(g->p.obj.curr_anim);
+            bool frame_cond = (curr_f_idx >= 2 && curr_f_idx <= 7);
+            bool crate_cond = cr->obj.is_active && !cr->is_broken && (cr->obj.pos.y == (GAME_GROUND_Y - cr->crate_tex.height));
+            if(frame_cond && crate_cond) {
+                if(col_check_bbox(&p->obj, COORDS_WORLD, &cr->obj, COORDS_WORLD)) {
+                    g->crate.is_broken = true;
+                }
+            }
+        }
+    }
+    for(int i = 0; i < TOTAL_KARIKKU; ++i) {
+        karikku_t *k = &g->karikku[i];
+        bool k_conds = k->obj.is_active && !obj_is_oob(&k->obj, COORDS_WORLD);
+        bool player_conds = !player_is_dying(&g->p);
+        bool check = false;
+        if(k_conds && player_conds) {
+            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &k->obj, COORDS_WORLD);
+        }
         if(check) {
             k->obj.is_active = false;
             g->p.k_count++;
@@ -325,8 +393,10 @@ void _game_update(float dt) {
         orb_t *orb = &g->levelbosses->vy.orbs[i];
         bool orb_conds = orb->obj.is_active && orb->is_hostile;
         bool vy_conds = !vy_is_dying(&g->levelbosses->vy);
-        bool col_conds = col_check_bbox(&g->levelbosses->vy.obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN);
-        bool check = orb_conds && vy_conds && col_conds;
+        bool check = false;
+        if(orb_conds && vy_conds) {
+            check = col_check_bbox(&g->levelbosses->vy.obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN);
+        }
         if(check) {
             orb->obj.is_active = false;
             vy_set_hurt_shock(&g->levelbosses->vy);
@@ -340,8 +410,10 @@ void _game_update(float dt) {
         aanam_t *aana = &g->aanas[i];
         bool aana_conds = aana->obj.is_active && !aana->is_dying && !aana->hit_player;
         bool player_conds = !player_is_dying(&g->p);
-        bool col_conds = col_check_bbox(&g->p.obj, COORDS_WORLD, &aana->obj, COORDS_WORLD);
-        bool check = aana_conds && player_conds && col_conds;
+        bool check = false;
+        if(aana_conds && player_conds) {
+            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &aana->obj, COORDS_WORLD);
+        }
         if(check) {
             bool anim_cond = g->p.obj.curr_anim == &g->p.anim_wlash;
             int curr_f_idx = anim_get_curr_frame_idx(g->p.obj.curr_anim);
@@ -517,6 +589,10 @@ void game_start_main_loop(void) {
             game_draw_inf_bg();
             player_draw(&g->p);
             // Draw bonfireTODO
+            crate_draw(&g->crate);
+            if(g->crate.is_open) {
+                crate_content_draw(&g->crate);
+            }
             karikku_draw_all(g->karikku);
             batr_draw_all(g->batrs);
             ffly_draw_all(g->ffly);

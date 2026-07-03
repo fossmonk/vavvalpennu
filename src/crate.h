@@ -26,10 +26,14 @@ typedef struct {
     anim_t anim_burst;
     Texture2D crate_tex;
     bool is_broken;
+    bool is_open;
 } crate_t;
 
 void crate_init(crate_t* cr);
+void crate_activate(crate_t *cr);
 void crate_update(crate_t* cr, float dt);
+void crate_content_update(crate_t *cr, float dt);
 void crate_draw(crate_t* cr);
+void crate_content_draw(crate_t *cr);
 
 #endif

@@ -6,14 +6,14 @@
 
 typedef struct {
     obj_t obj;
-    Shader shader;
     Texture2D artifact_tex;
-    int time_loc;
     bool is_won;
+    float terminal_y;
 } artifact_t;
 
-void artifact_init(void);
-void artifact_update(void);
-void artifact_draw(void);
+void artifact_init(artifact_t *artif);
+void artifact_activate_at(artifact_t *artif, Vector2 pos, float dt);
+void artifact_update(artifact_t* artif, float dt);
+void artifact_draw(artifact_t *artif);
 
 #endif

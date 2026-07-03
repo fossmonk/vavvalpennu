@@ -4,7 +4,11 @@
 
 void anim_asset_load(anim_info_t info, anim_asset_t *asset) {
     asset->texture = LoadTexture(info.anim_filepath);
-    asset->bbox = bbox_parse(info.bbox_filepath);
+    if(info.bbox_filepath) {
+        asset->bbox = bbox_parse(info.bbox_filepath);
+    } else {
+        asset->bbox.type = INVALID_BBOX_TYPE;
+    }
     asset->name = info.name;
     asset->framecount = info.framecount;
     asset->duration = info.duration;

@@ -10,7 +10,6 @@ typedef struct {
     anim_asset_t *asset;
     float timer;
     Rectangle curr_frame;
-    bbox_t hitbox;
 } anim_t;
 
 void anim_advance(anim_t *anim, float dt);

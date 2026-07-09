@@ -1,2 +1,4 @@
 *.exe
 vavvalpennu
+vavvalpennu_debug
+*.DS_Store

@@ -14,7 +14,8 @@
 #define PLAYER_CENTER_TO_CHEST (70.0f)
 #define JUMP_VEL_Y_0           (800.0f)
 #define ACCEL_PUSH             (5800.0f)
-#define P_HBAR_POS             (Vector2){5, 5}
+#define P_HBAR_POS             (Vector2){12, 12}
+#define P_HBAR_ICON_POS        (Vector2){5, 5}
 #define P_HBAR_MAXW            300
 #define P_HBAR_HEIGHT          20
 #define P_HBAR_SPACING         1
@@ -122,7 +123,7 @@ void player_init(player_t *p) {
     // init player healthbar
     hbar_init(&p->hbar, 
         P_HBAR_POS, P_HBAR_MAXW, P_HBAR_HEIGHT, P_HBAR_SPACING,
-        PLAYER_HBAR_ICON, P_HBAR_POS, RED, p->max_health);
+        PLAYER_HBAR_ICON, P_HBAR_ICON_POS, RED, p->max_health);
     // init player hud
     hud_init();
 }

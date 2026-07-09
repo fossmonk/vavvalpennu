@@ -2,6 +2,7 @@
 #include <vpconfig.h>
 #include <puzzle.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <rand.h>
 #include <ctype.h>
 #include <string.h>
@@ -9,7 +10,7 @@
 #include <textengine.h>
 #include <obj.h>
 
-#define PUZZLE_COUNT (6)
+#define PUZZLE_COUNT (16)
 
 typedef struct {
     char *q;
@@ -49,7 +50,47 @@ static puzzle_t g_puzzles[PUZZLE_COUNT] = {
     {
         .q = "The more you cut me the bigger I grow. What am I?",
         .a = {"hole", "ahole", NULL}
-    }
+    },
+    {
+        .q = "I am light as a feather, yet the strongest man cannot hold me for much longer than a few minutes.",
+        .a = {"breath", NULL, NULL}
+    },
+    {
+        .q = "I have many eyes but cannot see. I am buried alive but never weep. From my skin, new lives will creep.",
+        .a = {"potato", "apotato", NULL}
+    },
+    {
+        .q = "I have a spine but no bones. I have leaves but no branches. I can tell you everything, yet I cannot speak a word.",
+        .a = {"book", "abook", NULL}
+    },
+    {
+        .q = "I have keys but open no locks. I have space but no room. You can enter, but you can't go outside. What am I?",
+        .a = {"keyboard", "akeyboard", NULL}
+    },
+    {
+        .q = "I am always running but I have no legs. I never look back, and no one can catch me. I heal all wounds, yet I eventually kill everyone who tracks me.",
+        .a = {"time", NULL, NULL}
+    },
+    {
+        .q = "I can run but never walk, have a bed but never sleep, have a mouth but never speak. What am I?",
+        .a = {"river", "ariver", NULL}
+    },
+    {
+        .q = "I can capture a moment forever without keeping a single memory. I can reflect your true face, but I will never look you in the eye.",
+        .a = {"mirror", "amirror", NULL}
+    },
+    {
+        .q = "I have a neck but no head, and I wear a cap but have no hair. I am always at the party, but I never dance. What am I?",
+        .a = {"bottle", "abottle", NULL}
+    },
+    {
+        .q = "I have cities but no houses, mountains but no trees, and water but no fish. What am I?",
+        .a = {"map", "amap", NULL}
+    },
+    {
+        .q = "I shave every single day, yet my beard stays exactly the same length. Who am I?",
+        .a = {"barber", "abarber", NULL}
+    },
 };
 
 void puzzle_init(void) {
@@ -63,14 +104,15 @@ void puzzle_init(void) {
 }
 
 int puzzle_get(void) {
-    if(active_puzzle_bmap == ((1 << PUZZLE_COUNT) - 1)) active_puzzle_bmap = 0U;
+    if(active_puzzle_bmap == ((1 << (PUZZLE_COUNT)) - 1)) active_puzzle_bmap = 0U;
 
-    int retries = 100;
+    int retries = 500;
 
     while(retries--) {
         int r = vp_rand_lim(0, PUZZLE_COUNT);
         if(((active_puzzle_bmap >> r) & 0x1) == 0) {
             curr_puzzle_idx = r;
+            active_puzzle_bmap |= (1 << r);
             break;
         }
     }
@@ -90,19 +132,18 @@ void puzzle_play_wrong(void) {
     PlaySound(puzzle_wrong);
 }
 
-#define MAX_ANSWER_SZ (16)
+#define MAX_ANSWER_SZ (32)
 bool puzzle_check(char *user_ans, int id) {
     if(user_ans == NULL)  return false;
-
+    
     bool ret = false;
-
+    
     // sanitize
     char ans_sbuf[MAX_ANSWER_SZ] = { 0 };
-
-    for(int i = 0; i < MAX_ANSWER_SZ; ++i) {
-        if(user_ans[i] == '\n' || user_ans[i] == '0' || user_ans[i] == '\r')break;
-        if(isspace(user_ans[i])) continue;
-        if(isalnum(user_ans[i])) ans_sbuf[i] = tolower(user_ans[i]);
+    
+    for(int i = 0, j = 0; i < MAX_ANSWER_SZ; ++i) {
+        if(user_ans[i] == ' ') continue;
+        if(isalnum(user_ans[i])) ans_sbuf[j++] = tolower(user_ans[i]);
     }
 
     for(int i = 0; i < 3; ++i) {

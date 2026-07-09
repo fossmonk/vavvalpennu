@@ -48,6 +48,6 @@ void hud_draw(player_t *p) {
     ra.x += apos_x;
     ra.y += apos_y;
     DrawTextEx(hudfont, TextFormat("%02d", p->a_count), (Vector2){ra.x, ra.y}, 35, 1, WHITE);
-    DrawTextEx(hudfont, TextFormat("SCORE : %05d", p->score), (Vector2){0, 40}, 35, 1, WHITE);
-    DrawTextEx(hudfont, TextFormat("LEVEL : %01d", p->curr_level), (Vector2){0, 80}, 35, 1, WHITE);
+    DrawTextEx(hudfont, TextFormat("SCORE : %05d", p->score), (Vector2){12, 40}, 35, 1, WHITE);
+    DrawTextEx(hudfont, TextFormat("LEVEL : %01d", p->curr_level), (Vector2){12, 80}, 35, 1, WHITE);
 }

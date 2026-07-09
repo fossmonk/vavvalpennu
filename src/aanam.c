@@ -3,7 +3,7 @@
 #include <aanam.h>
 #include <rand.h>
 
-#define AANA_SPAWN_COOLDOWN_TIME (3.0f)
+#define AANA_SPAWN_COOLDOWN_TIME (5.0f)
 #define AANA_VEL_X (-400.0f)
 
 static float g_aanam_spawn_timer = 0.0f;

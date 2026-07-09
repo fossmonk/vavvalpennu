@@ -64,9 +64,9 @@ static bool crate_can_spawn(void) {
 }
 
 static void crate_init_once(void) {
-    // fill crate_pos_x with random x values spread through SCREENWIDTH
+    // fill crate_pos_x with random x values spread through a portion of SCREENWIDTH
     for(int i = 0; i < MAX_CRATES; ++i) {
-        crate_spos_x[i] = vp_rand_lim(100, G_W - 100);
+        crate_spos_x[i] = vp_rand_lim(G_W/3, G_W - 100);
     }
     // shuffle crate_c
     _arr_shuffle(crate_c, MAX_CRATES);

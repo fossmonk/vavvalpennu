@@ -9,9 +9,16 @@ void obj_global_set_cam2d(Camera2D *camref) {
     gcam2d = camref;
 }
 
+Vector2 obj_w2s_pos(Vector2 pos) {
+    return GetWorldToScreen2D(pos, *gcam2d);
+}
+
+Vector2 obj_s2w_pos(Vector2 pos) {
+    return GetScreenToWorld2D(pos, *gcam2d);
+}
+
 bool obj_is_oob(obj_t *obj, coord_sys coords) {
-    Vector2 screenpos = (coords == COORDS_WORLD) ? 
-        GetWorldToScreen2D(obj->pos, *gcam2d) : obj->pos;
+    Vector2 screenpos = (coords == COORDS_WORLD) ? obj_w2s_pos(obj->pos) : obj->pos;
 
     bool x_l = screenpos.x + obj->size.x < 0;
     bool x_h = screenpos.x > G_W;
@@ -20,19 +27,3 @@ bool obj_is_oob(obj_t *obj, coord_sys coords) {
     return (x_l || x_h || y_l || y_h);
 }
 
-float obj_cartd2(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2) {
-    Vector2 obj1_pos = (cs1 == COORDS_WORLD) ? GetWorldToScreen2D(obj1->pos, *gcam2d) : obj1->pos;
-    Vector2 obj2_pos = (cs2 == COORDS_WORLD) ? GetWorldToScreen2D(obj2->pos, *gcam2d) : obj2->pos;
-    
-    float dcx = (obj1_pos.x + obj1->size.x/2) - (obj2_pos.x + obj2->size.x/2);
-    float dcy = (obj1_pos.y + obj1->size.y/2) - (obj2_pos.y + obj2->size.y/2);
-    return dcx*dcx + dcy*dcy;
-}
-
-Vector2 obj_w2s_pos(Vector2 pos) {
-    return GetWorldToScreen2D(pos, *gcam2d);
-}
-
-Vector2 obj_s2w_pos(Vector2 pos) {
-    return GetScreenToWorld2D(pos, *gcam2d);
-}

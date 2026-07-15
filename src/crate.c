@@ -9,9 +9,9 @@
 // we spawn crates at certain positions
 // we have to make sure they're at least G_W*2 apart.
 
-#define MAX_TODDY_CRATES (15)
+#define MAX_POTION_CRATES (15)
 #define MAX_ARTIF_CRATES (10)
-#define MAX_CRATES (MAX_TODDY_CRATES + MAX_ARTIF_CRATES)
+#define MAX_CRATES (MAX_POTION_CRATES + MAX_ARTIF_CRATES)
 #define MAX_CRATE_POS_Y (3)
 
 // randomly fill this array
@@ -22,8 +22,8 @@ static float crate_spos_y[MAX_CRATE_POS_Y] =  {
 };
 // fill this array in order and shuffle it
 static crate_content_type crate_c[MAX_CRATES] = {
-    TODDY, TODDY, TODDY, TODDY, TODDY, TODDY, TODDY, TODDY, 
-    TODDY, TODDY, TODDY, TODDY, TODDY, TODDY, TODDY, ARTIFACT, 
+    POTION, POTION, POTION, POTION, POTION, POTION, POTION, POTION, 
+    POTION, POTION, POTION, POTION, POTION, POTION, POTION, ARTIFACT, 
     ARTIFACT, ARTIFACT, ARTIFACT, ARTIFACT, ARTIFACT, ARTIFACT,
     ARTIFACT, ARTIFACT, ARTIFACT 
 };
@@ -105,8 +105,8 @@ void crate_activate(crate_t *cr) {
             // setup artifact details
             artifact_init(&cr->content.content.artifact);
         } else {
-            // setup toddy details
-            toddy_init(&cr->content.content.toddy);
+            // setup potion details
+            potion_init(&cr->content.content.potion);
         }
         // set position
         cr->obj.pos.x = crate_spos_x[crate_idx_running];
@@ -130,7 +130,7 @@ void crate_update(crate_t* cr, float dt) {
                 if(cr->content.type == ARTIFACT) {
                     artifact_activate_at(&cr->content.content.artifact, cr->obj.pos, dt);
                 } else {
-                    toddy_activate_at(&cr->content.content.toddy, cr->obj.pos, dt);
+                    potion_activate_at(&cr->content.content.potion, cr->obj.pos, dt);
                 }
                 // now make it inactive
                 cr->is_broken = false;
@@ -157,7 +157,7 @@ void crate_content_update(crate_t *cr, float dt) {
     if(cr->content.type == ARTIFACT) {
         artifact_update(&cr->content.content.artifact, dt);
     } else {
-        toddy_update(&cr->content.content.toddy, dt);
+        potion_update(&cr->content.content.potion, dt);
     }
 }
 
@@ -180,6 +180,6 @@ void crate_content_draw(crate_t *cr) {
     if(cr->content.type == ARTIFACT) {
         artifact_draw(&cr->content.content.artifact);
     } else {
-        toddy_draw(&cr->content.content.toddy);
+        potion_draw(&cr->content.content.potion);
     }
 }

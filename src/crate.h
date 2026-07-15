@@ -5,13 +5,13 @@
 #include <obj.h>
 #include <anim.h>
 #include <artifact.h>
-#include <toddy.h>
+#include <potion.h>
 
 #define CR_ARTIF(p_cr) (cr->content.content.artifact)
-#define CR_TODDY(p_cr) (cr->content.content.toddy)
+#define CR_POTION(p_cr) (cr->content.content.potion)
 
 typedef enum {
-    TODDY,
+    POTION,
     ARTIFACT
 } crate_content_type;
 
@@ -19,7 +19,7 @@ typedef struct {
     crate_content_type type;
     union {
         artifact_t artifact;
-        toddy_t toddy;
+        potion_t potion;
     } content;
 } crate_content_t;
 

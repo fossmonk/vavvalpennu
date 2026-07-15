@@ -393,11 +393,11 @@ void _game_update(float dt) {
                     // make it stay there
                     CR_ARTIF(cr).gravity = false;
                 }
-            } else if(cr->content.type == TODDY && CR_TODDY(cr).obj.is_active) {
-                content_on_ground = (CR_TODDY(cr).obj.pos.y == CR_TODDY(cr).terminal_y);
-                if(content_on_ground && col_check_bbox(&p->obj, COORDS_WORLD, &CR_TODDY(cr).obj, COORDS_WORLD)) {
-                    // pick up toddy
-                    CR_TODDY(cr).obj.is_active = false;
+            } else if(cr->content.type == POTION && CR_POTION(cr).obj.is_active) {
+                content_on_ground = (CR_POTION(cr).obj.pos.y == CR_POTION(cr).terminal_y);
+                if(content_on_ground && col_check_bbox(&p->obj, COORDS_WORLD, &CR_POTION(cr).obj, COORDS_WORLD)) {
+                    // pick up potion
+                    CR_POTION(cr).obj.is_active = false;
                     p->health += 10;
                     p->health = _min(p->health, p->max_health);
                 }

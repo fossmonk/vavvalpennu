@@ -98,6 +98,20 @@ void aanam_update(aanam_t *aana, float dt) {
             anim_advance(aana->obj.curr_anim, dt);
         }
     }
+
+    if(aana->is_dying) {
+        if(aana->obj.curr_anim == &aana->anim_death) {
+            if(anim_is_lastframe(aana->obj.curr_anim)) {
+                aana->obj.is_active = false;
+                anim_reset(aana->obj.curr_anim);
+            } else {
+                anim_advance(aana->obj.curr_anim, dt);
+            }
+        } else {
+            aana->obj.curr_anim = &aana->anim_death;
+            aana->obj.curr_anim->curr_frame.x = 0;
+        }
+    }
 }
 
 void aanam_update_all(aanam_t *aanas, float dt) {

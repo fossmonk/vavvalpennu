@@ -44,7 +44,6 @@ typedef struct {
     Texture2D bg;
     Texture2D splash;
     Texture2D pausemenu;
-    Texture2D ktex;
     // game sounds/music
     Music bgmusic;
     // custom cursor

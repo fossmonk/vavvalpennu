@@ -28,7 +28,6 @@ int movie_register(movie_info_t m_info) {
     m->tex = LoadTexture(m_info.spritesheet_fname);
     m->framecount = m_info.num_frames;
     m->frametime = m_info.frame_time;
-    m->pos = m_info.pos;
     m->active = false;
     m->loop = false;
     m->paused = false;
@@ -45,22 +44,34 @@ int movie_register(movie_info_t m_info) {
     return ret;
 }
 
-void play_movie(int movie_id, bool loop) {
+Vector2 movie_get_framedim(int movie_id) {
+    Vector2 dim;
+    dim.x = movies[movie_id]->currframe.width;
+    dim.y = movies[movie_id]->currframe.height;
+    return dim;
+}
+
+void play_movie(int movie_id, Vector2 pos, bool loop) {
     movie_t *m = movies[movie_id];
-    m->active = true;
-    m->paused = false;
-    m->loop = loop;
+    if(m) {
+        m->pos = pos;
+        m->active = true;
+        m->paused = false;
+        m->loop = loop;
+    }
 }
 
 void pause_movie(int movie_id) {
     movie_t *m = movies[movie_id];
-    m->paused = true;
+    if(m) m->paused = true;
 }
 
 void stop_movie(int movie_id) {
     movie_t *m = movies[movie_id];
-    m->active = false;
-    m->paused = false;
+    if(m) {
+        m->active = false;
+        m->paused = false;
+    }
 }
 
 void movie_update(movie_t *m, float dt) {
@@ -76,6 +87,12 @@ void movie_update(movie_t *m, float dt) {
 
             m->currframe.x = curr_x;
             m->timer -= m->frametime;
+
+            if(curr_x == (tw-fw) && !m->loop) {
+                // end the movie automatically
+                m->active = false;
+                m->currframe.x = 0;
+            }
         }
     }
 }
@@ -83,7 +100,7 @@ void movie_update(movie_t *m, float dt) {
 void movie_update_all(float dt) {
     for(int i = 0; i < MAX_MOVIES; ++i) {
         movie_t *m = movies[i];
-        if(m->active) {
+        if(m && m->active) {
             movie_update(m, dt);
         }
     }
@@ -92,7 +109,7 @@ void movie_update_all(float dt) {
 void movie_draw_all(void) {
     for(int i = 0; i < MAX_MOVIES; ++i) {
         movie_t *m = movies[i];
-        if(m->active) {
+        if(m && m->active) {
             DrawTextureRec(m->tex, m->currframe, m->pos, WHITE);
         }
     }

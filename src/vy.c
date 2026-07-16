@@ -15,7 +15,6 @@
 
 #define ORB_RAND_CHANCE        ((vp_rand() % 5557 == 0))
 
-// VADAYAKSHI ANIMATIONS
 anim_asset_t vy_rise;
 anim_asset_t vy_shock;
 
@@ -105,6 +104,22 @@ void vy_update(vy_t *vy, float dt) {
         }
     }
 
+    if(vy_is_hurting(vy)) {
+        if(!vy->in_hurt_anim) {
+            // switch to hurt animation
+            vy->in_hurt_anim = true;
+            vy_activate_hurting(vy, dt);
+        } else {
+            // if hurt animation is over, switch to idle
+            if(anim_is_lastframe(vy->obj.curr_anim)) {
+                vy->in_hurt_anim = false;
+                vy_clr_hurt_shock(vy);
+                vy->obj.curr_anim = &vy->anim_vy_rise;
+            }
+        }
+        anim_advance(vy->obj.curr_anim, dt);
+    }
+
     for(int i = 0; i < MAX_ORBS; i++) {
         orb_t *orb = &vy->orbs[i];
         if(orb->obj.is_active) {
@@ -123,7 +138,6 @@ void vy_activate_hurting(vy_t *vy, float dt) {
     if(act) {
         vy->obj.size = anim_get_framesize(vy->obj.curr_anim);
     }
-    // reset current animation to start
     anim_reset(vy->obj.curr_anim);
 }
 

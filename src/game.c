@@ -15,9 +15,9 @@
 #include <puzzle.h>
 #include <textengine.h>
 #include <crate.h>
+#include <movie.h>
 
 // SOME CONSTANTS
-
 #define VY_BATR_HEALTH_DECR    (1)
 #define KCH_BATR_HEALTH_DECR   (5)
 #define PLAYER_ORB_HEALTH_DECR (20)
@@ -35,24 +35,6 @@
 // top level game object
 static game_t *g;
 
-static void game_load_assets(void) {
-    // background texture
-    g->bg = LoadTexture(BACKGROUND);
-    // splash screen texture
-    g->splash = LoadTexture(SPLASH_BG);
-    // pause menu texture
-    g->pausemenu = LoadTexture(PAUSEMENU_BG);
-    // custom cursor
-    g->cursor = LoadTexture(BAT_CURSOR);
-    // karikku thumbnail
-    g->ktex = LoadTexture(KARIKKU_ICON);
-    // fonts
-    g->game_font = LoadFontEx(MAIN_FONT, 96, NULL, 0);
-    SetTextureFilter(g->game_font.texture, TEXTURE_FILTER_BILINEAR);
-    // sound assets
-    g->bgmusic = LoadMusicStream(AUD_AMBIENT);
-}
-
 static void game_reset_typebuffer(void) {
     g->is_type_buffer_done = false;
     memset(g->typebuffer, 0, TYPEBUFFER_SIZE);
@@ -62,56 +44,68 @@ static void game_reset_typebuffer(void) {
 void game_init(RenderTexture2D *canvas) {
     // allocate memory first
     g = malloc(sizeof(*g));
+
     // init audio engine
     audio_init();
+
     // set canvas
     g->canvas = canvas;
+
     // kind of a hack, but makes stuff easy
     obj_global_set_cam2d(&g->cam);
+
     // load all assets
-    game_load_assets();
+    g->bg = LoadTexture(BACKGROUND);
+    g->splash = LoadTexture(SPLASH_BG);
+    g->pausemenu = LoadTexture(PAUSEMENU_BG);
+    g->cursor = LoadTexture(BAT_CURSOR);
+    g->game_font = LoadFontEx(MAIN_FONT, 96, NULL, 0);
+    SetTextureFilter(g->game_font.texture, TEXTURE_FILTER_BILINEAR);
+    g->bgmusic = LoadMusicStream(AUD_AMBIENT);
+    
     // initialize menu
     menu_init();
+
     // initialize puzzle
     puzzle_init();
     g->curr_puzzle = -1;
+    
     // initialize player
     player_init(&g->p);
+    
     // init all bosses
     boss_init_bosses();
     g->levelbosses = boss_get_bosses();
+    
     // initialize environment stuff
-    // BONFIRE
     // TODO bf_init(&g->bonfire);
-    // CRATE
     crate_init(&g->crate);
-    // KARIKKU
     karikku_init_all(g->karikku);
-    // FIREFLY
     ffly_init_all(g->ffly);
+
     // initialize other actors/sprites
-    // BATARANGS
     batr_init_all(g->batrs);
-    // AANAMARUTHAS
     aanam_init_all(g->aanas);
+
     // initialize generic game object stuff
-    g->t_ptr = 0;
-    memset(g->typebuffer, 0, TYPEBUFFER_SIZE);
+    game_reset_typebuffer();
+    g->is_type_mode = false;
+
     g->is_gameover = false;
     g->is_game_wclosed = false;
     g->is_game_paused = false;
     g->is_boss_active = false;
-    g->is_type_mode = false;
-    g->is_type_buffer_done = false;
     g->cam.rotation = 0;
     g->cam.zoom = 1;
     g->cam.target = obj_cxy(&g->p.obj);
     g->cam.offset = (Vector2){G_W/2, (GAME_GROUND_Y - g->p.obj.curr_anim->curr_frame.height/2)};
-    // START THE MUSIC
+    
+    // ALL DONE, START THE MUSIC!
     PlayMusicStream(g->bgmusic);
 }
 
 void _game_update(float dt) {
+    // this is required to prevent long dt's due to a window resize etc
     if(dt > 0.1f)dt = 0.1f;
     // update bgmusic
     UpdateMusicStream(g->bgmusic);
@@ -141,8 +135,6 @@ void _game_update(float dt) {
         }
     }
     // PLAYER
-    // handle inputs and execute player actions
-    // handle inputs only if player is not hurting
     bool player_move_conditions = !player_is_dying(&g->p) &&
         !player_is_hurting(&g->p) && !g->is_type_mode;
     
@@ -191,7 +183,7 @@ void _game_update(float dt) {
 
     player_update(&g->p, g->is_boss_active, dt);
 
-    // batarangs: already activated by player input
+    // BATARANGS: already activated by player input
     // now update the active ones
     batr_update_all(g->batrs, dt);
 
@@ -206,24 +198,27 @@ void _game_update(float dt) {
         crate_content_update(&g->crate, dt);
     }
 
-    // karikkus: already activated, just update
+    // KARIKKUS: already activated, just update
     karikku_update_all(g->karikku, dt);
 
-    // fireflys: active empty slots
+    // FIREFLYS: active empty slots
     ffly_activate_all(g->ffly);
 
-    // fireflys: update active ones
+    // FIREFLYS: update active ones
     ffly_update_all(g->ffly, dt);
 
-    // aanams: activate empty slots
+    // AANAMS: activate empty slots
     // if game is in type mode, do not init new aanams
     bool aanam_ban = g->is_type_mode || (g->crate.is_open && g->crate.content.type == ARTIFACT);
     if(!aanam_ban) {
         aanam_activate_all(g->aanas, g->is_boss_active, dt);
     }
 
-    // aanams: update active ones anyway
+    // AANAMS: update active ones anyway
     aanam_update_all(g->aanas, dt);
+
+    // update all movies
+    movie_update_all(dt);
 
     //////////////////////////////
     ////////// BOSS //////////////
@@ -236,7 +231,7 @@ void _game_update(float dt) {
         g->is_boss_active = true;
     }
 
-    // active check happens inside update call
+    // boss specific active check happens inside update call
     if(g->is_boss_active && boss_is_dead()) {
         g->is_boss_active = false;
         g->p.curr_level++;
@@ -479,42 +474,6 @@ void _game_update(float dt) {
         }
     }
 
-    /// HANDLE SPECIAL ANIMATIONS ///
-    // handle aanam death
-    for(int i = 0; i < MAX_AANAS; ++i) {
-        aanam_t *aana = &g->aanas[i];
-        if(aana->is_dying) {
-            if(aana->obj.curr_anim == &aana->anim_death) {
-                if(anim_is_lastframe(aana->obj.curr_anim)) {
-                    aana->obj.is_active = false;
-                    anim_reset(aana->obj.curr_anim);
-                } else {
-                    anim_advance(aana->obj.curr_anim, dt);
-                }
-            } else {
-                aana->obj.curr_anim = &aana->anim_death;
-                aana->obj.curr_anim->curr_frame.x = 0;
-            }
-        }
-    }
-
-    // handle vy hurting
-    if(vy_is_hurting(&g->levelbosses->vy)) {
-        if(!g->levelbosses->vy.in_hurt_anim) {
-            // switch to hurt animation
-            g->levelbosses->vy.in_hurt_anim = true;
-            vy_activate_hurting(&g->levelbosses->vy, dt);
-        } else {
-            // if hurt animation is over, switch to idle
-            if(anim_is_lastframe(g->levelbosses->vy.obj.curr_anim)) {
-                g->levelbosses->vy.in_hurt_anim = false;
-                vy_clr_hurt_shock(&g->levelbosses->vy);
-                g->levelbosses->vy.obj.curr_anim = &g->levelbosses->vy.anim_vy_rise;
-            }
-        }
-        anim_advance(g->levelbosses->vy.obj.curr_anim, dt);
-    }
-
     // check for player death
     if(g->p.health <= 0) {
         player_set_die(&g->p);
@@ -522,7 +481,7 @@ void _game_update(float dt) {
 
     if(g->levelbosses->vy.health <= 0) {
         g->levelbosses->vy.health = 0;
-        g->levelbosses->vy.obj.is_active = 0;
+        g->levelbosses->vy.obj.is_active = false;
     }
 
     if(g->levelbosses->kch.health <= 0) {
@@ -534,9 +493,6 @@ void _game_update(float dt) {
 // pause wrapper
 void game_update(float dt) {
     bool escp = IsKeyPressed(KEY_ESCAPE);
-    #ifdef __EMSCRIPTEN__
-    escp = IsKeyDown(KEY_ESCAPE);
-    #endif
     if(!escp && !g->is_game_paused) {
         _game_update(dt);
     } else {
@@ -565,19 +521,6 @@ void game_draw_inf_bg(void) {
 //////// SCENES //////////////
 //////////////////////////////
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
-void game_yield_frame(void) {
-#ifdef __EMSCRIPTEN__
-    // This tells the browser: "Pause this C loop, draw the frame, and come back to me in 2ms"
-    emscripten_sleep(0); 
-#else
-    // Desktop fallback just handles standard frame pacing
-#endif
-}
-
 void game_draw_canvas_to_screen(void) {
     Color overlay = (Color){ 255, 203, 0, 10};
     Vector2 mpos = GetMousePosition();
@@ -598,9 +541,6 @@ void game_start_scene(void) {
     bool game_quit = false;
     menu_action m_act = MENU_NO_ACTION;
     while(!game_start && !g->is_game_wclosed) {
-        #ifdef __EMSCRIPTEN__
-        PollInputEvents();
-        #endif
         BeginTextureMode(*g->canvas);
         DrawTexture(g->splash, 0, 0, DARKGRAY);
         menu_draw(m_act, MENU_START);
@@ -612,17 +552,12 @@ void game_start_scene(void) {
         game_start = (m_act == MENU_CLICK_START);
         game_quit = (m_act == MENU_CLICK_QUIT);
         g->is_game_wclosed = WindowShouldClose() || game_quit;
-        game_yield_frame();
     }
 }
 
 void game_start_main_loop(void) {
     while(!g->is_game_wclosed && !g->is_gameover) {
         float dt = GetFrameTime();
-        #ifdef __EMSCRIPTEN__
-        PollInputEvents();
-        dt = 1.0f/60.0f;
-        #endif
         
         game_update(dt);
 
@@ -662,6 +597,7 @@ void game_start_main_loop(void) {
             }
             
             // Draw everything that doesn't move with camera
+            movie_draw_all();
             orb_draw_all(g->levelbosses->vy.orbs);
             skball_draw_all(g->levelbosses->kch.skballs);
             if(g->levelbosses->vy.obj.is_active) {
@@ -691,7 +627,6 @@ void game_start_main_loop(void) {
             g->is_game_wclosed = WindowShouldClose() || game_quit;
             g->is_game_paused = !game_resumed;
         }
-        game_yield_frame();
     }
 }
 

@@ -8,11 +8,6 @@ Shader shader_load_custom(const char *vs_fname, const char* fs_fname) {
     char *vs_header = "#version 330\n\n";
     char *fs_header = "#version 330\n\n";
 
-    #ifdef __EMSCRIPTEN__
-    vs_header = "#version 300 es\nprecision highp float;\n\n";
-    fs_header = "#version 300 es\nprecision highp float;\n\n";
-    #endif
-
     size_t vsh_size = strlen(vs_header);
     size_t fsh_size = strlen(fs_header);
 

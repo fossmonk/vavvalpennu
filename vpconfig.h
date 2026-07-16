@@ -2,6 +2,7 @@
 #define _VPCONFIG_H_
 
 #include <anim_asset.h>
+#include <movie.h>
 
 // Game Title
 #define G_TITLE "VAVVALPENNU🦇"
@@ -127,6 +128,9 @@
 #define SOUND_A_ACHIEVE      "assets/audio/crate/achieve.mp3"
 #define SOUND_A_WRONG        "assets/audio/crate/wrong.mp3"
 #define SOUND_T_DRINK        "assets/audio/crate/drink.mp3"
+
+// MOVIES
+#define ARTIFACT_CLAIMED_MOVIE (movie_info_t){"assets/movies/artifact_claimed_movie.png", 25, 0.03}
 
 // CURSOR
 #define BAT_CURSOR     "assets/textures/batcursor.png"

@@ -47,14 +47,14 @@ static Rectangle controls_bb = {0, 0, 0, 0};
 static Rectangle quit_bb = {0, 0, 0, 0};
 static Rectangle back_bb = {0, 0, 0, 0};
 
-Vector2 get_scaled_mouse_pos(void) {
+static Vector2 get_scaled_mouse_pos(void) {
     Vector2 mouseScalePos = GetMousePosition();
     mouseScalePos.x = (mouseScalePos.x / GetScreenWidth()) * G_W;
     mouseScalePos.y = (mouseScalePos.y / GetScreenHeight()) * G_H;
     return mouseScalePos;
 }
 
-bool point_in_rect(Vector2 p, Rectangle r) {
+static bool point_in_rect(Vector2 p, Rectangle r) {
     float xl = r.x;
     float xh = r.x + r.width;
     float yl = r.y;
@@ -64,20 +64,17 @@ bool point_in_rect(Vector2 p, Rectangle r) {
 }
 
 // Since we can't curry let's save on some typing
-Vector2 menu_measure_text(const char *text) {
+static Vector2 menu_measure_text(const char *text) {
     return MeasureTextEx(menu_font, text, MENU_FONT_SIZE, MENU_SPACING);
 }
 
-void menu_draw_text(const char* text, Vector2 position) {
+static void menu_draw_text(const char* text, Vector2 position) {
     DrawTextEx(menu_font, text, position, MENU_FONT_SIZE, MENU_SPACING, WHITE);
 }
 
 menu_action menu_get_action(void) {
     menu_action ma = MENU_NO_ACTION;
     bool mousep = IsMouseButtonReleased(MOUSE_BUTTON_LEFT);
-    #ifdef __EMSCRIPTEN__
-    mousep = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
-    #endif
     if(mousep) {
         Vector2 mouse_pos = get_scaled_mouse_pos();
         if(point_in_rect(mouse_pos, start_bb)) ma = MENU_CLICK_START;
@@ -93,10 +90,7 @@ void menu_init(void) {
     menu_font = LoadFontEx(MENU_FONT, 96, NULL, 0);
     SetTextureFilter(menu_font.texture, TEXTURE_FILTER_BILINEAR);
     // Populate BB rectangles for clickable areas
-    // START
-    // CONTROLS
-    // QUIT
-    // BACK
+    // START, CONTROLS, QUIT, BACK
     float top_y = MENU_TOP_Y;
     float padding = 5.0f;
     Vector2 fontWH = menu_measure_text(menu_start);
@@ -139,7 +133,7 @@ void menu_init(void) {
     back_bb.height = fontWH.y;
 }
 
-void menu_draw_controls(void) {
+static void menu_draw_controls(void) {
     Vector2 fontWH;
     float top_y = CONTROLS_TOP_Y;
     float padding = 5.0f;

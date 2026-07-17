@@ -141,6 +141,11 @@ void vy_activate_hurting(vy_t *vy, float dt) {
     anim_reset(vy->obj.curr_anim);
 }
 
+void vy_decr_health(vy_t *vy, int amount) {
+    vy->health -= amount;
+    if(vy->health < 0) vy->health = 0;
+}
+
 void vy_draw(vy_t *vy) {
     DrawTextureRec(
         vy->obj.curr_anim->asset->texture, 

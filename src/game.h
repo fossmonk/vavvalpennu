@@ -36,8 +36,9 @@ typedef struct {
     char typebuffer[TYPEBUFFER_SIZE];
     RenderTexture2D *canvas;
     Camera2D cam;
-    // reference to bosses
-    bosses* levelbosses;
+    // level bosses
+    bosses_t bosses;
+    boss_type curr_boss;
     // game fonts
     Font game_font;
     // game textures
@@ -51,6 +52,7 @@ typedef struct {
     // type pointer, to be used with typebuffer
     int t_ptr;
     int curr_puzzle;
+    int puzzle_tries;
     // game boolean states
     bool is_gameover;
     bool is_game_wclosed;

@@ -2,9 +2,9 @@
 
 typedef unsigned int u32;
 
-static u32 gseed = 123456789;
+static long long gseed = 123456789;
 
-void vp_rand_seed(unsigned int seed) {
+void vp_rand_seed(long long seed) {
     gseed = seed;
 }
 

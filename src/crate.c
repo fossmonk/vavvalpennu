@@ -174,6 +174,9 @@ void crate_draw(crate_t* cr) {
             DrawTexture(cr->crate_tex, cr->obj.pos.x, cr->obj.pos.y, WHITE);
         }
     }
+    #ifdef DEBUG
+    bbox_draw(cr->obj.curr_anim->asset->bbox, cr->obj.pos, MAGENTA);
+    #endif
 }
 
 void crate_content_draw(crate_t *cr) {

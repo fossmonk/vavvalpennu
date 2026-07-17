@@ -5,9 +5,10 @@
 #include <hbar.h>
 #include <kchath.h>
 #include <skball.h>
+#include <rand.h>
 
 #define KCH_INIT_POS              ((Vector2){G_W/2, G_H/2})
-#define KCH_POS_CHANGE_CHANCE     (rand() % 423 == 0)
+#define KCH_POS_CHANGE_CHANCE     (vp_rand() % 423 == 0)
 
 anim_asset_t kchath_laugh;
 
@@ -89,6 +90,11 @@ void kchath_update(kchath_t *kch, float dt) {
             skball_update(skball, dt);
         }
     }
+}
+
+void kchath_decr_health(kchath_t *kch, int amount) {
+    kch->health -= amount;
+    if(kch->health < 0) kch->health = 0;
 }
 
 void kchath_draw(kchath_t *kch) {

@@ -10,6 +10,9 @@
 
 #define PLAYER_HITBOX_RB (5.0f)
 
+#define PLAYER_ORB_HEALTH_DECR (20)
+#define PLAYER_SKBALL_HEALTH_DECR (5)
+
 // action bitmasks
 #define P_IS_DYING     (1 << 0)
 #define P_IS_JUMPING   (1 << 1)
@@ -33,8 +36,12 @@
 #define player_clr_hurt_shock(p) ((p)->actionmask &= ~P_IS_HURTING_S)
 #define player_clr_hurt_burn(p)  ((p)->actionmask &= ~P_IS_HURTING_B)
 
+#define player_decr_health_skball(p) player_decr_health((p), PLAYER_SKBALL_HEALTH_DECR)
+#define player_decr_health_orb(p) player_decr_health((p), PLAYER_ORB_HEALTH_DECR)
+
 typedef struct {
     obj_t obj;
+    Vector2 prev_pos;
     // animations
     anim_t anim_run_r;
     anim_t anim_idle_r;
@@ -72,6 +79,7 @@ void player_activate_jump(player_t *p, float dt);
 void player_activate_hurting(player_t *p, float dt);
 void player_activate_whiplash(player_t *p, Vector2 mouse_pos);
 void player_activate_batr(player_t *p, batr_t *b, Vector2 pos);
+void player_decr_health(player_t *p, int amount);
 void player_update(player_t *p, bool boss_active, float dt);
 
 #endif

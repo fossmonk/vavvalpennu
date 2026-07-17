@@ -106,6 +106,7 @@ void player_init(player_t *p) {
     float player_inity = GAME_GROUND_Y - p->obj.curr_anim->curr_frame.height;
     p->obj.is_active = true;
     p->obj.pos = (Vector2){player_initx, player_inity};
+    p->prev_pos = (Vector2){-1, -1};
     p->obj.vel = (Vector2){0, 0};
     p->obj.size = (Vector2){
         p->obj.curr_anim->curr_frame.width, 
@@ -220,6 +221,7 @@ void player_activate_batr(player_t *p, batr_t *b, Vector2 pos) {
 }
 
 void player_update(player_t *p, bool boss_active, float dt) {
+    p->prev_pos = p->obj.pos;
     if(!player_is_hurting(p)) {
         // store initial position
         Vector2 initpos = p->obj.pos;
@@ -304,6 +306,11 @@ bool player_can_level_up(player_t *p) {
     };
 
     return (p->score > l_up_scores[p->curr_level]);
+}
+
+void player_decr_health(player_t *p, int amount) {
+    p->health -= amount;
+    if(p->health < 0) p->health = 0;
 }
 
 void player_draw(player_t *p) {

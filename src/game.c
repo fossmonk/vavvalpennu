@@ -17,12 +17,6 @@
 #include <crate.h>
 #include <movie.h>
 
-// SOME CONSTANTS
-#define VY_BATR_HEALTH_DECR    (1)
-#define KCH_BATR_HEALTH_DECR   (5)
-#define PLAYER_ORB_HEALTH_DECR (20)
-#define PLAYER_SKBALL_HEALTH_DECR (5)
-
 // SOME MACRO FUNCTIONS
 #ifndef _max
 #define _max(a, b) ((a) > (b) ? (a) : (b))
@@ -69,13 +63,14 @@ void game_init(RenderTexture2D *canvas) {
     // initialize puzzle
     puzzle_init();
     g->curr_puzzle = -1;
+    g->puzzle_tries = 3;
     
     // initialize player
     player_init(&g->p);
     
     // init all bosses
-    boss_init_bosses();
-    g->levelbosses = boss_get_bosses();
+    boss_init_bosses(&g->bosses);
+    g->curr_boss = NONE;
     
     // initialize environment stuff
     // TODO bf_init(&g->bonfire);
@@ -226,18 +221,19 @@ void _game_update(float dt) {
     bool boss_activate_conditions = player_can_level_up(&g->p) && 
         !g->is_boss_active && !g->is_type_mode;
     if(boss_activate_conditions) {
-        boss_set(g->p.curr_level);
-        boss_activate();
+        g->curr_boss = boss_get_for_level(g->p.curr_level);
+        boss_activate(g->curr_boss);
         g->is_boss_active = true;
     }
 
     // boss specific active check happens inside update call
-    if(g->is_boss_active && boss_is_dead()) {
+    if(g->is_boss_active && boss_is_dead(g->curr_boss)) {
         g->is_boss_active = false;
+        g->curr_boss = NONE;
         g->p.curr_level++;
     }
     
-    boss_update(dt);
+    boss_update(g->curr_boss, dt);
 
     /////////////////////////////////////////////////
     //////////// COLLISION DETECTION ////////////////
@@ -246,7 +242,7 @@ void _game_update(float dt) {
     for(int i = 0; i < MAX_BATRS; ++i) {
         for(int j = 0; j < MAX_ORBS; ++j) {
             batr_t *b = &g->batrs[i];
-            orb_t *orb = &g->levelbosses->vy.orbs[j];
+            orb_t *orb = &g->bosses.vy.orbs[j];
             bool b_conds = b->obj.is_active;
             bool orb_conds = orb->obj.is_active;
             bool check = false;
@@ -258,7 +254,7 @@ void _game_update(float dt) {
                 b->obj.is_active = false;
                 // change velocity of orb and aim it at vy
                 float v = Vector2Length(b->obj.vel);
-                orb->obj.vel = orb_get_hostile_vel(g->levelbosses->vy.obj.pos, orb, v);
+                orb->obj.vel = orb_get_hostile_vel(g->bosses.vy.obj.pos, orb, v);
                 // set orb as hostile
                 orb->is_hostile = true;
             }
@@ -268,30 +264,30 @@ void _game_update(float dt) {
     for(int i = 0; i < MAX_BATRS; ++i) {
         batr_t *b = &g->batrs[i];
         bool b_conds = b->obj.is_active;
-        bool vy_conds = g->levelbosses->vy.obj.is_active && !vy_is_dying(&g->levelbosses->vy);
+        bool vy_conds = g->bosses.vy.obj.is_active && !vy_is_dying(&g->bosses.vy);
         bool check = false;
         if(b_conds && vy_conds) {
-            check = col_check_bbox(&g->levelbosses->vy.obj, COORDS_WORLD, &b->obj, COORDS_WORLD); 
+            check = col_check_bbox(&g->bosses.vy.obj, COORDS_WORLD, &b->obj, COORDS_WORLD); 
         }
         if(check) {
             b->obj.is_active = false;
-            g->levelbosses->vy.health -= VY_BATR_HEALTH_DECR;
-            hbar_update(&g->levelbosses->vy.hbar, g->levelbosses->vy.health);
+            vy_decr_health_batr(&g->bosses.vy);
+            hbar_update(&g->bosses.vy.hbar, g->bosses.vy.health);
         }
     }
     // BATARANG WITH KCHATHAN
     for(int i = 0; i < MAX_BATRS; ++i) {
         batr_t *b = &g->batrs[i];
         bool b_conds = b->obj.is_active;
-        bool kch_conds = g->levelbosses->kch.obj.is_active && !kch_is_dying(&g->levelbosses->kch);
+        bool kch_conds = g->bosses.kch.obj.is_active && !kch_is_dying(&g->bosses.kch);
         bool check = false;
         if(b_conds && kch_conds) {
-            check = col_check_bbox(&g->levelbosses->kch.obj, COORDS_WORLD, &b->obj, COORDS_WORLD);
+            check = col_check_bbox(&g->bosses.kch.obj, COORDS_WORLD, &b->obj, COORDS_WORLD);
         }
         if(check) {
             b->obj.is_active = false;
-            g->levelbosses->kch.health -= KCH_BATR_HEALTH_DECR;
-            hbar_update(&g->levelbosses->kch.hbar, g->levelbosses->kch.health);
+            kch_decr_health_batr(&g->bosses.kch);
+            hbar_update(&g->bosses.kch.hbar, g->bosses.kch.health);
         }
     }
     // BATARANG WITH CRATE
@@ -310,7 +306,7 @@ void _game_update(float dt) {
     }
     // ORB WITH PLAYER
     for(int i = 0; i < MAX_ORBS; ++i) {
-        orb_t *orb = &g->levelbosses->vy.orbs[i];
+        orb_t *orb = &g->bosses.vy.orbs[i];
         bool orb_conds = orb->obj.is_active && !orb->is_hostile;
         bool player_conds = !player_is_dying(&g->p);
         bool check = false;
@@ -320,12 +316,12 @@ void _game_update(float dt) {
         if(check) {
             orb->obj.is_active = false;
             player_set_hurt_shock(&g->p);
-            g->p.health -= PLAYER_ORB_HEALTH_DECR;
+            player_decr_health_orb(&g->p);
         }
     }
     // SKBALL WITH PLAYER
     for(int i = 0; i < MAX_SKBALLS; ++i) {
-        skball_t *skb = &g->levelbosses->kch.skballs[i];
+        skball_t *skb = &g->bosses.kch.skballs[i];
         bool skb_conds = skb->obj.is_active;
         bool player_conds = !player_is_dying(&g->p);
         bool check = false;
@@ -335,7 +331,7 @@ void _game_update(float dt) {
         if(check) {
             skb->obj.is_active = false;
             player_set_hurt_shock(&g->p);
-            g->p.health -= PLAYER_SKBALL_HEALTH_DECR;
+            player_decr_health_skball(&g->p);
         }
     }
     // KARIKKU WITH PLAYER
@@ -397,17 +393,27 @@ void _game_update(float dt) {
                     p->health = _min(p->health, p->max_health);
                 }
             }
-            if(g->is_type_mode && g->is_type_buffer_done && (g->curr_puzzle >= 0)) {
+            if(g->is_type_mode && g->is_type_buffer_done && (g->curr_puzzle >= 0) && (g->puzzle_tries > 0)) {
                 bool answered = puzzle_check(g->typebuffer, g->curr_puzzle);
                 if(answered) {
                     g->curr_puzzle = -1;
+                    g->puzzle_tries = 3;
                     g->is_type_mode = false;
                     CR_ARTIF(cr).is_won = true;
                     CR_ARTIF(cr).obj.is_active = false;
                     p->a_count++;
                     puzzle_play_solved();
                 } else {
+                    --g->puzzle_tries;
                     puzzle_play_wrong();
+                }
+                if(g->puzzle_tries == 0) {
+                    // reset everything
+                    g->curr_puzzle = -1;
+                    g->puzzle_tries = 3;
+                    g->is_type_mode = false;
+                    CR_ARTIF(cr).is_won = false;
+                    CR_ARTIF(cr).obj.is_active = false;
                 }
                 game_reset_typebuffer();
             }
@@ -431,19 +437,19 @@ void _game_update(float dt) {
     }
     // HOSTILE ORB WITH VY
     for(int i = 0; i < MAX_ORBS; ++i) {
-        orb_t *orb = &g->levelbosses->vy.orbs[i];
+        orb_t *orb = &g->bosses.vy.orbs[i];
         bool orb_conds = orb->obj.is_active && orb->is_hostile;
-        bool vy_conds = !vy_is_dying(&g->levelbosses->vy);
+        bool vy_conds = !vy_is_dying(&g->bosses.vy);
         bool check = false;
         if(orb_conds && vy_conds) {
-            check = col_check_bbox(&g->levelbosses->vy.obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN);
+            check = col_check_bbox(&g->bosses.vy.obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN);
         }
         if(check) {
             orb->obj.is_active = false;
-            vy_set_hurt_shock(&g->levelbosses->vy);
-            g->levelbosses->vy.health -= VY_BATR_HEALTH_DECR*5;
-            hbar_update(&g->levelbosses->vy.hbar, g->levelbosses->vy.health);
-            PlaySound(g->levelbosses->vy.hurt);
+            vy_set_hurt_shock(&g->bosses.vy);
+            g->bosses.vy.health -= VY_BATR_HEALTH_DECR*5;
+            hbar_update(&g->bosses.vy.hbar, g->bosses.vy.health);
+            PlaySound(g->bosses.vy.hurt);
         }
     }
     // AANAM WITH PLAYER
@@ -479,14 +485,14 @@ void _game_update(float dt) {
         player_set_die(&g->p);
     }
 
-    if(g->levelbosses->vy.health <= 0) {
-        g->levelbosses->vy.health = 0;
-        g->levelbosses->vy.obj.is_active = false;
+    if(g->bosses.vy.health <= 0) {
+        g->bosses.vy.health = 0;
+        g->bosses.vy.obj.is_active = false;
     }
 
-    if(g->levelbosses->kch.health <= 0) {
-        g->levelbosses->kch.health = 0;
-        g->levelbosses->kch.obj.is_active = false;
+    if(g->bosses.kch.health <= 0) {
+        g->bosses.kch.health = 0;
+        g->bosses.kch.obj.is_active = false;
     }
 }
 
@@ -578,37 +584,32 @@ void game_start_main_loop(void) {
             ffly_draw_all(g->ffly);
             aanam_draw_all(g->aanas);
 
-            // Draw VY
-            if(g->levelbosses->vy.obj.is_active) {
-                vy_draw(&g->levelbosses->vy);
+            if(boss_is_active(g->curr_boss)) {
+                boss_draw(g->curr_boss);
             }
-            // Draw KCH
-            if(g->levelbosses->kch.obj.is_active) {
-                kchath_draw(&g->levelbosses->kch);
-            }
-
-            // Draw EPECHI
-            // TODO
             EndMode2D();
-
+            // Draw everything that doesn't move with camera
+            movie_draw_all();
+            
             if(g->curr_puzzle >= 0) {
                 puzzle_draw_q(g->curr_puzzle);
                 puzzle_draw_textbox(g->typebuffer);
             }
-            
-            // Draw everything that doesn't move with camera
-            movie_draw_all();
-            orb_draw_all(g->levelbosses->vy.orbs);
-            skball_draw_all(g->levelbosses->kch.skballs);
-            if(g->levelbosses->vy.obj.is_active) {
-                hbar_draw(&g->levelbosses->vy.hbar);
-            }
-            if(g->levelbosses->kch.obj.is_active) {
-                hbar_draw(&g->levelbosses->kch.hbar);
-            }
-            hud_draw(&g->p);
 
+            if(boss_is_active(g->curr_boss)) {
+                if(g->curr_boss == VADAYAKSHI) {
+                    orb_draw_all(g->bosses.vy.orbs);
+                    hbar_draw(&g->bosses.vy.hbar);
+                } else if(g->curr_boss == KCHATHAN) {
+
+                    hbar_draw(&g->bosses.kch.hbar);
+                    skball_draw_all(g->bosses.kch.skballs);
+                }
+            } 
+
+            hud_draw(&g->p);
             EndTextureMode();
+            // All things drawn to canvas, now blit
             game_draw_canvas_to_screen();
             g->is_game_wclosed = WindowShouldClose();
         } else {

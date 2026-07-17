@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <raylib.h>
 #include <vpconfig.h>
 #include <boss.h>
@@ -6,48 +7,38 @@
 #include <vy.h>
 #include <epechi.h>
 #include <kchath.h>
+#include <arukola.h>
 
-static BOSS_TYPE boss;
-static bosses gbosses;
+bosses_t *gref_bosses = NULL;
 
-void boss_init_bosses(void) {
+boss_type boss_level_map[] = {
+    [VP_L0] = KCHATHAN,
+    [VP_L1] = EPECHI,
+    [VP_L2] = ARUKOLA,
+    [VP_L3] = VADAYAKSHI,
+};
+
+void boss_init_bosses(bosses_t *bosses) {
     // VADAYAKSHI
-    vy_init(&gbosses.vy);
+    vy_init(&bosses->vy);
     // KUTTICHATHAN
-    kchath_init(&gbosses.kch);
+    kchath_init(&bosses->kch);
     // ARUKOLA
     // EPECHI
+
+    // set the global reference
+    gref_bosses = bosses;
 }
 
-bosses* boss_get_bosses(void) {
-    return &gbosses;
+boss_type boss_get_for_level(vplevel l) {
+    return boss_level_map[l];
 }
 
-void boss_set(vplevel l) {
-    // TODO: set this correctly when all bosses are configured.
-    #if 0
-    static const BOSS_TYPE level2boss[] = {
-        [VP_L0] = KCHATHAN,
-        [VP_L1] = EPECHI,
-        [VP_L2] = ARUKOLA,
-        [VP_L3] = VADAYAKSHI,
-    };
-
-    boss = level2boss[l];
-    #else
-    boss = KCHATHAN;
-    #endif
-}
-
-BOSS_TYPE boss_get(void) {
-    return boss;
-}
-
-void boss_activate(void) {
+void boss_activate(boss_type boss) {
     switch (boss)
     {
     case KCHATHAN:
-        kchath_activate(&gbosses.kch);
+        kchath_activate(&gref_bosses->kch);
         break;
     case EPECHI:
         /* code */
@@ -56,7 +47,7 @@ void boss_activate(void) {
         /* code */
         break;
     case VADAYAKSHI:
-        vy_activate(&gbosses.vy);
+        vy_activate(&gref_bosses->vy);
         break;
     
     default:
@@ -64,21 +55,21 @@ void boss_activate(void) {
     }
 }
 
-bool boss_is_active(void) {
+bool boss_is_active(boss_type boss) {
     bool ret = false;
     switch (boss)
     {
     case KCHATHAN:
-        /* code */
+        ret = gref_bosses->kch.obj.is_active;
         break;
     case EPECHI:
-        /* code */
+        ret = gref_bosses->ep.obj.is_active;
         break;
     case ARUKOLA:
-        /* code */
+        ret = gref_bosses->akola.obj.is_active;
         break;
     case VADAYAKSHI:
-        ret = gbosses.vy.obj.is_active;
+        ret = gref_bosses->vy.obj.is_active;
         break;
     
     default:
@@ -88,11 +79,11 @@ bool boss_is_active(void) {
     return ret;
 }
 
-void boss_update(float dt) {
+void boss_update(boss_type boss, float dt) {
     switch (boss)
     {
     case KCHATHAN:
-        kchath_update(&gbosses.kch, dt);
+        kchath_update(&gref_bosses->kch, dt);
         break;
     case EPECHI:
         /* code */
@@ -101,7 +92,7 @@ void boss_update(float dt) {
         /* code */
         break;
     case VADAYAKSHI:
-        vy_update(&gbosses.vy, dt);
+        vy_update(&gref_bosses->vy, dt);
         break;
     
     default:
@@ -109,12 +100,12 @@ void boss_update(float dt) {
     }
 }
 
-bool boss_is_dead(void) {
+bool boss_is_dead(boss_type boss) {
     bool ret = false;
     switch (boss)
     {
     case KCHATHAN:
-        ret = (gbosses.kch.health == 0);
+        ret = (gref_bosses->kch.health == 0);
         break;
     case EPECHI:
         /* code */
@@ -123,7 +114,7 @@ bool boss_is_dead(void) {
         /* code */
         break;
     case VADAYAKSHI:
-        ret = (gbosses.vy.health == 0);
+        ret = (gref_bosses->vy.health == 0);
         break;
     
     default:
@@ -132,11 +123,11 @@ bool boss_is_dead(void) {
     return ret;
 }
 
-void boss_draw(void) {
+void boss_draw(boss_type boss) {
     switch (boss)
     {
     case KCHATHAN:
-        /* code */
+        kchath_draw(&gref_bosses->kch);
         break;
     case EPECHI:
         /* code */
@@ -145,7 +136,7 @@ void boss_draw(void) {
         /* code */
         break;
     case VADAYAKSHI:
-        vy_draw(&gbosses.vy);
+        vy_draw(&gref_bosses->vy);
         break;
     
     default:

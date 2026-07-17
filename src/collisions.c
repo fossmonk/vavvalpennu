@@ -50,7 +50,7 @@ static bool col_check_r2r(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2
     float y1min = RECT_BBOX(obj1).y + obj1_spos.y;
     float y1max = y1min + RECT_BBOX(obj1).height;
     float y2min = RECT_BBOX(obj2).y + obj2_spos.y;
-    float y2max = y1min + RECT_BBOX(obj2).height;
+    float y2max = y2min + RECT_BBOX(obj2).height;
 
     bool xcheck = (x1min < x2max) && (x1max > x2min);
     bool ycheck = (y1min < y2max) && (y1max > y2min);

@@ -3,12 +3,12 @@
 #include <time.h>
 #include <raylib.h>
 #include <vpconfig.h>
+#include <rand.h>
 
 #include <game.h>
 
 int main(void) {
-    srand(time(NULL));
-    SetRandomSeed(time(NULL));
+    vp_rand_seed(time(NULL));
 
     #ifndef DEBUG
     SetTraceLogLevel(LOG_NONE);

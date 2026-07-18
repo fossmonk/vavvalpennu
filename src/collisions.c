@@ -16,7 +16,7 @@
 #define CIRCLE_BBOX(obj) ((obj)->curr_anim->asset->bbox.bbox.circle)
 #define RECT_BBOX(obj) ((obj)->curr_anim->asset->bbox.bbox.rect)
 
-static bool col_check_c2c(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2) {
+static bool col_check_c2c(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2, col_details_2d* o_details) {
     // radial check
     float radius_sum = CIRCLE_BBOX(obj1).r + CIRCLE_BBOX(obj2).r;
     Vector2 c1 = (Vector2){
@@ -33,10 +33,27 @@ static bool col_check_c2c(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2
     
     float dsqr = (c1.x-c2.x)*(c1.x-c2.x) + (c1.y-c2.y)*(c1.y-c2.y);
 
+    if(o_details != NULL) {
+        // fill col detail bools
+        float x1min = c1.x - CIRCLE_BBOX(obj1).r;
+        float x2min = c2.x - CIRCLE_BBOX(obj2).r;
+        float x1max = c1.x + CIRCLE_BBOX(obj1).r;
+        float x2max = c2.x + CIRCLE_BBOX(obj2).r;
+        float y1min = c1.y - CIRCLE_BBOX(obj1).r;
+        float y2min = c2.y - CIRCLE_BBOX(obj2).r;
+        float y1max = c1.y + CIRCLE_BBOX(obj1).r;
+        float y2max = c2.y + CIRCLE_BBOX(obj2).r;
+
+        o_details->lr = (x1max > x2min);
+        o_details->rl = (x1min < x2max);
+        o_details->tb = (y1max > y2min);
+        o_details->bt = (y1min < y2max);
+    }
+
     return (dsqr <= (radius_sum * radius_sum));
 }
 
-static bool col_check_r2r(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2) {
+static bool col_check_r2r(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2, col_details_2d* o_details) {
     // convert all screencords
     Vector2 obj1_spos = (cs1 == COORDS_WORLD) ? obj_w2s_pos(obj1->pos) : obj1->pos;
     Vector2 obj2_spos = (cs2 == COORDS_WORLD) ? obj_w2s_pos(obj2->pos) : obj2->pos;
@@ -52,13 +69,23 @@ static bool col_check_r2r(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2
     float y2min = RECT_BBOX(obj2).y + obj2_spos.y;
     float y2max = y2min + RECT_BBOX(obj2).height;
 
-    bool xcheck = (x1min < x2max) && (x1max > x2min);
-    bool ycheck = (y1min < y2max) && (y1max > y2min);
+    bool lr = (x1max > x2min);
+    bool rl = (x1min < x2max);
+    bool tb = (y1max > y2min);
+    bool bt = (y1min < y2max);
 
-    return (xcheck && ycheck);
+    if(o_details != NULL) {
+        // fill col detail bools
+        o_details->lr = lr;
+        o_details->rl = rl;
+        o_details->tb = tb;
+        o_details->bt = bt;
+    }
+
+    return (lr && rl && bt && tb);
 }
 
-static bool col_check_c2r(obj_t *c_obj, coord_sys cs_c, obj_t *r_obj, coord_sys cs_r) {
+static bool col_check_c2r(obj_t *c_obj, coord_sys cs_c, obj_t *r_obj, coord_sys cs_r, col_details_2d* o_details) {
     // convert all screencords
     Vector2 c_obj_spos = (cs_c == COORDS_WORLD) ? obj_w2s_pos(c_obj->pos) : c_obj->pos;
     Vector2 r_obj_spos = (cs_r == COORDS_WORLD) ? obj_w2s_pos(r_obj->pos) : r_obj->pos;
@@ -76,20 +103,41 @@ static bool col_check_c2r(obj_t *c_obj, coord_sys cs_c, obj_t *r_obj, coord_sys 
     If the circle is to the BELOW the square, check against the BOTTOM edge.
     If the circle is ABOVE the square, check against the TOP edge.
     */
-    if(c_x < r_x) test_x = r_x;
-    else if(c_x > (r_x + RECT_BBOX(r_obj).width)) test_x = (r_x + RECT_BBOX(r_obj).width);
-    if(c_y < r_y) test_y = r_y;
-    else if(c_y > (r_y + RECT_BBOX(r_obj).height)) test_y = (r_y + RECT_BBOX(r_obj).height);
+    bool lr = false, rl = false, tb = false, bt = false;
+    
+    if(c_x < r_x) {
+        lr = true;
+        test_x = r_x;
+    } else if(c_x > (r_x + RECT_BBOX(r_obj).width)) {
+        rl = true;
+        test_x = (r_x + RECT_BBOX(r_obj).width);
+    }
+
+    if(c_y < r_y) {
+        tb = true;
+        test_y = r_y;
+    } else if(c_y > (r_y + RECT_BBOX(r_obj).height)) {
+        bt = true;
+        test_y = (r_y + RECT_BBOX(r_obj).height);
+    } 
 
     float dist_x = c_x - test_x;
     float dist_y = c_y - test_y;
     float dsqr = (dist_x * dist_x) + (dist_y * dist_y);
     float rsqr = CIRCLE_BBOX(c_obj).r * CIRCLE_BBOX(c_obj).r;
+
+    if(o_details != NULL) {
+
+        o_details->lr = lr;
+        o_details->rl = rl;
+        o_details->tb = tb;
+        o_details->bt = bt;
+    }
     
     return (dsqr < rsqr);
 }
 
-bool col_check_bbox(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2) {
+bool col_check_bbox(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2, col_details_2d* o_details) {
     bool colliding = false;
     
     bbox_type bt1 = obj1->curr_anim->asset->bbox.type;
@@ -100,9 +148,9 @@ bool col_check_bbox(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2) {
     }
 
     if(bt1 == CIRCLE && bt2 == CIRCLE) {
-        colliding = col_check_c2c(obj1, cs1, obj2, cs2);
+        colliding = col_check_c2c(obj1, cs1, obj2, cs2, o_details);
     } else if(bt1 == RECTANGLE && bt2 == RECTANGLE) {
-        colliding = col_check_r2r(obj1, cs1, obj2, cs2);
+        colliding = col_check_r2r(obj1, cs1, obj2, cs2, o_details);
     } else {
         obj_t *c_obj;
         obj_t *r_obj;
@@ -120,7 +168,7 @@ bool col_check_bbox(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2) {
             c_cs = cs2;
             r_cs = cs1;
         }
-        colliding = col_check_c2r(c_obj, c_cs, r_obj, r_cs);
+        colliding = col_check_c2r(c_obj, c_cs, r_obj, r_cs, o_details);
     }
     
     return colliding;

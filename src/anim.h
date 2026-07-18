@@ -7,6 +7,11 @@
 #define _ANIM_H_
 
 typedef struct {
+    int id;
+} anim_id_t;
+
+typedef struct {
+    anim_id_t id;
     anim_asset_t *asset;
     float timer;
     Rectangle curr_frame;

@@ -2,6 +2,7 @@
 #include <raylib.h>
 #include <vpconfig.h>
 #include <obj.h>
+#include <bbox.h>
 
 Camera2D *gcam2d = NULL;
 
@@ -27,3 +28,25 @@ bool obj_is_oob(obj_t *obj, coord_sys coords) {
     return (x_l || x_h || y_l || y_h);
 }
 
+Rectangle obj_get_bbox_rect(obj_t *obj) {
+    Rectangle r;
+    bbox_t bbox = obj->curr_anim->asset->bbox;
+    switch (bbox.type)
+    {
+        case CIRCLE:
+            r.x = bbox.bbox.circle.cx - bbox.bbox.circle.r;
+            r.y = bbox.bbox.circle.cy - bbox.bbox.circle.r;
+            r.width = 2*bbox.bbox.circle.r;
+            r.height = 2*bbox.bbox.circle.r;
+            break;
+        case RECTANGLE:
+            r = bbox.bbox.rect;
+            break;
+        case POLYGON:
+        default:
+            /* TODO */
+            r = (Rectangle){0,0,0,0};
+            break;
+    }
+    return r;
+}

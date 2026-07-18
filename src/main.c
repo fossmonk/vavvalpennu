@@ -4,29 +4,24 @@
 #include <raylib.h>
 #include <vpconfig.h>
 #include <rand.h>
-
 #include <game.h>
 
-int main(void) {
-    vp_rand_seed(time(NULL));
+#ifdef DEBUG
+#define SET_TRACE SetTraceLogLevel(LOG_ERROR)
+#else
+#define SET_TRACE SetTraceLogLevel(LOG_NONE)
+#endif
 
-    #ifndef DEBUG
-    SetTraceLogLevel(LOG_NONE);
-    #else
-    SetTraceLogLevel(LOG_DEBUG);
-    #endif
-
+static void set_window(void) {
     /* Init Window with our original dimensions */
     InitWindow(G_W, G_H, G_TITLE);
-    // Find out display resolutions
+    /* Find out display resolutions */
     int mon = GetCurrentMonitor();
     int sw = GetMonitorWidth(mon);
     int sh = GetMonitorHeight(mon);
 
     #ifndef DEBUG
-    /* Now reset the window size to screen size */
     SetWindowSize(sw, sh);
-    // Start game in full screen mode
     SetWindowState(FLAG_FULLSCREEN_MODE);
     #else
     /* Games in fullscreen can't be minimized (raylib issue)
@@ -35,10 +30,18 @@ int main(void) {
     (void)sh;
     SetWindowSize(G_W, G_H);
     #endif
+}
+
+int main(void) {
+    vp_rand_seed(time(NULL));
+
+    SET_TRACE;
+
+    set_window();
     
     /* No exit keys, handle separately */
     SetExitKey(KEY_NULL);
-    /* Hide the cursor since we have custom */
+    /* Hide the cursor since we have custom cursor */
     HideCursor();
 
     /* Create virtual canvas always with original dims G_W, G_H */

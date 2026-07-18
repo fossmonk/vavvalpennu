@@ -11,6 +11,7 @@
 #define KCH_POS_CHANGE_CHANCE     (vp_rand() % 423 == 0)
 
 anim_asset_t kchath_laugh;
+anim_asset_t kchath_hurt;
 
 static bool g_anim_asset_loaded = false;
 
@@ -18,6 +19,7 @@ void kchath_init(kchath_t* kch) {
     // ANIM
     if(!g_anim_asset_loaded) {
         anim_asset_load(ANIM_KCH_LAUGH, &kchath_laugh);
+        anim_asset_load(ANIM_KCH_HURT, &kchath_hurt);
     }
     Vector2 dim;
     // die
@@ -26,6 +28,11 @@ void kchath_init(kchath_t* kch) {
     kch->anim_laugh.asset = &kchath_laugh;
     kch->anim_laugh.timer = 0.0f;
     kch->anim_laugh.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
+    // hurt
+    dim = anim_asset_get_frame_dim(&kchath_hurt);
+    kch->anim_hurt.asset = &kchath_hurt;
+    kch->anim_hurt.timer = 0.0f;
+    kch->anim_hurt.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
 
     // AUDIO
     // laugh

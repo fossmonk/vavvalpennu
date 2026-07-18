@@ -27,7 +27,7 @@
 
 // GLOBALS
 // top level game object
-static game_t *g;
+game_t *g;
 
 static void game_reset_typebuffer(void) {
     g->is_type_buffer_done = false;
@@ -64,9 +64,13 @@ void game_init(RenderTexture2D *canvas) {
     puzzle_init();
     g->curr_puzzle = -1;
     g->puzzle_tries = 3;
+
+    // initiate and populate obstacle list. This needs to be passed to player_init
+    obj_t **obstacle_list = NULL;
+    obs_da_append(obstacle_list, &g->crate.obj);
     
     // initialize player
-    player_init(&g->p);
+    player_init(&g->p, obstacle_list);
     
     // init all bosses
     boss_init_bosses(&g->bosses);
@@ -129,20 +133,21 @@ void _game_update(float dt) {
             g->typebuffer[g->t_ptr] = '\0';
         }
     }
-    // PLAYER
+    // PLAYER CAN MOVE if !(DYING, HURTING, DANCING)
     bool player_move_conditions = !player_is_dying(&g->p) &&
-        !player_is_hurting(&g->p) && !g->is_type_mode;
+                                  !player_is_hurting(&g->p) &&
+                                  !player_is_dancing(&g->p);
     
     if(player_move_conditions) {
         if(input_iskeydown(KEY_D)) {
-            player_activate_move_r(&g->p, dt);
+            player_activate_hmove(&g->p, RIGHT, dt);
         }
 
         if(input_iskeydown(KEY_A)) {
-            player_activate_move_l(&g->p, dt);
+            player_activate_hmove(&g->p, LEFT, dt);
         }
 
-        if(input_iskeypressed(KEY_SPACE) && !player_is_jumping(&g->p)) {
+        if(input_iskeypressed(KEY_SPACE)) {
             player_activate_jump(&g->p, dt);
         }
 
@@ -159,24 +164,23 @@ void _game_update(float dt) {
             Vector2 mouse_pos = input_get_mouse_pos();
             player_activate_whiplash(&g->p, mouse_pos);
         }
-
         
-        // update camera position w.r.t player considering deadzone
-        if(!g->is_boss_active) {
-            // DEADZONE RIGHT LIMIT
-            float px_rl = g->p.obj.pos.x + g->p.obj.curr_anim->curr_frame.width;
-            if((px_rl - g->cam.target.x) > DZ_RL) {
-                g->cam.target.x = px_rl - DZ_RL;
-            }
-            // DEADZONE LEFT LIMIT
-            float px_ll = g->p.obj.pos.x;
-            if(px_ll - g->cam.target.x < DZ_LL) {
-                g->cam.target.x = px_ll - DZ_LL;
-            }
+    }
+    player_update(&g->p, dt);
+    // clamp player x if boss is active or type mode
+    if(g->is_boss_active || g->is_type_mode) {
+        player_clamp_to_screenx(&g->p);
+    } else {
+        float player_x = g->p.obj.pos.x;
+        // DEADZONE RIGHT LIMIT
+        if((player_x - g->cam.target.x) > DZ_RL) {
+            g->cam.target.x = player_x - DZ_RL;
+        }
+        // DEADZONE LEFT LIMIT
+        if(player_x - g->cam.target.x < DZ_LL) {
+            g->cam.target.x = player_x - DZ_LL;
         }
     }
-
-    player_update(&g->p, g->is_boss_active, dt);
 
     // BATARANGS: already activated by player input
     // now update the active ones
@@ -235,6 +239,8 @@ void _game_update(float dt) {
     
     boss_update(g->curr_boss, dt);
 
+    // TODO: move this to colman.c -> collision manager..
+
     /////////////////////////////////////////////////
     //////////// COLLISION DETECTION ////////////////
     /////////////////////////////////////////////////
@@ -247,7 +253,7 @@ void _game_update(float dt) {
             bool orb_conds = orb->obj.is_active;
             bool check = false;
             if(b_conds && orb_conds) {
-                check = col_check_bbox(&b->obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN);
+                check = col_check_bbox(&b->obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN, NULL);
             }
             if(check) {
                 // deactivate batr
@@ -267,7 +273,7 @@ void _game_update(float dt) {
         bool vy_conds = g->bosses.vy.obj.is_active && !vy_is_dying(&g->bosses.vy);
         bool check = false;
         if(b_conds && vy_conds) {
-            check = col_check_bbox(&g->bosses.vy.obj, COORDS_WORLD, &b->obj, COORDS_WORLD); 
+            check = col_check_bbox(&g->bosses.vy.obj, COORDS_WORLD, &b->obj, COORDS_WORLD, NULL); 
         }
         if(check) {
             b->obj.is_active = false;
@@ -282,7 +288,7 @@ void _game_update(float dt) {
         bool kch_conds = g->bosses.kch.obj.is_active && !kch_is_dying(&g->bosses.kch);
         bool check = false;
         if(b_conds && kch_conds) {
-            check = col_check_bbox(&g->bosses.kch.obj, COORDS_WORLD, &b->obj, COORDS_WORLD);
+            check = col_check_bbox(&g->bosses.kch.obj, COORDS_WORLD, &b->obj, COORDS_WORLD, NULL);
         }
         if(check) {
             b->obj.is_active = false;
@@ -297,7 +303,7 @@ void _game_update(float dt) {
         bool crate_conds = g->crate.obj.is_active && !g->crate.is_broken && (g->crate.obj.pos.y != (GAME_GROUND_Y - g->crate.crate_tex.height));
         bool check = false;
         if(b_conds && crate_conds) {
-            check = col_check_bbox(&g->crate.obj, COORDS_WORLD, &b->obj, COORDS_WORLD);
+            check = col_check_bbox(&g->crate.obj, COORDS_WORLD, &b->obj, COORDS_WORLD, NULL);
         }
         if(check) {
             b->obj.is_active = false;
@@ -311,7 +317,7 @@ void _game_update(float dt) {
         bool player_conds = !player_is_dying(&g->p);
         bool check = false;
         if(orb_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN);
+            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN, NULL);
         }
         if(check) {
             orb->obj.is_active = false;
@@ -326,7 +332,7 @@ void _game_update(float dt) {
         bool player_conds = !player_is_dying(&g->p);
         bool check = false;
         if(skb_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &skb->obj, COORDS_SCREEN);
+            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &skb->obj, COORDS_SCREEN, NULL);
         }
         if(check) {
             skb->obj.is_active = false;
@@ -341,13 +347,13 @@ void _game_update(float dt) {
         bool player_conds = !player_is_dying(&g->p);
         bool check = false;
         if(k_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &k->obj, COORDS_WORLD);
+            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &k->obj, COORDS_WORLD, NULL);
         }
         if(check) {
             k->obj.is_active = false;
             g->p.k_count++;
             g->p.score += 5;
-            PlaySound(g->p.slurp);
+            PlaySound(g->p.sounds.slurp);
         }
     }
     // CRATE WITH PLAYER
@@ -357,11 +363,11 @@ void _game_update(float dt) {
 
         bool crate_cond = cr->obj.is_active && !cr->is_broken && (cr->obj.pos.y == (GAME_GROUND_Y - cr->crate_tex.height));
         
-        if(crate_cond && (p->obj.curr_anim == &p->anim_wlash)) {
+        if(crate_cond && (p->obj.curr_anim->id.id == p->anims.wlash.id.id)) {
             int curr_f_idx = anim_get_curr_frame_idx(g->p.obj.curr_anim);
             bool frame_cond = (curr_f_idx >= 2 && curr_f_idx <= 7);
             if(frame_cond) {
-                if(col_check_bbox(&p->obj, COORDS_WORLD, &cr->obj, COORDS_WORLD)) {
+                if(col_check_bbox(&p->obj, COORDS_WORLD, &cr->obj, COORDS_WORLD, NULL)) {
                     g->crate.is_broken = true;
                 }
             }
@@ -371,7 +377,7 @@ void _game_update(float dt) {
             bool content_on_ground = false;
             if(cr->content.type == ARTIFACT && CR_ARTIF(cr).obj.is_active && (g->curr_puzzle < 0)) {
                 content_on_ground = (CR_ARTIF(cr).obj.pos.y == CR_ARTIF(cr).terminal_y);
-                bool col_check = col_check_bbox(&p->obj, COORDS_WORLD, &CR_ARTIF(cr).obj, COORDS_WORLD);
+                bool col_check = col_check_bbox(&p->obj, COORDS_WORLD, &CR_ARTIF(cr).obj, COORDS_WORLD, NULL);
                 if(content_on_ground && col_check && !g->is_type_mode) {
                     g->is_type_mode = true;
                     g->curr_puzzle = puzzle_get();
@@ -386,7 +392,7 @@ void _game_update(float dt) {
                 }
             } else if(cr->content.type == POTION && CR_POTION(cr).obj.is_active) {
                 content_on_ground = (CR_POTION(cr).obj.pos.y == CR_POTION(cr).terminal_y);
-                if(content_on_ground && col_check_bbox(&p->obj, COORDS_WORLD, &CR_POTION(cr).obj, COORDS_WORLD)) {
+                if(content_on_ground && col_check_bbox(&p->obj, COORDS_WORLD, &CR_POTION(cr).obj, COORDS_WORLD, NULL)) {
                     // pick up potion
                     CR_POTION(cr).obj.is_active = false;
                     p->health += 10;
@@ -402,6 +408,7 @@ void _game_update(float dt) {
                     CR_ARTIF(cr).is_won = true;
                     CR_ARTIF(cr).obj.is_active = false;
                     p->a_count++;
+                    p->score += 100;
                     puzzle_play_solved();
                 } else {
                     --g->puzzle_tries;
@@ -426,13 +433,13 @@ void _game_update(float dt) {
         bool player_conds = !player_is_dying(&g->p);
         bool check = false;
         if(k_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &k->obj, COORDS_WORLD);
+            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &k->obj, COORDS_WORLD, NULL);
         }
         if(check) {
             k->obj.is_active = false;
             g->p.k_count++;
             g->p.score += 5;
-            PlaySound(g->p.slurp);
+            PlaySound(g->p.sounds.slurp);
         }
     }
     // HOSTILE ORB WITH VY
@@ -442,7 +449,7 @@ void _game_update(float dt) {
         bool vy_conds = !vy_is_dying(&g->bosses.vy);
         bool check = false;
         if(orb_conds && vy_conds) {
-            check = col_check_bbox(&g->bosses.vy.obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN);
+            check = col_check_bbox(&g->bosses.vy.obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN, NULL);
         }
         if(check) {
             orb->obj.is_active = false;
@@ -459,10 +466,10 @@ void _game_update(float dt) {
         bool player_conds = !player_is_dying(&g->p);
         bool check = false;
         if(aana_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &aana->obj, COORDS_WORLD);
+            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &aana->obj, COORDS_WORLD, NULL);
         }
         if(check) {
-            bool anim_cond = g->p.obj.curr_anim == &g->p.anim_wlash;
+            bool anim_cond = g->p.obj.curr_anim->id.id == g->p.anims.wlash.id.id;
             int curr_f_idx = anim_get_curr_frame_idx(g->p.obj.curr_anim);
             bool frame_cond = (curr_f_idx >= 2 && curr_f_idx <= 7);
             bool pos_cond = ((g->p.obj.hdir == RIGHT) && (aana->obj.pos.x > g->p.obj.pos.x)) ||
@@ -474,7 +481,7 @@ void _game_update(float dt) {
             } else {
                 aana->hit_player = true;
                 player_set_hurt_flash(&g->p);
-                PlaySound(g->p.hurt);
+                PlaySound(g->p.sounds.hurt);
                 g->p.health -= 5;
             }
         }
@@ -605,7 +612,7 @@ void game_start_main_loop(void) {
                     hbar_draw(&g->bosses.kch.hbar);
                     skball_draw_all(g->bosses.kch.skballs);
                 }
-            } 
+            }
 
             hud_draw(&g->p);
             EndTextureMode();

@@ -50,4 +50,13 @@ void hud_draw(player_t *p) {
     DrawTextEx(hudfont, TextFormat("%02d", p->a_count), (Vector2){ra.x, ra.y}, 35, 1, WHITE);
     DrawTextEx(hudfont, TextFormat("SCORE : %05d", p->score), (Vector2){12, 40}, 35, 1, WHITE);
     DrawTextEx(hudfont, TextFormat("LEVEL : %01d", p->curr_level), (Vector2){12, 80}, 35, 1, WHITE);
+    
+    // DEBUG HUD
+    #ifdef DEBUG
+    Rectangle r = obj_get_bbox_rect(&p->obj);
+    float player_bottom = p->obj.pos.y + r.y + r.height;
+    DrawTextEx(hudfont, 
+        TextFormat("PX: %0.1f, PY: %0.1f, VX: %0.1f, VY: %0.1f\n", p->obj.pos.x, player_bottom, p->obj.vel.x, p->obj.vel.y),
+        (Vector2){12, 120}, 35, 1, GREEN);
+    #endif
 }

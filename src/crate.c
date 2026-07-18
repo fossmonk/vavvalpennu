@@ -20,6 +20,7 @@ static float crate_spos_x[MAX_CRATES];
 static float crate_spos_y[MAX_CRATE_POS_Y] =  {
     GAME_GROUND_Y, GAME_GROUND_Y - 500, GAME_GROUND_Y - 700
 };
+
 // fill this array in order and shuffle it
 static crate_content_type crate_c[MAX_CRATES] = {
     POTION, POTION, POTION, POTION, POTION, POTION, POTION, POTION, 
@@ -173,10 +174,10 @@ void crate_draw(crate_t* cr) {
         } else {
             DrawTexture(cr->crate_tex, cr->obj.pos.x, cr->obj.pos.y, WHITE);
         }
+        #ifdef DEBUG
+        bbox_draw(cr->obj.curr_anim->asset->bbox, cr->obj.pos, MAGENTA);
+        #endif
     }
-    #ifdef DEBUG
-    bbox_draw(cr->obj.curr_anim->asset->bbox, cr->obj.pos, MAGENTA);
-    #endif
 }
 
 void crate_content_draw(crate_t *cr) {

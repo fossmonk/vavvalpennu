@@ -16,7 +16,7 @@
 #define WORLD_XR (G_W * 50)
 
 // Camera deadzone parameters
-#define DZ_RL (200)
+#define DZ_RL (100)
 #define DZ_LL (-600)
 
 // Common Physics constants
@@ -30,7 +30,7 @@
 #define MAIN_FONT      "assets/fonts/Almendra-Bold.ttf"
 #define HUD_FONT       "assets/fonts/Almendra-Bold.ttf"
 #define MENU_FONT      "assets/fonts/AladinR.ttf"
-#define PUZZLE_FONT    "assets/fonts/DesMalers.ttf"
+#define PUZZLE_FONT    "assets/fonts/OfenbacherSchwabCAT.ttf"
 #define BACKGROUND     "assets/backdrop/keralabackdrop.png"
 #define SPLASH_BG      "assets/backdrop/splash.png"
 #define PAUSEMENU_BG   "assets/backdrop/pausemenu.png"
@@ -66,6 +66,7 @@
 
 // KUTTICHATHAN
 #define ANIM_KCH_LAUGH     (anim_info_t){"assets/sprites/kchath/laugh.png", "assets/sprites/kchath/laugh.bbox", "KCH LAUGH", 25, 0.07f, true}
+#define ANIM_KCH_HURT      (anim_info_t){"assets/sprites/kchath/hurt.png", "assets/sprites/kchath/hurt.bbox", "KCH HURT", 16, 0.03f, false}
 
 
 // AANAMARUTHA
@@ -148,7 +149,9 @@
 // Some helpful macro functions
 // use very carefully
 #define SPREAD_VEC(v) v.x, v.y
-#define SPREAD_RECT(r) r.x, r.y, r.width, r.height 
+#define SPREAD_RECT(r) r.x, r.y, r.width, r.height
+
+#define ARRAY_SIZE(x) (sizeof((x))/sizeof((x)[0]))
 
 
 #endif /* _VPCONFIG_H_ */

@@ -35,8 +35,8 @@ static cp control_pairs[] = {
     {"MOVE LEFT","A"},
     {"MOVE RIGHT","D"},
     {"JUMP","SPACE"},
-    {"THROW BATARANG","RMB"},
-    {"HEAVY ATTACK","LMB"},
+    {"THROW BATARANG","LMB"},
+    {"HEAVY ATTACK","R"},
     {NULL, NULL}
 };
 

@@ -53,6 +53,7 @@ void orb_init(orb_t *orb) {
     int noise_tex_loc = GetShaderLocation(orb->shader, "u_noiseTex");
     SetShaderValueTexture(orb->shader, noise_tex_loc, orb->noise_tex);
     orb->obj.is_active = false;
+    orb->obj.cs = COORDS_SCREEN;
     orb->obj.size = (Vector2){orb->orb_tex.width, orb->orb_tex.height};
     orb->is_hostile = false;
     orb->xpos = g_orb_xpos[g_orbcount++];
@@ -103,7 +104,7 @@ void orb_activate(orb_t *orb, float dt) {
 
 void orb_update(orb_t *orb, float dt) {
     // check for bounds
-    if(obj_is_oob(&orb->obj, COORDS_SCREEN)) {
+    if(obj_is_oob(&orb->obj)) {
         orb->obj.is_active = false;
         orb->is_hostile = false;
     } else {

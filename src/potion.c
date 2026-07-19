@@ -8,6 +8,7 @@ static anim_t dummy_anim;
 void potion_init(potion_t *potion) {
     potion->tex = LoadTexture(POTION_TEXTURE);
     potion->terminal_y = GAME_GROUND_Y - (potion->tex.height);
+    potion->obj.cs = COORDS_WORLD;
 
     // load dummy animation for collision bbox
     dummy_anim_asset.texture = potion->tex;

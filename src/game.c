@@ -254,7 +254,7 @@ void _game_update(float dt) {
             bool orb_conds = orb->obj.is_active;
             bool check = false;
             if(b_conds && orb_conds) {
-                check = col_check_bbox(&b->obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN, NULL);
+                check = col_check_bbox(&b->obj, &orb->obj, NULL);
             }
             if(check) {
                 // deactivate batr
@@ -274,7 +274,7 @@ void _game_update(float dt) {
         bool vy_conds = g->bosses.vy.obj.is_active && !vy_is_dying(&g->bosses.vy);
         bool check = false;
         if(b_conds && vy_conds) {
-            check = col_check_bbox(&g->bosses.vy.obj, COORDS_WORLD, &b->obj, COORDS_WORLD, NULL); 
+            check = col_check_bbox(&g->bosses.vy.obj, &b->obj, NULL); 
         }
         if(check) {
             b->obj.is_active = false;
@@ -289,7 +289,7 @@ void _game_update(float dt) {
         bool kch_conds = g->bosses.kch.obj.is_active && !kch_is_dying(&g->bosses.kch);
         bool check = false;
         if(b_conds && kch_conds) {
-            check = col_check_bbox(&g->bosses.kch.obj, COORDS_WORLD, &b->obj, COORDS_WORLD, NULL);
+            check = col_check_bbox(&g->bosses.kch.obj, &b->obj, NULL);
         }
         if(check) {
             b->obj.is_active = false;
@@ -304,7 +304,7 @@ void _game_update(float dt) {
         bool crate_conds = g->crate.obj.is_active && !g->crate.is_broken && (g->crate.obj.pos.y != (GAME_GROUND_Y - g->crate.crate_tex.height));
         bool check = false;
         if(b_conds && crate_conds) {
-            check = col_check_bbox(&g->crate.obj, COORDS_WORLD, &b->obj, COORDS_WORLD, NULL);
+            check = col_check_bbox(&g->crate.obj, &b->obj, NULL);
         }
         if(check) {
             b->obj.is_active = false;
@@ -318,7 +318,7 @@ void _game_update(float dt) {
         bool player_conds = !player_is_dying(&g->p);
         bool check = false;
         if(orb_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN, NULL);
+            check = col_check_bbox(&g->p.obj, &orb->obj, NULL);
         }
         if(check) {
             orb->obj.is_active = false;
@@ -333,7 +333,7 @@ void _game_update(float dt) {
         bool player_conds = !player_is_dying(&g->p);
         bool check = false;
         if(skb_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &skb->obj, COORDS_SCREEN, NULL);
+            check = col_check_bbox(&g->p.obj, &skb->obj, NULL);
         }
         if(check) {
             skb->obj.is_active = false;
@@ -344,11 +344,11 @@ void _game_update(float dt) {
     // KARIKKU WITH PLAYER
     for(int i = 0; i < TOTAL_KARIKKU; ++i) {
         karikku_t *k = &g->karikku[i];
-        bool k_conds = k->obj.is_active && !obj_is_oob(&k->obj, COORDS_WORLD);
+        bool k_conds = k->obj.is_active && !obj_is_oob(&k->obj);
         bool player_conds = !player_is_dying(&g->p);
         bool check = false;
         if(k_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &k->obj, COORDS_WORLD, NULL);
+            check = col_check_bbox(&g->p.obj, &k->obj, NULL);
         }
         if(check) {
             k->obj.is_active = false;
@@ -368,7 +368,7 @@ void _game_update(float dt) {
             int curr_f_idx = anim_get_curr_frame_idx(g->p.obj.curr_anim);
             bool frame_cond = (curr_f_idx >= 2 && curr_f_idx <= 7);
             if(frame_cond) {
-                if(col_check_bbox(&p->obj, COORDS_WORLD, &cr->obj, COORDS_WORLD, NULL)) {
+                if(col_check_bbox(&p->obj, &cr->obj, NULL)) {
                     g->crate.is_broken = true;
                 }
             }
@@ -378,7 +378,7 @@ void _game_update(float dt) {
             bool content_on_ground = false;
             if(cr->content.type == ARTIFACT && CR_ARTIF(cr).obj.is_active && (g->curr_puzzle < 0)) {
                 content_on_ground = (CR_ARTIF(cr).obj.pos.y == CR_ARTIF(cr).terminal_y);
-                bool col_check = col_check_bbox(&p->obj, COORDS_WORLD, &CR_ARTIF(cr).obj, COORDS_WORLD, NULL);
+                bool col_check = col_check_bbox(&p->obj, &CR_ARTIF(cr).obj, NULL);
                 if(content_on_ground && col_check && !g->is_type_mode) {
                     g->is_type_mode = true;
                     g->curr_puzzle = puzzle_get();
@@ -393,7 +393,7 @@ void _game_update(float dt) {
                 }
             } else if(cr->content.type == POTION && CR_POTION(cr).obj.is_active) {
                 content_on_ground = (CR_POTION(cr).obj.pos.y == CR_POTION(cr).terminal_y);
-                if(content_on_ground && col_check_bbox(&p->obj, COORDS_WORLD, &CR_POTION(cr).obj, COORDS_WORLD, NULL)) {
+                if(content_on_ground && col_check_bbox(&p->obj, &CR_POTION(cr).obj, NULL)) {
                     // pick up potion
                     CR_POTION(cr).obj.is_active = false;
                     p->health += 10;
@@ -431,11 +431,11 @@ void _game_update(float dt) {
     // KARIKKU WITH PLAYER
     for(int i = 0; i < TOTAL_KARIKKU; ++i) {
         karikku_t *k = &g->karikku[i];
-        bool k_conds = k->obj.is_active && !obj_is_oob(&k->obj, COORDS_WORLD);
+        bool k_conds = k->obj.is_active && !obj_is_oob(&k->obj);
         bool player_conds = !player_is_dying(&g->p);
         bool check = false;
         if(k_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &k->obj, COORDS_WORLD, NULL);
+            check = col_check_bbox(&g->p.obj, &k->obj, NULL);
         }
         if(check) {
             k->obj.is_active = false;
@@ -451,7 +451,7 @@ void _game_update(float dt) {
         bool vy_conds = !vy_is_dying(&g->bosses.vy);
         bool check = false;
         if(orb_conds && vy_conds) {
-            check = col_check_bbox(&g->bosses.vy.obj, COORDS_WORLD, &orb->obj, COORDS_SCREEN, NULL);
+            check = col_check_bbox(&g->bosses.vy.obj, &orb->obj, NULL);
         }
         if(check) {
             orb->obj.is_active = false;
@@ -468,7 +468,7 @@ void _game_update(float dt) {
         bool player_conds = !player_is_dying(&g->p);
         bool check = false;
         if(aana_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, COORDS_WORLD, &aana->obj, COORDS_WORLD, NULL);
+            check = col_check_bbox(&g->p.obj, &aana->obj, NULL);
         }
         if(check) {
             bool anim_cond = g->p.obj.curr_anim->id.id == g->p.anims.wlash.id.id;

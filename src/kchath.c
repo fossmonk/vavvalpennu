@@ -44,6 +44,7 @@ void kchath_init(kchath_t* kch) {
     kch->obj.curr_anim = &kch->anim_laugh;
     kch->obj.size = (Vector2){kch->obj.curr_anim->curr_frame.width, kch->obj.curr_anim->curr_frame.height};
     kch->obj.is_active = false;
+    kch->obj.cs = COORDS_WORLD;
     kch->actionmask = 0;
     kch->max_health = 150;
     kch->health = kch->max_health;

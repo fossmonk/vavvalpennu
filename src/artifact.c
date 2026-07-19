@@ -31,6 +31,7 @@ void artifact_init(artifact_t *artif) {
     artif->artifact_tex = LoadTexture(tex_fname);
     artif->terminal_y = GAME_GROUND_Y - (artif->artifact_tex.height);
     artif->gravity = true;
+    artif->obj.cs = COORDS_WORLD;
 
     // load dummy animation for collision bbox
     dummy_anim_asset.texture = artif->artifact_tex;

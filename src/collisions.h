@@ -13,6 +13,6 @@ typedef struct {
     bool bt;
 } col_details_2d;
 
-bool col_check_bbox(obj_t *obj1, coord_sys cs1, obj_t *obj2, coord_sys cs2, col_details_2d *o_details);
+bool col_check_bbox(obj_t *obj1, obj_t *obj2, col_details_2d *o_details);
 
 #endif

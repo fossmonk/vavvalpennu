@@ -50,6 +50,7 @@ void vy_init(vy_t *vy) {
     vy->obj.curr_anim = &vy->anim_vy_rise;
     vy->obj.size = (Vector2){vy->obj.curr_anim->curr_frame.width, vy->obj.curr_anim->curr_frame.height};
     vy->obj.is_active = false;
+    vy->obj.cs = COORDS_WORLD;
     vy->actionmask = 0;
     vy->is_orbpos = false;
     vy->max_health = VY_MAX_HEALTH;

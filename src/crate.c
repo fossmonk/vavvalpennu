@@ -94,6 +94,7 @@ void crate_init(crate_t* cr) {
     dummy_anim.asset = &dummy_anim_asset;
     cr->obj.curr_anim = &dummy_anim;
     cr->obj.is_active = false;
+    cr->obj.cs = COORDS_WORLD;
 }
 
 void crate_activate(crate_t *cr) {
@@ -147,7 +148,7 @@ void crate_update(crate_t* cr, float dt) {
             PlaySound(s_crate_break);
         }
     } else {
-        if(obj_is_oob(&cr->obj, COORDS_WORLD)) {
+        if(obj_is_oob(&cr->obj)) {
             cr->obj.is_active = false;
         }
     }

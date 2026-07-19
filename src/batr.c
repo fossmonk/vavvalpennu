@@ -26,6 +26,7 @@ void batr_init(batr_t *b) {
         b->obj.curr_anim->curr_frame.height
     };
     b->obj.is_active = false;
+    b->obj.cs = COORDS_WORLD;
     // purposely don't set pos and vel.
     // this has to be init'ed when spawned.
 }
@@ -38,7 +39,7 @@ void batr_init_all(batr_t *batrs) {
 
 void batr_update(batr_t *b, float dt) {
     // check for bounds
-    if(obj_is_oob(&b->obj, COORDS_WORLD)) {
+    if(obj_is_oob(&b->obj)) {
         b->obj.is_active = false;
     } else {
         // update positions with velocity

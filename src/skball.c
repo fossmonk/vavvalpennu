@@ -21,6 +21,7 @@ void skball_init(skball_t *skball) {
     skball->r = skball->skball_tex.width/2;
     skball->time_loc = GetShaderLocation(skball->shader, "u_time");
     skball->obj.is_active = false;
+    skball->obj.cs = COORDS_SCREEN;
     skball->id = get_id();
     skball->obj.size = (Vector2){skball->skball_tex.width, skball->skball_tex.height};
 
@@ -65,7 +66,7 @@ void skball_activate(skball_t *skball) {
 }
 
 void skball_update(skball_t *skball, float dt) {
-    if(obj_is_oob(&skball->obj, COORDS_SCREEN)) {
+    if(obj_is_oob(&skball->obj)) {
         skball->obj.is_active = false;
     } else {
         skball->obj.pos.x += skball->obj.vel.x * dt;

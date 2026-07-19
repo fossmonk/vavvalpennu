@@ -18,8 +18,8 @@ Vector2 obj_s2w_pos(Vector2 pos) {
     return GetScreenToWorld2D(pos, *gcam2d);
 }
 
-bool obj_is_oob(obj_t *obj, coord_sys coords) {
-    Vector2 screenpos = (coords == COORDS_WORLD) ? obj_w2s_pos(obj->pos) : obj->pos;
+bool obj_is_oob(obj_t *obj) {
+    Vector2 screenpos = (obj->cs == COORDS_WORLD) ? obj_w2s_pos(obj->pos) : obj->pos;
 
     bool x_l = screenpos.x + obj->size.x < 0;
     bool x_h = screenpos.x > G_W;

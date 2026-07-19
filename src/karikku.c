@@ -75,6 +75,7 @@ void karikku_init(karikku_t *k) {
     // contrary to others, karikkus are active always
     // until picked up
     k->obj.is_active = true;
+    k->obj.cs = COORDS_WORLD;
     k->obj.pos = kpos[kcount++];
 }
 
@@ -108,7 +109,7 @@ void karikku_draw(karikku_t *k) {
 void karikku_draw_all(karikku_t *karikkus) {
     for(int i = 0; i < TOTAL_KARIKKU; ++i) {
         karikku_t *k = &karikkus[i];
-        if(k->obj.is_active && !obj_is_oob(&k->obj, COORDS_WORLD)) {
+        if(k->obj.is_active && !obj_is_oob(&k->obj)) {
             karikku_draw(k);
         }
     }

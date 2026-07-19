@@ -39,6 +39,7 @@ void aanam_init(aanam_t *aana) {
         aana->anim_run.curr_frame.height
     };
     aana->obj.is_active = false;
+    aana->obj.cs = COORDS_WORLD;
     aana->is_dying = false;
     aana->hit_player = false;
 
@@ -90,7 +91,7 @@ void aanam_activate_all(aanam_t *aanas, bool boss_active, float dt) {
 void aanam_update(aanam_t *aana, float dt) {
     if(aana->obj.is_active && !aana->is_dying) {
         // check for bounds
-        if(obj_is_oob(&aana->obj, COORDS_WORLD)) {
+        if(obj_is_oob(&aana->obj)) {
             aana->obj.is_active = false;
         } else {
             // update x pos

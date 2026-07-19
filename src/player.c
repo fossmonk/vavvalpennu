@@ -136,6 +136,7 @@ void player_init(player_t *p, obj_t **obstacle_list) {
     float player_initx = G_W/2 - p->obj.curr_anim->curr_frame.width;
     float player_inity = GAME_GROUND_Y - p->obj.curr_anim->curr_frame.height;
     p->obj.is_active = true;
+    p->obj.cs = COORDS_WORLD;
     p->obj.pos = (Vector2){player_initx, player_inity};
     p->prev_pos = (Vector2){-1, -1};
     p->obj.vel = (Vector2){0, 0};
@@ -172,7 +173,7 @@ bool player_can_move(player_t *p, hdir_t hdir) {
     for(int i = 0; i < num_obs; ++i) {
         obj_t *obs = p->obstacle_list[i];
         if(obs->is_active) {
-            bool is_colliding = col_check_bbox(&p->obj, COORDS_WORLD, obs, COORDS_WORLD, &c_details);
+            bool is_colliding = col_check_bbox(&p->obj, obs, &c_details);
             bool check = (hdir == RIGHT) ? c_details.rl : c_details.lr;
             can_move = !(is_colliding && check);
             if(!can_move) break;
@@ -198,7 +199,7 @@ bool player_is_grounded(player_t *p, float *curr_ground) {
 
         if(!obs->is_active) continue;
         
-        bool is_colliding = col_check_bbox(&p->obj, COORDS_WORLD, obs, COORDS_WORLD, &c_details);
+        bool is_colliding = col_check_bbox(&p->obj, obs, &c_details);
         if(is_colliding && c_details.bt) {
             ground_y = obs->pos.y;
             obs_below = true;
@@ -246,16 +247,16 @@ void player_activate_hmove(player_t *p, hdir_t hdir, float dt) {
 
 void player_activate_jump(player_t *p, float dt) {
     // check if the player is grounded
-    if(player_is_grounded(p, NULL)) {
-        // set animation to jump
-        p->obj.curr_anim = &p->anims.jump;
-        p->obj.size = anim_get_framesize(p->obj.curr_anim);
-        // set animation orientation
-        p->obj.hdir == RIGHT ? anim_hflipr(p->obj.curr_anim) : anim_hflipl(p->obj.curr_anim);
-        // set initial vertical velocity
-        p->obj.vel.y = -JUMP_VEL_Y_0;
-        PlaySound(p->sounds.jump);
-    }
+    if(!player_is_grounded(p, NULL)) return;
+
+    // set animation to jump
+    p->obj.curr_anim = &p->anims.jump;
+    p->obj.size = anim_get_framesize(p->obj.curr_anim);
+    // set animation orientation
+    p->obj.hdir == RIGHT ? anim_hflipr(p->obj.curr_anim) : anim_hflipl(p->obj.curr_anim);
+    // set initial vertical velocity
+    p->obj.vel.y = -JUMP_VEL_Y_0;
+    PlaySound(p->sounds.jump);
 }
 
 void player_activate_hurting(player_t *p, float dt) {
@@ -413,7 +414,17 @@ bool player_can_level_up(player_t *p) {
         [VP_L3] = 5500
     };
 
-    return (p->score > l_up_scores[p->curr_level]);
+    static const int l_up_kcounts[] = {
+        [VP_L0] = 50,
+        [VP_L1] = 100,
+        [VP_L2] = 200,
+        [VP_L3] = 300
+    };
+
+    bool score_cond = p->score > l_up_scores[p->curr_level];
+    bool karikku_cond = p->k_count > l_up_kcounts[p->curr_level];
+
+    return score_cond && karikku_cond;
 }
 
 void player_decr_health(player_t *p, int amount) {

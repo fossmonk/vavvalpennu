@@ -21,12 +21,13 @@ typedef struct {
     anim_t *curr_anim;
     hdir_t hdir;
     bool is_active;
+    coord_sys cs;
 } obj_t;
 
 void obj_global_set_cam2d(Camera2D *camref);
 Vector2 obj_w2s_pos(Vector2 pos);
 Vector2 obj_s2w_pos(Vector2 pos);
-bool obj_is_oob(obj_t *obj, coord_sys coords);
+bool obj_is_oob(obj_t *obj);
 Rectangle obj_get_bbox_rect(obj_t *obj);
 
 /// SOME STATIC INLINES

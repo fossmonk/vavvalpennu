@@ -48,6 +48,7 @@ void ffly_init(ffly_t *ff) {
         ff->obj.curr_anim->curr_frame.height
     };
     ff->obj.is_active = false;
+    ff->obj.cs = COORDS_WORLD;
 }
 
 void ffly_init_all(ffly_t *fflys) {
@@ -78,7 +79,7 @@ void ffly_activate_all(ffly_t *ffs) {
 }
 
 void ffly_update(ffly_t *ff, float dt) {
-    if(obj_is_oob(&ff->obj, COORDS_WORLD)) {
+    if(obj_is_oob(&ff->obj)) {
         ff->obj.is_active = false;
     } else {
         if(ff->reached_target) {

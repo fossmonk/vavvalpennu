@@ -9,7 +9,7 @@
 #include <levels.h>
 #include <hud.h>
 #include <collisions.h>
-#include <obstacles.h>
+#include <dyn_arr.h>
 
 #define PLAYER_VEL_X_DECAY     (-12)
 #define PLAYER_VEL_Y_DECAY     (-2.5)
@@ -167,7 +167,7 @@ bool player_can_move(player_t *p, hdir_t hdir) {
     // loop through list of obstacles, check if player bbox is colliding with obstacle bbox
     // and player right limit is >= obstacle left limit
     bool can_move = true;
-    int num_obs = obs_da_len(p->obstacle_list);
+    int num_obs = dyn_arr_len(p->obstacle_list);
     col_details_2d c_details;
     for(int i = 0; i < num_obs; ++i) {
         obj_t *obs = p->obstacle_list[i];
@@ -189,7 +189,7 @@ bool player_is_grounded(player_t *p, float *curr_ground) {
     float player_b_y = p->obj.pos.y + bbox_rect.y + bbox_rect.height;
     
     // check if there are any obstacles below
-    int num_obs = obs_da_len(p->obstacle_list);
+    int num_obs = dyn_arr_len(p->obstacle_list);
     col_details_2d c_details;
     bool obs_below = false;
     float ground_y = -1;

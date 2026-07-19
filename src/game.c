@@ -14,6 +14,7 @@
 #include <input.h>
 #include <puzzle.h>
 #include <crate.h>
+#include <dyn_arr.h>
 
 // SOME MACRO FUNCTIONS
 #ifndef _max
@@ -65,7 +66,7 @@ void game_init(RenderTexture2D *canvas) {
 
     // initiate and populate obstacle list. This needs to be passed to player_init
     obj_t **obstacle_list = NULL;
-    obs_da_append(obstacle_list, &g->crate.obj);
+    dyn_arr_append(obstacle_list, &g->crate.obj);
     
     // initialize player
     player_init(&g->p, obstacle_list);

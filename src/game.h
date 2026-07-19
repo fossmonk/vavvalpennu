@@ -15,7 +15,6 @@
 #include <karikku.h>
 #include <ffly.h>
 #include <crate.h>
-#include <obstacles.h>
 
 #define TYPEBUFFER_SIZE (64)
 

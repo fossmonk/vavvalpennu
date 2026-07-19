@@ -7,7 +7,6 @@
 #include <ctype.h>
 #include <string.h>
 #include <bbox.h>
-#include <textengine.h>
 #include <obj.h>
 
 #define PUZZLE_COUNT (16)
@@ -25,6 +24,68 @@ Texture2D scroll_tex;
 Rectangle scroll_write_rect;
 Sound puzzle_solved;
 Sound puzzle_wrong;
+
+static int extract_word(char *line, char* word) {
+    int i = 0;
+    while(line[i] != ' ' && line[i] != '\0') {
+        word[i] = line[i];
+        ++i;
+    }
+    return i;
+}
+
+static void draw_rect_wrapped_text(char *text, Font font, float font_size, Rectangle rect) {
+    // shrink rectangle
+    float margin = 2.0f;
+    rect.x += margin;
+    rect.y += margin;
+    rect.width -= 2*margin;
+    rect.height -= 2*margin;
+
+    float x_ptr = 0.0f, y_ptr = 0.0f;
+    char *p = text;
+    char wordbuf[32] = { 0 };
+
+    // handle special cases
+    if(p == NULL) return;
+
+    int offset = 0;
+    Vector2 pos;
+    while(*p != '\0') {
+        offset = extract_word(p, wordbuf);
+        if(p[offset] != '\0') {
+            wordbuf[offset] = ' ';
+            wordbuf[offset+1] = '\0';
+        }
+        if(p[offset] == ' ')offset++;
+        
+        Vector2 w_sz = MeasureTextEx(font, wordbuf, font_size, 1);
+        
+        if(w_sz.x <= (rect.width - x_ptr)) {
+            pos = (Vector2){x_ptr + rect.x, y_ptr + rect.y};
+            DrawTextEx(font, wordbuf, pos, font_size, 1, WHITE);
+            x_ptr += w_sz.x;
+        } else {
+            y_ptr += (w_sz.y + 1.0f);
+            x_ptr = 0.0f;
+            if(w_sz.x <= rect.width) {
+                pos = (Vector2){x_ptr + rect.x, y_ptr + rect.y};
+                DrawTextEx(font, wordbuf, pos, font_size, 1, WHITE);
+                x_ptr += w_sz.x;
+            } else {
+                printf("[VP WARNING] word %s is OOB !!\n", wordbuf);
+            }
+        }
+
+        if(x_ptr >= rect.width) {
+            y_ptr += (w_sz.y + 1.0f);
+            x_ptr = 0.0f;
+        } 
+            
+        for(int z = 0; z < 32; ++z)wordbuf[z] = '\0';
+        p += offset;
+    }
+}
 
 static puzzle_t g_puzzles[PUZZLE_COUNT] = {
     {
@@ -165,7 +226,7 @@ void puzzle_draw_q(int puzzle_id) {
     // Draw the scroll
     DrawTexture(scroll_tex, SPREAD_VEC(scroll_pos), WHITE);
     // Draw the text
-    te_draw_inside_rect(question, puzzlefont, 40, r);
+    draw_rect_wrapped_text(question, puzzlefont, 40, r);
 }
 
 void puzzle_draw_textbox(char *typebuffer) {

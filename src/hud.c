@@ -4,7 +4,6 @@
 #include <player.h>
 #include <hbar.h>
 #include <bbox.h>
-#include <textengine.h>
 
 Texture2D k_hud_tex;
 Texture2D a_hud_tex;

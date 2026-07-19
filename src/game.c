@@ -13,7 +13,6 @@
 #include <boss.h>
 #include <input.h>
 #include <puzzle.h>
-#include <textengine.h>
 #include <crate.h>
 
 // SOME MACRO FUNCTIONS

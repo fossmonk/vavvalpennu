@@ -12,12 +12,12 @@
 #include <obstacles.h>
 
 #define PLAYER_VEL_X_DECAY     (-12)
-#define PLAYER_VEL_X_ROUNDOFF  (5.0f)
 #define PLAYER_VEL_Y_DECAY     (-2.5)
+#define PLAYER_VEL_X_ROUNDOFF  (2.0f)
 #define PLAYER_VEL_Y_ROUNDOFF  (1E-1)
 #define PLAYER_CENTER_TO_CHEST (70.0f)
 #define JUMP_VEL_Y_0           (700.0f)
-#define ACCEL_PUSH             (7000.0f)
+#define ACCEL_PUSH             (6500.0f)
 #define P_HBAR_POS             (Vector2){12, 12}
 #define P_HBAR_ICON_POS        (Vector2){5, 5}
 #define P_HBAR_MAXW            300
@@ -126,6 +126,10 @@ void player_init(player_t *p, obj_t **obstacle_list) {
     p->sounds.batr_whoosh = LoadSound(SOUND_PBATR);
     // player hit hurt
     p->sounds.hurt = LoadSound(SOUND_PPAIN);
+    // player drink potion
+    p->sounds.potion = LoadSound(SOUND_PPOTION);
+    // player theme
+    p->sounds.theme = LoadSound(SOUND_PTHEME);
     
     // STATE
     p->obj.curr_anim = &p->anims.idle;

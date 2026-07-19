@@ -1,10 +1,10 @@
+#include <stdlib.h>
 #include <raylib.h>
 #include <vpconfig.h>
 #include <obj.h>
 #include <orb.h>
 #include <vy.h>
 #include <rand.h>
-#include <shader.h>
 #include <bbox.h>
 
 static float g_orb_xpos[MAX_ORBS];
@@ -46,7 +46,7 @@ void orb_init(orb_t *orb) {
     SetTextureWrap(orb->noise_tex, TEXTURE_WRAP_REPEAT);
     UnloadImage(noise_img);
     orb->orb_tex = LoadTexture(ORB_TEXTURE);
-    orb->shader = shader_load_custom(0, ORB_SHADER);
+    orb->shader = LoadShader(NULL, ORB_SHADER);
     orb->r = orb->orb_tex.width/2;
     orb->time_loc = GetShaderLocation(orb->shader, "u_time");
     orb->shade_loc = GetShaderLocation(orb->shader, "u_shade");

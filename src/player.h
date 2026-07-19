@@ -47,6 +47,8 @@ typedef struct {
     Sound slurp;
     Sound batr_whoosh;
     Sound hurt;
+    Sound potion;
+    Sound theme;
 } player_sounds_t;
 
 typedef struct {

@@ -4,7 +4,6 @@
 #include <crate.h>
 #include <obj.h>
 #include <rand.h>
-#include <shader.h>
 
 // we spawn crates at certain positions
 // we have to make sure they're at least G_W*2 apart.
@@ -172,7 +171,7 @@ void crate_draw(crate_t* cr) {
                 WHITE
             );
         } else {
-            DrawTexture(cr->crate_tex, cr->obj.pos.x, cr->obj.pos.y, WHITE);
+            DrawTexture(cr->crate_tex, SPREAD_VEC(cr->obj.pos) , WHITE);
         }
         #ifdef DEBUG
         bbox_draw(cr->obj.curr_anim->asset->bbox, cr->obj.pos, MAGENTA);

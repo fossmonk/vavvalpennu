@@ -9,7 +9,6 @@
 #include <bbox.h>
 #include <textengine.h>
 #include <obj.h>
-#include <movie.h>
 
 #define PUZZLE_COUNT (16)
 
@@ -26,9 +25,6 @@ Texture2D scroll_tex;
 Rectangle scroll_write_rect;
 Sound puzzle_solved;
 Sound puzzle_wrong;
-
-int artif_movie_id = -1;
-Vector2 artif_movie_pos;
 
 static puzzle_t g_puzzles[PUZZLE_COUNT] = {
     {
@@ -105,9 +101,6 @@ void puzzle_init(void) {
     SetTextureFilter(puzzlefont.texture, TEXTURE_FILTER_BILINEAR);
     puzzle_solved = LoadSound(SOUND_A_ACHIEVE);
     puzzle_wrong = LoadSound(SOUND_A_WRONG);
-    artif_movie_id = movie_register(ARTIFACT_CLAIMED_MOVIE);
-    Vector2 dim = movie_get_framedim(artif_movie_id);
-    artif_movie_pos = (Vector2){G_W/2 - dim.x/2, G_H/2 - dim.y/2};
 }
 
 int puzzle_get(void) {
@@ -132,7 +125,6 @@ Vector2 puzzle_get_pos(void) {
 }
 
 void puzzle_play_solved(void) {
-    play_movie(artif_movie_id, artif_movie_pos, false);
     PlaySound(puzzle_solved);
 }
 
@@ -171,7 +163,7 @@ void puzzle_draw_q(int puzzle_id) {
     r.x = scroll_write_rect.x + scroll_pos.x;
     r.y = scroll_write_rect.y + scroll_pos.y;
     // Draw the scroll
-    DrawTexture(scroll_tex, scroll_pos.x, scroll_pos.y, WHITE);
+    DrawTexture(scroll_tex, SPREAD_VEC(scroll_pos), WHITE);
     // Draw the text
     te_draw_inside_rect(question, puzzlefont, 40, r);
 }

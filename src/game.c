@@ -15,7 +15,6 @@
 #include <puzzle.h>
 #include <textengine.h>
 #include <crate.h>
-#include <movie.h>
 
 // SOME MACRO FUNCTIONS
 #ifndef _max
@@ -98,6 +97,11 @@ void game_init(RenderTexture2D *canvas) {
     g->cam.zoom = 1;
     g->cam.target = obj_cxy(&g->p.obj);
     g->cam.offset = (Vector2){G_W/2, (GAME_GROUND_Y - g->p.obj.curr_anim->curr_frame.height/2)};
+
+    // try player drop
+    g->p.obj.pos = (Vector2){G_W/2 - 200, 10};
+    g->p.obj.curr_anim = &g->p.anims.jump;
+    g->p.obj.vel.y = 150.0f;
     
     // ALL DONE, START THE MUSIC!
     PlayMusicStream(g->bgmusic);
@@ -139,11 +143,11 @@ void _game_update(float dt) {
                                   !player_is_dancing(&g->p);
     
     if(player_move_conditions) {
-        if(input_iskeydown(KEY_D)) {
+        if(input_iskeydown(KEY_D) && !g->is_type_mode) {
             player_activate_hmove(&g->p, RIGHT, dt);
         }
 
-        if(input_iskeydown(KEY_A)) {
+        if(input_iskeydown(KEY_A) && !g->is_type_mode) {
             player_activate_hmove(&g->p, LEFT, dt);
         }
 
@@ -151,7 +155,7 @@ void _game_update(float dt) {
             player_activate_jump(&g->p, dt);
         }
 
-        if(input_ismousepressed(MOUSE_BUTTON_RIGHT)) {
+        if(input_ismousepressed(MOUSE_BUTTON_LEFT)) {
             Vector2 mouse_pos = input_get_mouse_pos();
             // check for empty slot
             batr_t *b = batr_get_empty_slot(g->batrs);
@@ -160,7 +164,7 @@ void _game_update(float dt) {
             }
         }
 
-        if(input_ismousepressed(MOUSE_BUTTON_LEFT)) {
+        if(input_iskeypressed(KEY_R) && !g->is_type_mode) {
             Vector2 mouse_pos = input_get_mouse_pos();
             player_activate_whiplash(&g->p, mouse_pos);
         }
@@ -215,9 +219,6 @@ void _game_update(float dt) {
 
     // AANAMS: update active ones anyway
     aanam_update_all(g->aanas, dt);
-
-    // update all movies
-    movie_update_all(dt);
 
     //////////////////////////////
     ////////// BOSS //////////////
@@ -397,6 +398,7 @@ void _game_update(float dt) {
                     CR_POTION(cr).obj.is_active = false;
                     p->health += 10;
                     p->health = _min(p->health, p->max_health);
+                    PlaySound(p->sounds.potion);
                 }
             }
             if(g->is_type_mode && g->is_type_buffer_done && (g->curr_puzzle >= 0) && (g->puzzle_tries > 0)) {
@@ -500,6 +502,9 @@ void _game_update(float dt) {
     if(g->bosses.kch.health <= 0) {
         g->bosses.kch.health = 0;
         g->bosses.kch.obj.is_active = false;
+        for(int i = 0; i < MAX_SKBALLS; ++i) {
+            g->bosses.kch.skballs[i].obj.is_active = false;
+        }
     }
 }
 
@@ -545,7 +550,7 @@ void game_draw_canvas_to_screen(void) {
     Vector2 origin = { 0.0f, 0.0f };
     DrawTexturePro(g->canvas->texture, sourceRec, destRec, origin, 0.0f, WHITE);
     DrawRectangle(0, 0, (float)GetScreenWidth(), (float)GetScreenHeight(), overlay);
-    DrawTexture(g->cursor, mpos.x, mpos.y, WHITE);
+    DrawTexture(g->cursor, SPREAD_VEC(mpos), WHITE);
     EndDrawing();
 }
 
@@ -568,7 +573,41 @@ void game_start_scene(void) {
     }
 }
 
+void game_fade_into_main(void) {
+    if(!g->is_game_wclosed && !WindowShouldClose()) {
+        const float fade_duration = 3.0f;
+        float fade_timer = 0.0f;
+    
+        Shader fade_in = LoadShader(NULL, FADE_IN_SHADER);
+        Texture2D fade_bg = LoadTexture(FADE_IN_TEXTURE);
+        Sound howl = LoadSound(SOUND_HOWL);
+        PlaySound(howl);
+        int utime = GetShaderLocation(fade_in, "time");
+        
+        while(fade_timer <= fade_duration) {
+            SetShaderValue(fade_in, utime, &fade_timer, SHADER_UNIFORM_FLOAT);
+            float dt = GetFrameTime();
+            fade_timer += dt;
+    
+            BeginTextureMode(*g->canvas);
+            DrawTexture(fade_bg, 0, 0, DARKGRAY);
+            BeginShaderMode(fade_in);
+            Rectangle src = {0.0f, 0.0f, fade_bg.width, fade_bg.height};
+            Rectangle dst = {0.0f, 0.0f, fade_bg.width, fade_bg.height};
+            DrawTexturePro(fade_bg, src, dst, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
+            EndShaderMode();
+            EndTextureMode();
+            game_draw_canvas_to_screen();
+        }
+    
+        UnloadSound(howl);
+        UnloadShader(fade_in);
+    }
+}
+
 void game_start_main_loop(void) {
+    // Play the batgirl theme
+    PlaySound(g->p.sounds.theme);
     while(!g->is_game_wclosed && !g->is_gameover) {
         float dt = GetFrameTime();
         
@@ -596,7 +635,6 @@ void game_start_main_loop(void) {
             }
             EndMode2D();
             // Draw everything that doesn't move with camera
-            movie_draw_all();
             
             if(g->curr_puzzle >= 0) {
                 puzzle_draw_q(g->curr_puzzle);

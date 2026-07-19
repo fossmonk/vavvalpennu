@@ -65,6 +65,7 @@ typedef struct {
 
 void game_init(RenderTexture2D *canvas);
 void game_start_scene(void);
+void game_fade_into_main(void);
 void game_start_main_loop(void);
 void game_deinit(void);
 

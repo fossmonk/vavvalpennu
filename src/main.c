@@ -50,6 +50,7 @@ int main(void) {
 
     game_init(&canvas);
     game_start_scene();
+    game_fade_into_main();
     game_start_main_loop();
     game_deinit();
 

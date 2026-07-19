@@ -4,7 +4,6 @@
 #include <vpconfig.h>
 #include <obj.h>
 #include <skball.h>
-#include <shader.h>
 
 static anim_t dummy_anim;
 static anim_asset_t dummy_anim_asset;
@@ -18,7 +17,7 @@ int get_id(void) {
 
 void skball_init(skball_t *skball) {
     skball->skball_tex = LoadTexture(SKBALL_TEXTURE);
-    skball->shader     = shader_load_custom(NULL, SKBALL_SHADER);
+    skball->shader     = LoadShader(NULL, SKBALL_SHADER);
     skball->r = skball->skball_tex.width/2;
     skball->time_loc = GetShaderLocation(skball->shader, "u_time");
     skball->obj.is_active = false;

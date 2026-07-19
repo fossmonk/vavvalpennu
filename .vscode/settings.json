@@ -1,6 +1,6 @@
 {
     "editor.defaultFormatter": "ms-vscode.cpptools-extension-pack",
-    "editor.fontFamily": "'JetBrains Mono', monospace",
+    "editor.fontFamily": "'Monaspace Argon NF', monospace",
     "editor.fontLigatures": "'calt', 'liga', 'ss01', 'ss02', 'ss03', 'ss04', 'ss05', 'ss06', 'ss07', 'ss08', 'ss09'",
     "editor.fontSize": 18,
     "lldb.showDisassembly": "never",

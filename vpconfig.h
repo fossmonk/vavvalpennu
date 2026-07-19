@@ -2,7 +2,6 @@
 #define _VPCONFIG_H_
 
 #include <anim_asset.h>
-#include <movie.h>
 
 // Game Title
 #define G_TITLE "VAVVALPENNU🦇"
@@ -16,8 +15,8 @@
 #define WORLD_XR (G_W * 50)
 
 // Camera deadzone parameters
-#define DZ_RL (100)
-#define DZ_LL (-600)
+#define DZ_RL (0)
+#define DZ_LL (-700)
 
 // Common Physics constants
 #define ACCEL_G (600.0f)
@@ -27,13 +26,14 @@
 #define VY_MAX_HEALTH             (250)
 
 // Asset files
-#define MAIN_FONT      "assets/fonts/Almendra-Bold.ttf"
-#define HUD_FONT       "assets/fonts/Almendra-Bold.ttf"
-#define MENU_FONT      "assets/fonts/AladinR.ttf"
-#define PUZZLE_FONT    "assets/fonts/OfenbacherSchwabCAT.ttf"
-#define BACKGROUND     "assets/backdrop/keralabackdrop.png"
-#define SPLASH_BG      "assets/backdrop/splash.png"
-#define PAUSEMENU_BG   "assets/backdrop/pausemenu.png"
+#define MAIN_FONT       "assets/fonts/UnitBlock.ttf"
+#define HUD_FONT        "assets/fonts/UnitBlock.ttf"
+#define MENU_FONT       "assets/fonts/AladinR.ttf"
+#define PUZZLE_FONT     "assets/fonts/Yonkers.ttf"
+#define BACKGROUND      "assets/backdrop/keralabackdrop.png"
+#define SPLASH_BG       "assets/backdrop/splash.png"
+#define PAUSEMENU_BG    "assets/backdrop/pausemenu.png"
+#define FADE_IN_TEXTURE "assets/backdrop/fadein.png"
 
 // Animation assets
 // PLAYER
@@ -106,10 +106,11 @@
 #define ARTIF_BBOX4      "assets/textures/theyyam.bbox"
 
 // Shader files
-#define HBAR_SHADER    "shaders/hbar.fs"
-#define ORB_SHADER     "shaders/orb.fs"
-#define SKBALL_SHADER  "shaders/skball.fs"
+#define HBAR_SHADER     "shaders/hbar.fs"
+#define ORB_SHADER      "shaders/orb.fs"
+#define SKBALL_SHADER   "shaders/skball.fs"
 #define SPARKLE_SHADER  "shaders/sparkle.fs"
+#define FADE_IN_SHADER  "shaders/fade_in.fs"
 
 // AUDIO
 #define AUD_AMBIENT          "assets/audio/ambient.mp3"
@@ -123,15 +124,15 @@
 #define SOUND_PSLURP         "assets/audio/player/slurp.mp3"
 #define SOUND_PBATR          "assets/audio/player/batr_whoosh.mp3"
 #define SOUND_PPAIN          "assets/audio/player/pain.mp3"
+#define SOUND_PPOTION        "assets/audio/player/potion.mp3"
+#define SOUND_PTHEME         "assets/audio/player/batgirl.mp3"
 #define SOUND_AGROWL         "assets/audio/aanam/growl.mp3"
 #define SOUND_C_APPEAR       "assets/audio/crate/appear.mp3"
 #define SOUND_C_BREAK        "assets/audio/crate/break.mp3"
 #define SOUND_A_ACHIEVE      "assets/audio/crate/achieve.mp3"
 #define SOUND_A_WRONG        "assets/audio/crate/wrong.mp3"
 #define SOUND_T_DRINK        "assets/audio/crate/drink.mp3"
-
-// MOVIES
-#define ARTIFACT_CLAIMED_MOVIE (movie_info_t){"assets/movies/artifact_claimed_movie.png", 25, 0.03}
+#define SOUND_HOWL           "assets/audio/starthowl.mp3"
 
 // CURSOR
 #define BAT_CURSOR     "assets/textures/batcursor.png"

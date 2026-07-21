@@ -13,8 +13,8 @@ bosses_t *gref_bosses = NULL;
 
 boss_type boss_level_map[] = {
     [VP_L0] = KCHATHAN,
-    [VP_L1] = EPECHI,
-    [VP_L2] = ARUKOLA,
+    [VP_L1] = VADAYAKSHI,
+    [VP_L2] = VADAYAKSHI,
     [VP_L3] = VADAYAKSHI,
 };
 
@@ -121,6 +121,27 @@ bool boss_is_dead(boss_type boss) {
         break;
     }
     return ret;
+}
+
+void boss_handle_death(boss_type boss) {
+    switch (boss)
+    {
+    case KCHATHAN:
+        kchath_handle_death(&gref_bosses->kch);
+        break;
+    case EPECHI:
+        /* code */
+        break;
+    case ARUKOLA:
+        /* code */
+        break;
+    case VADAYAKSHI:
+        vy_handle_death(&gref_bosses->vy);
+        break;
+    
+    default:
+        break;
+    }
 }
 
 void boss_draw(boss_type boss) {

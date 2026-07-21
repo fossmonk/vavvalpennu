@@ -296,6 +296,12 @@ void player_activate_whiplash(player_t *p, Vector2 mouse_pos) {
     PlaySound(p->sounds.whip);
 }
 
+bool player_in_wlash_frame(player_t *p) {
+    if(p->obj.curr_anim->id.id != p->anims.wlash.id.id) return false;
+    int frame = anim_get_curr_frame_idx(p->obj.curr_anim);
+    return frame >= 2 && frame <= 7;
+}
+
 void player_activate_batr(player_t *p, batr_t *b, Vector2 pos) {
     b->obj.is_active = true;
     b->obj.curr_anim->curr_frame.x = 0;

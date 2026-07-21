@@ -18,7 +18,6 @@ typedef enum {
 } menu_type;
 
 void menu_init(void);
-menu_action menu_get_action(void);
-void menu_draw(menu_action ma, menu_type mt);
+menu_action menu_update_and_draw(menu_type mt);
 
 #endif

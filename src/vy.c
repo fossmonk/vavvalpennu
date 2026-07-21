@@ -154,3 +154,10 @@ void vy_draw(vy_t *vy) {
         WHITE
     );
 }
+
+void vy_handle_death(vy_t *vy) {
+    if(vy->health <= 0) {
+        vy->health = 0;
+        vy->obj.is_active = false;
+    }
+}

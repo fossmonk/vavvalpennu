@@ -15,6 +15,7 @@
 #include <puzzle.h>
 #include <crate.h>
 #include <dyn_arr.h>
+#include <ftext.h>
 
 // SOME MACRO FUNCTIONS
 #ifndef _max
@@ -24,9 +25,14 @@
 #define _min(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
+#define MAX_DT_LOG (16)
+
 // GLOBALS
 // top level game object
 game_t *g;
+
+static float dt_log[MAX_DT_LOG];
+static int log_idx = 0;
 
 static void game_reset_typebuffer(void) {
     g->is_type_buffer_done = false;
@@ -40,6 +46,9 @@ void game_init(RenderTexture2D *canvas) {
 
     // init audio engine
     audio_init();
+
+    // input_init
+    input_init();
 
     // set canvas
     g->canvas = canvas;
@@ -58,6 +67,9 @@ void game_init(RenderTexture2D *canvas) {
     
     // initialize menu
     menu_init();
+
+    // initialize floating text
+    ftext_init_all();
 
     // initialize puzzle
     puzzle_init();
@@ -99,9 +111,9 @@ void game_init(RenderTexture2D *canvas) {
     g->cam.offset = (Vector2){G_W/2, (GAME_GROUND_Y - g->p.obj.curr_anim->curr_frame.height/2)};
 
     // try player drop
-    g->p.obj.pos = (Vector2){G_W/2 - 200, 10};
+    g->p.obj.pos = (Vector2){(G_W/2) - (0.1*G_W), (G_H*0.2)};
     g->p.obj.curr_anim = &g->p.anims.jump;
-    g->p.obj.vel.y = 150.0f;
+    g->p.obj.vel.y = 450.0f;
     
     // ALL DONE, START THE MUSIC!
     PlayMusicStream(g->bgmusic);
@@ -110,6 +122,7 @@ void game_init(RenderTexture2D *canvas) {
 void _game_update(float dt) {
     // this is required to prevent long dt's due to a window resize etc
     if(dt > 0.1f)dt = 0.1f;
+    dt_log[(log_idx++) % MAX_DT_LOG] = dt;
     // update bgmusic
     UpdateMusicStream(g->bgmusic);
     // If game is in type mode, mostly because of puzzles,
@@ -137,45 +150,48 @@ void _game_update(float dt) {
             g->typebuffer[g->t_ptr] = '\0';
         }
     }
+
+    // Extract out player
+    player_t *p = &g->p;
     // PLAYER CAN MOVE if !(DYING, HURTING, DANCING)
-    bool player_move_conditions = !player_is_dying(&g->p) &&
-                                  !player_is_hurting(&g->p) &&
-                                  !player_is_dancing(&g->p);
+    bool player_move_conditions = !player_is_dying(p) &&
+                                  !player_is_hurting(p) &&
+                                  !player_is_dancing(p);
     
     if(player_move_conditions) {
-        if(input_iskeydown(KEY_D) && !g->is_type_mode) {
-            player_activate_hmove(&g->p, RIGHT, dt);
+        if(input_move_right() && !g->is_type_mode) {
+            player_activate_hmove(p, RIGHT, dt);
         }
 
-        if(input_iskeydown(KEY_A) && !g->is_type_mode) {
-            player_activate_hmove(&g->p, LEFT, dt);
+        if(input_move_left() && !g->is_type_mode) {
+            player_activate_hmove(p, LEFT, dt);
         }
 
-        if(input_iskeypressed(KEY_SPACE)) {
-            player_activate_jump(&g->p, dt);
+        if(input_jump()) {
+            player_activate_jump(p, dt);
         }
 
-        if(input_ismousepressed(MOUSE_BUTTON_LEFT)) {
+        if(input_throw_batr()) {
             Vector2 mouse_pos = input_get_mouse_pos();
             // check for empty slot
             batr_t *b = batr_get_empty_slot(g->batrs);
             if(b) {
-                player_activate_batr(&g->p, b, mouse_pos);
+                player_activate_batr(p, b, mouse_pos);
             }
         }
 
-        if(input_iskeypressed(KEY_R) && !g->is_type_mode) {
+        if(input_lash_whip() && !g->is_type_mode) {
             Vector2 mouse_pos = input_get_mouse_pos();
-            player_activate_whiplash(&g->p, mouse_pos);
+            player_activate_whiplash(p, mouse_pos);
         }
         
     }
-    player_update(&g->p, dt);
+    player_update(p, dt);
     // clamp player x if boss is active or type mode
     if(g->is_boss_active || g->is_type_mode) {
-        player_clamp_to_screenx(&g->p);
+        player_clamp_to_screenx(p);
     } else {
-        float player_x = g->p.obj.pos.x;
+        float player_x = p->obj.pos.x;
         // DEADZONE RIGHT LIMIT
         if((player_x - g->cam.target.x) > DZ_RL) {
             g->cam.target.x = player_x - DZ_RL;
@@ -223,7 +239,7 @@ void _game_update(float dt) {
     //////////////////////////////
     ////////// BOSS //////////////
     //////////////////////////////
-    bool boss_activate_conditions = player_can_level_up(&g->p) && 
+    bool boss_activate_conditions = player_can_level_up(p) && 
         !g->is_boss_active && !g->is_type_mode;
     if(boss_activate_conditions) {
         g->curr_boss = boss_get_for_level(g->p.curr_level);
@@ -315,40 +331,40 @@ void _game_update(float dt) {
     for(int i = 0; i < MAX_ORBS; ++i) {
         orb_t *orb = &g->bosses.vy.orbs[i];
         bool orb_conds = orb->obj.is_active && !orb->is_hostile;
-        bool player_conds = !player_is_dying(&g->p);
+        bool player_conds = !player_is_dying(p);
         bool check = false;
         if(orb_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, &orb->obj, NULL);
+            check = col_check_bbox(&p->obj, &orb->obj, NULL);
         }
         if(check) {
             orb->obj.is_active = false;
-            player_set_hurt_shock(&g->p);
-            player_decr_health_orb(&g->p);
+            player_set_hurt_shock(p);
+            player_decr_health_orb(p);
         }
     }
     // SKBALL WITH PLAYER
     for(int i = 0; i < MAX_SKBALLS; ++i) {
         skball_t *skb = &g->bosses.kch.skballs[i];
         bool skb_conds = skb->obj.is_active;
-        bool player_conds = !player_is_dying(&g->p);
+        bool player_conds = !player_is_dying(p);
         bool check = false;
         if(skb_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, &skb->obj, NULL);
+            check = col_check_bbox(&p->obj, &skb->obj, NULL);
         }
         if(check) {
             skb->obj.is_active = false;
-            player_set_hurt_shock(&g->p);
-            player_decr_health_skball(&g->p);
+            player_set_hurt_shock(p);
+            player_decr_health_skball(p);
         }
     }
     // KARIKKU WITH PLAYER
     for(int i = 0; i < TOTAL_KARIKKU; ++i) {
         karikku_t *k = &g->karikku[i];
         bool k_conds = k->obj.is_active && !obj_is_oob(&k->obj);
-        bool player_conds = !player_is_dying(&g->p);
+        bool player_conds = !player_is_dying(p);
         bool check = false;
         if(k_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, &k->obj, NULL);
+            check = col_check_bbox(&p->obj, &k->obj, NULL);
         }
         if(check) {
             k->obj.is_active = false;
@@ -358,84 +374,76 @@ void _game_update(float dt) {
         }
     }
     // CRATE WITH PLAYER
-    {
-        crate_t *cr = &g->crate;
-        player_t *p = &g->p;
+    crate_t *cr = &g->crate;
 
-        bool crate_cond = cr->obj.is_active && !cr->is_broken && (cr->obj.pos.y == (GAME_GROUND_Y - cr->crate_tex.height));
-        
-        if(crate_cond && (p->obj.curr_anim->id.id == p->anims.wlash.id.id)) {
-            int curr_f_idx = anim_get_curr_frame_idx(g->p.obj.curr_anim);
-            bool frame_cond = (curr_f_idx >= 2 && curr_f_idx <= 7);
-            if(frame_cond) {
-                if(col_check_bbox(&p->obj, &cr->obj, NULL)) {
-                    g->crate.is_broken = true;
-                }
-            }
+    if(!cr->is_broken) {
+        // this means crate is not broken by batarang
+        // check if crate is on ground and is hit by whiplash
+        cr->is_broken = cr->obj.is_active &&
+                        (cr->obj.pos.y == (GAME_GROUND_Y - cr->crate_tex.height)) &&
+                        player_in_wlash_frame(p) &&
+                        col_check_bbox(&p->obj, &cr->obj, NULL);
+    }
+    
+    if(cr->is_open) {
+        bool cont_grounded_active = crate_content_is_grounded_and_active(cr);
+        // check for collision with artifact
+        if(cr->content.type == ARTIFACT &&
+            cont_grounded_active && 
+            col_check_bbox(&p->obj, &CR_ARTIF(cr).obj, NULL) &&
+            (g->curr_puzzle < 0)) 
+        {
+            g->is_type_mode = true;
+            g->curr_puzzle = puzzle_get();
+            // set artifact position to above the puzzle, centered
+            Vector2 puzzle_pos = puzzle_get_pos();
+            crate_artif_setpos(cr, puzzle_pos);
+        } else if (cr->content.type == POTION &&
+                    cont_grounded_active &&
+                    col_check_bbox(&p->obj, &CR_POTION(cr).obj, NULL))
+        {
+            // pick up potion
+            CR_POTION(cr).obj.is_active = false;
+            p->health += 10;
+            p->health = _min(p->health, p->max_health);
+            PlaySound(p->sounds.potion);
         }
-        if(cr->is_open) {
-            // check for collision with artifact
-            bool content_on_ground = false;
-            if(cr->content.type == ARTIFACT && CR_ARTIF(cr).obj.is_active && (g->curr_puzzle < 0)) {
-                content_on_ground = (CR_ARTIF(cr).obj.pos.y == CR_ARTIF(cr).terminal_y);
-                bool col_check = col_check_bbox(&p->obj, &CR_ARTIF(cr).obj, NULL);
-                if(content_on_ground && col_check && !g->is_type_mode) {
-                    g->is_type_mode = true;
-                    g->curr_puzzle = puzzle_get();
-                    // set artifact position to above the puzzle, centered
-                    Vector2 puzzle_pos = puzzle_get_pos();
-                    CR_ARTIF(cr).obj.pos.y = puzzle_pos.y - CR_ARTIF(cr).artifact_tex.height;
-                    CR_ARTIF(cr).obj.pos.x = G_W/2 - CR_ARTIF(cr).artifact_tex.width/2;
-                    CR_ARTIF(cr).obj.pos = obj_s2w_pos(CR_ARTIF(cr).obj.pos);
-                    CR_ARTIF(cr).obj.vel.y = 0;
-                    // make it stay there
-                    CR_ARTIF(cr).gravity = false;
-                }
-            } else if(cr->content.type == POTION && CR_POTION(cr).obj.is_active) {
-                content_on_ground = (CR_POTION(cr).obj.pos.y == CR_POTION(cr).terminal_y);
-                if(content_on_ground && col_check_bbox(&p->obj, &CR_POTION(cr).obj, NULL)) {
-                    // pick up potion
-                    CR_POTION(cr).obj.is_active = false;
-                    p->health += 10;
-                    p->health = _min(p->health, p->max_health);
-                    PlaySound(p->sounds.potion);
-                }
+
+        if(g->is_type_mode && g->is_type_buffer_done && (g->curr_puzzle >= 0) && (g->puzzle_tries > 0)) {
+            bool answered = puzzle_check(g->typebuffer, g->curr_puzzle);
+            if(answered) {
+                g->curr_puzzle = -1;
+                g->puzzle_tries = 3;
+                g->is_type_mode = false;
+                CR_ARTIF(cr).is_won = true;
+                CR_ARTIF(cr).obj.is_active = false;
+                p->a_count++;
+                p->score += 100;
+                ftext_spawn("ARTIFACT CLAIMED: +100 points!", obj_w2s_pos(p->obj.pos));
+                puzzle_play_solved();
+            } else {
+                --g->puzzle_tries;
+                puzzle_play_wrong();
             }
-            if(g->is_type_mode && g->is_type_buffer_done && (g->curr_puzzle >= 0) && (g->puzzle_tries > 0)) {
-                bool answered = puzzle_check(g->typebuffer, g->curr_puzzle);
-                if(answered) {
-                    g->curr_puzzle = -1;
-                    g->puzzle_tries = 3;
-                    g->is_type_mode = false;
-                    CR_ARTIF(cr).is_won = true;
-                    CR_ARTIF(cr).obj.is_active = false;
-                    p->a_count++;
-                    p->score += 100;
-                    puzzle_play_solved();
-                } else {
-                    --g->puzzle_tries;
-                    puzzle_play_wrong();
-                }
-                if(g->puzzle_tries == 0) {
-                    // reset everything
-                    g->curr_puzzle = -1;
-                    g->puzzle_tries = 3;
-                    g->is_type_mode = false;
-                    CR_ARTIF(cr).is_won = false;
-                    CR_ARTIF(cr).obj.is_active = false;
-                }
-                game_reset_typebuffer();
+            if(g->puzzle_tries == 0) {
+                // reset everything
+                g->curr_puzzle = -1;
+                g->puzzle_tries = 3;
+                g->is_type_mode = false;
+                CR_ARTIF(cr).is_won = false;
+                CR_ARTIF(cr).obj.is_active = false;
             }
+            game_reset_typebuffer();
         }
     }
     // KARIKKU WITH PLAYER
     for(int i = 0; i < TOTAL_KARIKKU; ++i) {
         karikku_t *k = &g->karikku[i];
         bool k_conds = k->obj.is_active && !obj_is_oob(&k->obj);
-        bool player_conds = !player_is_dying(&g->p);
+        bool player_conds = !player_is_dying(p);
         bool check = false;
         if(k_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, &k->obj, NULL);
+            check = col_check_bbox(&p->obj, &k->obj, NULL);
         }
         if(check) {
             k->obj.is_active = false;
@@ -465,24 +473,26 @@ void _game_update(float dt) {
     for(int i = 0; i < MAX_AANAS; ++i) {
         aanam_t *aana = &g->aanas[i];
         bool aana_conds = aana->obj.is_active && !aana->is_dying && !aana->hit_player;
-        bool player_conds = !player_is_dying(&g->p);
+        bool player_conds = !player_is_dying(p);
         bool check = false;
         if(aana_conds && player_conds) {
-            check = col_check_bbox(&g->p.obj, &aana->obj, NULL);
+            check = col_check_bbox(&p->obj, &aana->obj, NULL);
         }
         if(check) {
-            bool anim_cond = g->p.obj.curr_anim->id.id == g->p.anims.wlash.id.id;
-            int curr_f_idx = anim_get_curr_frame_idx(g->p.obj.curr_anim);
+            bool anim_cond = p->obj.curr_anim->id.id == g->p.anims.wlash.id.id;
+            int curr_f_idx = anim_get_curr_frame_idx(p->obj.curr_anim);
             bool frame_cond = (curr_f_idx >= 2 && curr_f_idx <= 7);
-            bool pos_cond = ((g->p.obj.hdir == RIGHT) && (aana->obj.pos.x > g->p.obj.pos.x)) ||
-                            ((g->p.obj.hdir == LEFT) && (aana->obj.pos.x < g->p.obj.pos.x));
+            bool pos_cond = ((p->obj.hdir == RIGHT) && (aana->obj.pos.x > p->obj.pos.x)) ||
+                            ((p->obj.hdir == LEFT) && (aana->obj.pos.x < p->obj.pos.x));
             if(anim_cond && frame_cond && pos_cond) {
                 // hit whip on aanam
                 aana->is_dying = true;
                 g->p.score += 50;
+                // spawn a floating text of "+50"
+                ftext_spawn("+50 points!", obj_w2s_pos(p->obj.pos));
             } else {
                 aana->hit_player = true;
-                player_set_hurt_flash(&g->p);
+                player_set_hurt_flash(p);
                 PlaySound(g->p.sounds.hurt);
                 g->p.health -= 5;
             }
@@ -491,21 +501,11 @@ void _game_update(float dt) {
 
     // check for player death
     if(g->p.health <= 0) {
-        player_set_die(&g->p);
+        player_set_die(p);
     }
 
-    if(g->bosses.vy.health <= 0) {
-        g->bosses.vy.health = 0;
-        g->bosses.vy.obj.is_active = false;
-    }
-
-    if(g->bosses.kch.health <= 0) {
-        g->bosses.kch.health = 0;
-        g->bosses.kch.obj.is_active = false;
-        for(int i = 0; i < MAX_SKBALLS; ++i) {
-            g->bosses.kch.skballs[i].obj.is_active = false;
-        }
-    }
+    // update floating text
+    ftext_update_all(dt);
 }
 
 // pause wrapper
@@ -561,12 +561,11 @@ void game_start_scene(void) {
     while(!game_start && !g->is_game_wclosed) {
         BeginTextureMode(*g->canvas);
         DrawTexture(g->splash, 0, 0, DARKGRAY);
-        menu_draw(m_act, MENU_START);
+        m_act = menu_update_and_draw(MENU_START);
         EndTextureMode();
         game_draw_canvas_to_screen();
 
         // check menu interaction
-        m_act = menu_get_action();
         game_start = (m_act == MENU_CLICK_START);
         game_quit = (m_act == MENU_CLICK_QUIT);
         g->is_game_wclosed = WindowShouldClose() || game_quit;
@@ -635,6 +634,7 @@ void game_start_main_loop(void) {
             }
             EndMode2D();
             // Draw everything that doesn't move with camera
+            ftext_draw_all();
             
             if(g->curr_puzzle >= 0) {
                 puzzle_draw_q(g->curr_puzzle);
@@ -660,16 +660,15 @@ void game_start_main_loop(void) {
         } else {
             bool game_resumed = false;
             bool game_quit = false;
-            menu_action m_act = menu_get_action();
             BeginTextureMode(*g->canvas);
             DrawTexture(g->pausemenu, 0, 0, WHITE);
-            menu_draw(m_act, MENU_PAUSE);
+            menu_action m_act = menu_update_and_draw(MENU_PAUSE);
             EndTextureMode();
             game_draw_canvas_to_screen();
 
             // check menu interaction
             game_quit = (m_act == MENU_CLICK_QUIT);
-            game_resumed = (m_act == MENU_CLICK_START);
+            game_resumed = (m_act == MENU_CLICK_RESUME);
             g->is_game_wclosed = WindowShouldClose() || game_quit;
             g->is_game_paused = !game_resumed;
         }
@@ -677,6 +676,10 @@ void game_start_main_loop(void) {
 }
 
 void game_deinit(void) {
+    // print dt logs
+    float avg_dt = 0.0f;
+    for(int i = 0; i < MAX_DT_LOG; ++i) avg_dt += dt_log[i];
+    printf("[Average Delta Time] %0.2fms\n", avg_dt*1000.0f/((float)MAX_DT_LOG));
     // deinit audio engine
     audio_deinit();
     // free game object memory

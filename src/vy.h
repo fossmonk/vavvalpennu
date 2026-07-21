@@ -52,6 +52,7 @@ void vy_update(vy_t *vy, float dt);
 void vy_activate_hurting(vy_t *vy, float dt);
 void vy_decr_health(vy_t *vy, int amount);
 void vy_draw(vy_t *vy);
+void vy_handle_death(vy_t *vy);
 
 
 #endif

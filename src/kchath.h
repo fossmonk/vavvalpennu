@@ -47,6 +47,7 @@ void kchath_init(kchath_t* kch);
 void kchath_activate(kchath_t *kch);
 void kchath_update(kchath_t *kch, float dt);
 void kchath_decr_health(kchath_t *kch, int amount);
+void kchath_handle_death(kchath_t *kch);
 void kchath_draw(kchath_t *kch);
 
 #endif

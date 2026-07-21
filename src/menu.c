@@ -2,50 +2,22 @@
 #include <raylib.h>
 #include <vpconfig.h>
 #include <menu.h>
+#include <input.h>
 
-#define MENU_TOP_Y (256)
-#define CONTROLS_TOP_Y (300)
+#define TOP_Y (0.25 * G_H)
 #define MENU_FONT_SIZE (35)
 #define MENU_SPACING (0.75)
+#define ITEM_PADDING (12.0f)
 
 typedef enum {
     MENU_MAIN,
     MENU_CONTROLS
 } menu_state;
 
-typedef struct {
-    const char *action;
-    const char *control;
-} cp;
-
 static menu_state mstate = MENU_MAIN;
-static const char *menu_start = "START GAME";
-static const char *menu_pause = "RESUME GAME";
-static const char *menu_controls = "CONTROLS";
-static const char *menu_quit = "QUIT GAME";
-static const char *menu_back = "GO BACK";
-
-static const char* controls_heading[] = {
-    "CONTROLS",
-    "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
-    NULL
-};
-
-static cp control_pairs[] = {
-    {"MOVE LEFT","A"},
-    {"MOVE RIGHT","D"},
-    {"JUMP","SPACE"},
-    {"THROW BATARANG","LMB"},
-    {"HEAVY ATTACK","R"},
-    {NULL, NULL}
-};
-
 static Font menu_font;
-static Rectangle start_bb = {0, 0, 0, 0};
-static Rectangle pause_bb = {0, 0, 0, 0};
-static Rectangle controls_bb = {0, 0, 0, 0};
-static Rectangle quit_bb = {0, 0, 0, 0};
-static Rectangle back_bb = {0, 0, 0, 0};
+static int g_reb_idx = -1;
+static bool g_skip_input_frame = false; // Ignore inputs on the frame rebind opens
 
 static Vector2 get_scaled_mouse_pos(void) {
     Vector2 mouseScalePos = GetMousePosition();
@@ -55,119 +27,187 @@ static Vector2 get_scaled_mouse_pos(void) {
 }
 
 static bool point_in_rect(Vector2 p, Rectangle r) {
-    float xl = r.x;
-    float xh = r.x + r.width;
-    float yl = r.y;
-    float yh = r.y + r.height;
-
-    return (p.x > xl && p.x < xh && p.y > yl && p.y < yh);
+    return (p.x > r.x && p.x < r.x + r.width && p.y > r.y && p.y < r.y + r.height);
 }
 
-// Since we can't curry let's save on some typing
 static Vector2 menu_measure_text(const char *text) {
     return MeasureTextEx(menu_font, text, MENU_FONT_SIZE, MENU_SPACING);
 }
 
-static void menu_draw_text(const char* text, Vector2 position) {
-    DrawTextEx(menu_font, text, position, MENU_FONT_SIZE, MENU_SPACING, WHITE);
+static void menu_draw_text(const char* text, Vector2 position, Color color) {
+    DrawTextEx(menu_font, text, position, MENU_FONT_SIZE, MENU_SPACING, color);
 }
 
-menu_action menu_get_action(void) {
-    menu_action ma = MENU_NO_ACTION;
-    bool mousep = IsMouseButtonReleased(MOUSE_BUTTON_LEFT);
-    if(mousep) {
-        Vector2 mouse_pos = get_scaled_mouse_pos();
-        if(point_in_rect(mouse_pos, start_bb)) ma = MENU_CLICK_START;
-        else if(point_in_rect(mouse_pos, controls_bb)) ma = MENU_CLICK_CONTROLS;
-        else if(point_in_rect(mouse_pos, quit_bb)) ma = MENU_CLICK_QUIT;
-        else if(point_in_rect(mouse_pos, back_bb)) ma = MENU_CLICK_BACK;
-        else ma = MENU_NO_ACTION;
+static bool menu_draw_button_and_check_clicked(const char *text, float cx, float y) {
+    Vector2 font_wh = menu_measure_text(text);
+    Rectangle bb = {cx - font_wh.x/2.0f, y, font_wh.x, font_wh.y};
+
+    Vector2 mouse_pos = get_scaled_mouse_pos();
+    bool hovered = point_in_rect(mouse_pos, bb);
+    Color color = hovered ? YELLOW : WHITE;
+
+    menu_draw_text(text, (Vector2){bb.x, bb.y}, color);
+
+    return hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+}
+
+static bool menu_draw_ctrl_row_and_check_clicked(const char *action, const char *key, float xl, float xr, float y, bool is_rebinding) {
+    const char* disptext = is_rebinding ? "PRESS ANY KEY..." : key;
+    Vector2 disp_wh = menu_measure_text(disptext);
+    Rectangle row_bb = {xl, y, xr - xl, disp_wh.y};
+    Vector2 mousepos = get_scaled_mouse_pos();
+    bool hovered = point_in_rect(mousepos, row_bb);
+    
+    Color action_color = hovered ? YELLOW : WHITE;
+    Color disp_color = is_rebinding ? RED : (hovered ? YELLOW : LIGHTGRAY);
+    
+    menu_draw_text(action, (Vector2){xl, y}, action_color);
+    menu_draw_text(disptext, (Vector2){xr - disp_wh.x, y}, disp_color);
+
+    return hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+}
+
+static bool key_taken(input_device d, int key, input_cfg_t *icfg, int idx) {
+    input_item_t *controls[] = {
+        &icfg->move_left, &icfg->move_right, &icfg->jump,
+        &icfg->lash_whip, &icfg->throw_batr,
+    };
+    int controls_size = ARRAY_SIZE(controls);
+
+    for (int i = 0; i < controls_size; ++i) {
+        if (controls[i]->device == d && controls[i]->value == key && i != idx) {
+            return true;
+        }
     }
-    return ma;
+    return false;
+}
+
+static void menu_handle_keybinding(input_cfg_t *icfg) {
+    if (g_reb_idx < 0) return;
+
+    // Discard input on the frame rebind mode was clicked
+    if (g_skip_input_frame) {
+        g_skip_input_frame = false;
+        return;
+    }
+
+    int kb = GetKeyPressed();
+    int mb = -1;
+    for (int i = MOUSE_BUTTON_LEFT; i <= MOUSE_BUTTON_BACK; ++i) {
+        if (IsMouseButtonPressed(i)) {
+            mb = i;
+            break;
+        }
+    }
+
+    if (kb <= 0 && mb < 0) return;
+
+    input_item_t *controls[] = {
+        &icfg->move_left, &icfg->move_right, &icfg->jump,
+        &icfg->lash_whip, &icfg->throw_batr,
+    };
+    int controls_size = ARRAY_SIZE(controls);
+
+    // Prioritize mouse button rebind
+    if (mb >= 0 && g_reb_idx < controls_size) {
+        if (!key_taken(MOUSE, mb, icfg, g_reb_idx)) {
+            controls[g_reb_idx]->device = MOUSE;
+            controls[g_reb_idx]->value = mb;
+            controls[g_reb_idx]->name = input_get_mouse_button_name(mb);
+            input_cfg_sync_to_file();
+        }
+        g_reb_idx = -1;
+    } 
+    // Keyboard key rebind
+    else if (kb > 0 && g_reb_idx < controls_size) {
+        if (kb == KEY_ESCAPE) {
+            g_reb_idx = -1;
+            return;
+        }
+
+        if (!key_taken(KEYBOARD, kb, icfg, g_reb_idx)) {
+            controls[g_reb_idx]->device = KEYBOARD;
+            controls[g_reb_idx]->value = kb;
+            controls[g_reb_idx]->name = input_get_kb_keyname(kb);
+            input_cfg_sync_to_file();
+        }
+        g_reb_idx = -1;
+    }
 }
 
 void menu_init(void) {
     menu_font = LoadFontEx(MENU_FONT, 96, NULL, 0);
     SetTextureFilter(menu_font.texture, TEXTURE_FILTER_BILINEAR);
-    // Populate BB rectangles for clickable areas
-    // START, CONTROLS, QUIT, BACK
-    float top_y = MENU_TOP_Y;
-    float padding = 5.0f;
-    Vector2 fontWH = menu_measure_text(menu_start);
-    start_bb.x = G_W/2 - fontWH.x/2;
-    start_bb.y = top_y;
-    start_bb.width = fontWH.x;
-    start_bb.height = fontWH.y;
-
-    // Don't increment y yet, RESUME will be at the same place as START
-    fontWH = menu_measure_text(menu_pause);
-    pause_bb.x = G_W/2 - fontWH.x/2;
-    pause_bb.y = top_y;
-    pause_bb.width = fontWH.x;
-    pause_bb.height = fontWH.y;
-
-    top_y += fontWH.y + padding;
-
-    fontWH = menu_measure_text(menu_controls);
-    controls_bb.x = G_W/2 - fontWH.x/2;
-    controls_bb.y = top_y;
-    controls_bb.width = fontWH.x;
-    controls_bb.height = fontWH.y;
-    top_y += fontWH.y + padding;
-
-    fontWH = menu_measure_text(menu_quit);
-    quit_bb.x = G_W/2 - fontWH.x/2;
-    quit_bb.y = top_y;
-    quit_bb.width = fontWH.x;
-    quit_bb.height = fontWH.y;
-    top_y += fontWH.y + padding;
-
-    int control_linecount = 0;
-    for(int i = 0; controls_heading[i] != NULL; ++i) control_linecount++;
-    for(int i = 0; control_pairs[i].action != NULL; ++i) control_linecount++;
-
-    fontWH = menu_measure_text(menu_back);
-    back_bb.x = G_W/2 - fontWH.x/2;
-    back_bb.y = CONTROLS_TOP_Y + ((fontWH.y + padding) * control_linecount);
-    back_bb.width = fontWH.x;
-    back_bb.height = fontWH.y;
 }
 
-static void menu_draw_controls(void) {
-    Vector2 fontWH;
-    float top_y = CONTROLS_TOP_Y;
-    float padding = 5.0f;
-    // Draw CONTROLS
-    //      ========
-    for(int i = 0; i < 2; ++i) {
-        fontWH = menu_measure_text(controls_heading[i]);
-        menu_draw_text(controls_heading[i], (Vector2){G_W/2 - fontWH.x/2, top_y});
-        top_y += fontWH.y + padding;
-    }
-    float xl = G_W/2 - fontWH.x/2;
-    float xr = xl + fontWH.x;
+menu_action menu_update_and_draw(menu_type mt) {
+    menu_action action_trig = MENU_NO_ACTION;
+    input_cfg_t *icfg = input_get_cfg();
 
-    for(int i = 0; control_pairs[i].action != NULL; ++i) {
-        menu_draw_text(control_pairs[i].action, (Vector2){xl, top_y});
-        fontWH = menu_measure_text(control_pairs[i].control);
-        menu_draw_text(control_pairs[i].control, (Vector2){xr - fontWH.x, top_y});
-        top_y += fontWH.y + padding;
-    }
-}
+    float start_y = TOP_Y;
+    float cx = G_W / 2.0f;
 
-void menu_draw(menu_action ma, menu_type mt) {
-    if(mstate == MENU_MAIN && ma == MENU_CLICK_CONTROLS) mstate = MENU_CONTROLS;
-    if(mstate == MENU_CONTROLS && ma == MENU_CLICK_BACK) mstate = MENU_MAIN;
-    if(mstate == MENU_MAIN) {
-        if(mt == MENU_START) {
-            menu_draw_text(menu_start, (Vector2){start_bb.x, start_bb.y});
-        } else {
-            menu_draw_text(menu_pause, (Vector2){pause_bb.x, pause_bb.y});
+    if (mstate == MENU_MAIN) {
+        const char *first_option = (mt == MENU_START) ? "START GAME" : "RESUME GAME";
+
+        if (menu_draw_button_and_check_clicked(first_option, cx, start_y)) {
+            action_trig = (mt == MENU_START) ? MENU_CLICK_START : MENU_CLICK_RESUME;
         }
-        menu_draw_text(menu_controls, (Vector2){controls_bb.x, controls_bb.y});
-        menu_draw_text(menu_quit, (Vector2){quit_bb.x, quit_bb.y});
-    } else {
-        menu_draw_controls();
-        menu_draw_text(menu_back, (Vector2){back_bb.x, back_bb.y});
+        start_y += MENU_FONT_SIZE + ITEM_PADDING;
+
+        if (menu_draw_button_and_check_clicked("CONTROLS", cx, start_y)) {
+            mstate = MENU_CONTROLS;
+        }
+        start_y += MENU_FONT_SIZE + ITEM_PADDING;
+
+        if (menu_draw_button_and_check_clicked("QUIT GAME", cx, start_y)) {
+            action_trig = MENU_CLICK_QUIT;
+        }
+    } else if (mstate == MENU_CONTROLS) {
+        Vector2 heading_wh = menu_measure_text("CONTROLS");
+        menu_draw_text("CONTROLS", (Vector2){cx - heading_wh.x/2.0f, start_y}, WHITE);
+        start_y += MENU_FONT_SIZE + ITEM_PADDING * 2;
+
+        input_item_t *controls[] = {
+            &icfg->move_left,
+            &icfg->move_right,
+            &icfg->jump,
+            &icfg->lash_whip,
+            &icfg->throw_batr
+        };
+        int controls_size = ARRAY_SIZE(controls);
+
+        float margin_x = 0.3 * G_W;
+        float xl = margin_x;
+        float xr = G_W - margin_x;
+
+        for (int i = 0; i < controls_size; ++i) {
+            bool is_rebinding = (g_reb_idx == i);
+            bool ctrl_row_clicked = menu_draw_ctrl_row_and_check_clicked(
+                controls[i]->description, 
+                controls[i]->name, 
+                xl, xr, start_y, 
+                is_rebinding
+            );
+
+            // Only check row clicks if NOT currently rebinding
+            if (g_reb_idx == -1 && ctrl_row_clicked) {
+                g_reb_idx = i;
+                g_skip_input_frame = true; // Ignore initial click in key handler
+            }
+            start_y += MENU_FONT_SIZE + ITEM_PADDING;
+        }
+
+        start_y += ITEM_PADDING * 2;
+        if (g_reb_idx == -1 && menu_draw_button_and_check_clicked("GO BACK", cx, start_y)) {
+            mstate = MENU_MAIN;
+        }
     }
+
+    // Capture keybinding AFTER UI rendering pass
+    if (g_reb_idx >= 0) {
+        menu_handle_keybinding(icfg);
+    }
+
+    return action_trig;
 }

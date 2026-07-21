@@ -36,6 +36,8 @@ void crate_init(crate_t* cr);
 void crate_activate(crate_t *cr);
 void crate_update(crate_t* cr, float dt);
 void crate_content_update(crate_t *cr, float dt);
+bool crate_content_is_grounded_and_active(crate_t* cr);
+void crate_artif_setpos(crate_t *cr, Vector2 pos);
 void crate_draw(crate_t* cr);
 void crate_content_draw(crate_t *cr);
 

@@ -28,6 +28,7 @@
 // Asset files
 #define MAIN_FONT       "assets/fonts/UnitBlock.ttf"
 #define HUD_FONT        "assets/fonts/UnitBlock.ttf"
+#define FTEXT_FONT      "assets/fonts/UnitBlock.ttf"
 #define MENU_FONT       "assets/fonts/AladinR.ttf"
 #define PUZZLE_FONT     "assets/fonts/Yonkers.ttf"
 #define BACKGROUND      "assets/backdrop/keralabackdrop.png"
@@ -67,7 +68,7 @@
 // KUTTICHATHAN
 #define ANIM_KCH_LAUGH     (anim_info_t){"assets/sprites/kchath/laugh.png", "assets/sprites/kchath/laugh.bbox", "KCH LAUGH", 25, 0.07f, true}
 #define ANIM_KCH_HURT      (anim_info_t){"assets/sprites/kchath/hurt.png", "assets/sprites/kchath/hurt.bbox", "KCH HURT", 16, 0.03f, false}
-
+#define ANIM_KCH_DEATH     (anim_info_t){"assets/sprites/kchath/death.png", "assets/sprites/kchath/death.bbox", "KCH DEATH", 25, 0.03f, false}
 
 // AANAMARUTHA
 #define ANIM_AANAM_RUN    (anim_info_t){"assets/sprites/aanamarutha/run.png", "assets/sprites/aanamarutha/run.bbox", "AANAM RUN", 16, 0.05f, true}
@@ -81,8 +82,8 @@
 #define ORB_BBOX         "assets/textures/orb.bbox"
 #define CRATE_TEXTURE    "assets/sprites/crate/tex.png"
 #define CRATE_BBOX       "assets/sprites/crate/tex.bbox"
-#define POTION_TEXTURE   "assets/textures/toddy.png"
-#define POTION_BBOX      "assets/textures/toddy.bbox"
+#define POTION_TEXTURE   "assets/textures/potion.png"
+#define POTION_BBOX      "assets/textures/potion.bbox"
 #define SCROLL_TEXTURE   "assets/textures/scroll.png"
 #define SCROLL_BBOX      "assets/textures/scroll.bbox"
 #define K_HUD_TEXTURE    "assets/textures/karikku_hud.png"
@@ -146,6 +147,9 @@
 #define MAX_FFLY (5)
 #define MAX_KARIKKU (8) // per screen width count?
 #define TOTAL_KARIKKU (MAX_KARIKKU * (WORLD_XR / G_W))
+
+// INPUT CFG FILE
+#define INPUT_CFG_FILE ("vp.set")
 
 // Some helpful macro functions
 // use very carefully

@@ -91,6 +91,7 @@ void player_activate_hmove(player_t *p, hdir_t hdir, float dt);
 void player_activate_jump(player_t *p, float dt);
 void player_activate_hurting(player_t *p, float dt);
 void player_activate_whiplash(player_t *p, Vector2 mouse_pos);
+bool player_in_wlash_frame(player_t *p);
 void player_activate_batr(player_t *p, batr_t *b, Vector2 pos);
 void player_decr_health(player_t *p, int amount);
 void player_clamp_to_screenx(player_t *p);

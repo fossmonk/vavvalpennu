@@ -29,6 +29,7 @@ void boss_activate(boss_type boss);
 bool boss_is_active(boss_type boss);
 void boss_update(boss_type boss, float dt);
 bool boss_is_dead(boss_type boss);
+void boss_handle_death(boss_type boss);
 void boss_draw(boss_type boss);
 
 #endif

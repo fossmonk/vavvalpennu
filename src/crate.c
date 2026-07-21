@@ -13,6 +13,9 @@
 #define MAX_CRATES (MAX_POTION_CRATES + MAX_ARTIF_CRATES)
 #define MAX_CRATE_POS_Y (3)
 
+#define CRATE_SPAWN_A (300) // initial offset for spawn
+#define CRATE_SPAWN_D (G_W*1.5) // common difference for spawn
+
 // randomly fill this array
 static float crate_spos_x[MAX_CRATES];
 // keep known values here
@@ -31,10 +34,8 @@ static crate_content_type crate_c[MAX_CRATES] = {
 static anim_asset_t crate_burst;
 static anim_asset_t dummy_anim_asset;
 static anim_t dummy_anim;
-const float spawn_a = 300;
-static int spawn_n = 2;
-const float spawn_d = G_W*1.5;
 static int crate_index = 0;
+static int crate_spawn_count = 2;
 static bool crate_once_init_done = false;
 
 Sound s_crate_appear;
@@ -55,10 +56,10 @@ static void _arr_shuffle(cct *arr, int sz) {
 
 static bool crate_can_spawn(void) {
     bool ret = false;
-    float current_check_x = spawn_a + spawn_n*spawn_d;
+    float current_check_x = CRATE_SPAWN_A + (crate_spawn_count * CRATE_SPAWN_D);
     if(obj_s2w_pos((Vector2){0,0}).x > current_check_x) {
         ret = true;
-        spawn_n++;
+        crate_spawn_count++;
     }
     return ret;
 }
@@ -162,6 +163,15 @@ void crate_content_update(crate_t *cr, float dt) {
     }
 }
 
+void crate_artif_setpos(crate_t *cr, Vector2 pos) {
+    CR_ARTIF(cr).obj.pos.y = pos.y - CR_ARTIF(cr).artifact_tex.height;
+    CR_ARTIF(cr).obj.pos.x = G_W/2 - CR_ARTIF(cr).artifact_tex.width/2;
+    CR_ARTIF(cr).obj.pos = obj_s2w_pos(CR_ARTIF(cr).obj.pos);
+    CR_ARTIF(cr).obj.vel.y = 0;
+    // make it stay there
+    CR_ARTIF(cr).gravity = false;
+}
+
 void crate_draw(crate_t* cr) {
     if(cr->obj.is_active) {
         if(cr->is_broken) {
@@ -178,6 +188,18 @@ void crate_draw(crate_t* cr) {
         bbox_draw(cr->obj.curr_anim->asset->bbox, cr->obj.pos, MAGENTA);
         #endif
     }
+}
+
+bool crate_content_is_grounded_and_active(crate_t* cr) {
+    bool content_on_ground = false;
+    if(cr->content.type == ARTIFACT) {
+        artifact_t *a = &CR_ARTIF(cr);
+        content_on_ground = a->obj.is_active && (a->obj.pos.y == a->terminal_y);
+    } else if(cr->content.type == POTION) {
+        potion_t *p = &CR_POTION(cr);
+        content_on_ground = p->obj.is_active && (p->obj.pos.y == p->terminal_y);
+    }
+    return content_on_ground;
 }
 
 void crate_content_draw(crate_t *cr) {

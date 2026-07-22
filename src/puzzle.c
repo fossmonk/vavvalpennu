@@ -98,7 +98,7 @@ static puzzle_t g_puzzles[PUZZLE_COUNT] = {
     },
     {
         .q = "The More You Take, the More You Leave Behind. What Am I?",
-        .a = {"footsteps", NULL, NULL}
+        .a = {"footsteps", "footstep", "afootstep"}
     },
     {
         .q = "What Comes Once in a Minute, Twice in a Moment, But Never in a Thousand Years?",
@@ -106,11 +106,11 @@ static puzzle_t g_puzzles[PUZZLE_COUNT] = {
     },
     {
         .q = "I can be cracked. I can be made. I can be told. I can be played. What am I?",
-        .a = {"joke", "ajoke", NULL}
+        .a = {"joke", "ajoke", "jokes"}
     },
     {
         .q = "The more you cut me the bigger I grow. What am I?",
-        .a = {"hole", "ahole", NULL}
+        .a = {"hole", "ahole", "holes"}
     },
     {
         .q = "I am light as a feather, yet the strongest man cannot hold me for much longer than a few minutes.",
@@ -118,11 +118,11 @@ static puzzle_t g_puzzles[PUZZLE_COUNT] = {
     },
     {
         .q = "I have many eyes but cannot see. I am buried alive but never weep. From my skin, new lives will creep.",
-        .a = {"potato", "apotato", NULL}
+        .a = {"potato", "apotato", "potatoes"}
     },
     {
         .q = "I have a spine but no bones. I have leaves but no branches. I can tell you everything, yet I cannot speak a word.",
-        .a = {"book", "abook", NULL}
+        .a = {"book", "abook", "books"}
     },
     {
         .q = "I have keys but open no locks. I have space but no room. You can enter, but you can't go outside. What am I?",

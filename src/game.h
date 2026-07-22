@@ -42,7 +42,8 @@ typedef struct {
     // game fonts
     Font game_font;
     // game textures
-    Texture2D bg;
+    Texture2D bd_bg;
+    Texture2D bd_fg;
     Texture2D splash;
     Texture2D pausemenu;
     // game sounds/music

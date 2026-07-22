@@ -154,6 +154,38 @@ void input_cfg_sync_to_file(void) {
     SaveFileData(INPUT_CFG_FILE, (void *)&g_input_cfg, sizeof(g_input_cfg));
 }
 
+void input_cfg_load_strs(void) {
+    g_input_cfg.move_left.description   = INIT_MOVE_LEFT.description;
+    g_input_cfg.move_right.description  = INIT_MOVE_RIGHT.description;
+    g_input_cfg.jump.description        = INIT_JUMP.description;
+    g_input_cfg.lash_whip.description   = INIT_LASH_WHIP.description;
+    g_input_cfg.throw_batr.description  = INIT_THROW_BATR.description;
+
+    input_item_t *items[] = {
+        &g_input_cfg.move_left,
+        &g_input_cfg.move_right,
+        &g_input_cfg.jump,
+        &g_input_cfg.lash_whip,
+        &g_input_cfg.throw_batr,
+    };
+
+    for(int i = 0; i < ARRAY_SIZE(items); ++i) {
+        switch (items[i]->device)
+        {
+            case KEYBOARD:
+                items[i]->name = g_input_name_map_kb[items[i]->value];
+                break;
+            case MOUSE:
+                items[i]->name = g_input_name_map_mouse[items[i]->value];
+                break;
+            
+            default:
+                items[i]->name = "UNKNOWN";
+                break;
+        }
+    }
+}
+
 void input_init(void) {
     g_input_cfg.move_left   = INIT_MOVE_LEFT;
     g_input_cfg.move_right  = INIT_MOVE_RIGHT;
@@ -173,6 +205,8 @@ void input_init(void) {
             for(int i = 0; i < sz; i++) {
                 *p++ = *q++;
             }
+            // now the strings are not loaded. Populate that
+            input_cfg_load_strs();
             UnloadFileData(data);
         } else {
             // cfg file is tampered, dump default config

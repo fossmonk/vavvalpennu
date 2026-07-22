@@ -57,7 +57,8 @@ void game_init(RenderTexture2D *canvas) {
     obj_global_set_cam2d(&g->cam);
 
     // load all assets
-    g->bg = LoadTexture(BACKGROUND);
+    g->bd_bg = LoadTexture(BACKDROP_BG);
+    g->bd_fg = LoadTexture(BACKDROP_FG);
     g->splash = LoadTexture(SPLASH_BG);
     g->pausemenu = LoadTexture(PAUSEMENU_BG);
     g->cursor = LoadTexture(BAT_CURSOR);
@@ -522,6 +523,7 @@ void game_update(float dt) {
 
 // background draw wrapper
 void game_draw_inf_bg(void) {
+    #if 0
     float cam_left_edge = g->cam.target.x - (G_W/2);
     float bg_offset = (int)cam_left_edge % g->bg.width;
     if(bg_offset < 0) {
@@ -533,6 +535,28 @@ void game_draw_inf_bg(void) {
     DrawTexture(g->bg, drawX, 0, DARKGRAY);
     DrawTexture(g->bg, drawX + g->bg.width, 0, DARKGRAY);
     DrawTexture(g->bg, drawX + 2*g->bg.width, 0, DARKGRAY);
+    #else
+    // let the background move at 0.5x of camera
+    float para_cam = g->cam.target.x * 0.5f;
+    float bd_bg_offset = (int)para_cam % g->bd_bg.width;
+    if(bd_bg_offset < 0) bd_bg_offset += g->bd_bg.width;
+    float draw_x = -bd_bg_offset;
+    DrawTexture(g->bd_bg, draw_x, 0, DARKGRAY);
+    DrawTexture(g->bd_bg, draw_x + g->bd_bg.width, 0, DARKGRAY);
+    if (draw_x + g->bd_bg.width < G_W) {
+        DrawTexture(g->bd_bg, draw_x + 2 * g->bd_bg.width, 0, DARKGRAY);
+    }
+    // let the foreground move with camera;
+    para_cam = g->cam.target.x;
+    float bd_fg_offset = (int)para_cam % g->bd_fg.width;
+    if(bd_fg_offset < 0) bd_fg_offset += g->bd_fg.width;
+    draw_x = -bd_fg_offset;
+    DrawTexture(g->bd_fg, draw_x, 0, DARKGRAY);
+    DrawTexture(g->bd_fg, draw_x + g->bd_fg.width, 0, DARKGRAY);
+    if (draw_x + g->bd_fg.width < G_W) {
+        DrawTexture(g->bd_fg, draw_x + 2 * g->bd_fg.width, 0, DARKGRAY);
+    }
+    #endif
 }
 
 //////////////////////////////
@@ -614,10 +638,9 @@ void game_start_main_loop(void) {
 
         if(!g->is_game_paused) {
             BeginTextureMode(*g->canvas);
-
+            game_draw_inf_bg();
             BeginMode2D(g->cam);
             // Draw everything that moves with camera
-            game_draw_inf_bg();
             player_draw(&g->p);
             // Draw bonfireTODO
             crate_draw(&g->crate);

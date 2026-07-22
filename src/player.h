@@ -87,6 +87,7 @@ typedef struct {
 
 void player_init(player_t *p, obj_t **obstacle_list);
 void player_draw(player_t *p);
+bool player_can_move(player_t *p);
 bool player_can_level_up(player_t *p);
 void player_activate_hmove(player_t *p, hdir_t hdir, float dt);
 void player_activate_jump(player_t *p, float dt);

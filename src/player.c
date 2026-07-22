@@ -292,6 +292,11 @@ static bool player_resolve_col(player_t *p, obj_t* obs) {
     return true;
 }
 
+bool player_can_move(player_t *p) {
+    bool wlash = p->obj.curr_anim->id.id == p->anims.wlash.id.id;
+    return !wlash && !player_is_dancing(p) && !player_is_dying(p) && !player_is_hurting(p);
+}
+
 void player_update(player_t *p, float dt) {
     // store initial position
     p->prev_pos = p->obj.pos;

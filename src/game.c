@@ -154,12 +154,8 @@ void _game_update(float dt) {
 
     // Extract out player
     player_t *p = &g->p;
-    // PLAYER CAN MOVE if !(DYING, HURTING, DANCING)
-    bool player_move_conditions = !player_is_dying(p) &&
-                                  !player_is_hurting(p) &&
-                                  !player_is_dancing(p);
     
-    if(player_move_conditions) {
+    if(player_can_move(p)) {
         if(input_move_right() && !g->is_type_mode) {
             player_activate_hmove(p, RIGHT, dt);
         }

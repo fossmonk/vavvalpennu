@@ -12,7 +12,7 @@
 #define GAME_GROUND_Y (942)
 
 #define WORLD_XL (-G_W)
-#define WORLD_XR (G_W * 50)
+#define WORLD_XR (G_W * 80)
 
 // Camera deadzone parameters
 #define DZ_RL (0)

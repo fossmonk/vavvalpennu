@@ -82,6 +82,7 @@ typedef struct {
     int score;
     unsigned char actionmask;
     bool in_hurt_anim;
+    bool is_grounded;
 } player_t;
 
 void player_init(player_t *p, obj_t **obstacle_list);

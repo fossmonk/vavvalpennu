@@ -110,7 +110,7 @@ void aanam_update(aanam_t *aana, float dt) {
             }
         } else {
             aana->obj.curr_anim = &aana->anim_death;
-            aana->obj.curr_anim->curr_frame.x = 0;
+            anim_reset(aana->obj.curr_anim);
         }
     }
 }

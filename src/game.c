@@ -229,7 +229,7 @@ void _game_update(float dt) {
 
     // AANAMS: activate empty slots
     // if game is in type mode, do not init new aanams
-    bool aanam_ban = g->is_type_mode || (g->crate.is_open && g->crate.content.type == ARTIFACT);
+    bool aanam_ban = (g->is_type_mode || (g->crate.is_open && g->crate.content.type == ARTIFACT)) ? true : false;
     if(!aanam_ban) {
         aanam_activate_all(g->aanas, g->is_boss_active, dt);
     }
@@ -310,6 +310,7 @@ void _game_update(float dt) {
         }
         if(check) {
             b->obj.is_active = false;
+            kch_set_hurt_shock(&g->bosses.kch);
             kch_decr_health_batr(&g->bosses.kch);
             hbar_update(&g->bosses.kch.hbar, g->bosses.kch.health);
         }
@@ -523,19 +524,6 @@ void game_update(float dt) {
 
 // background draw wrapper
 void game_draw_inf_bg(void) {
-    #if 0
-    float cam_left_edge = g->cam.target.x - (G_W/2);
-    float bg_offset = (int)cam_left_edge % g->bg.width;
-    if(bg_offset < 0) {
-        bg_offset += g->bg.width;
-    }
-    float drawX = cam_left_edge - bg_offset;
-    
-    // Draw infinite background
-    DrawTexture(g->bg, drawX, 0, DARKGRAY);
-    DrawTexture(g->bg, drawX + g->bg.width, 0, DARKGRAY);
-    DrawTexture(g->bg, drawX + 2*g->bg.width, 0, DARKGRAY);
-    #else
     // let the background move at 0.5x of camera
     float para_cam = g->cam.target.x * 0.5f;
     float bd_bg_offset = (int)para_cam % g->bd_bg.width;
@@ -556,7 +544,6 @@ void game_draw_inf_bg(void) {
     if (draw_x + g->bd_fg.width < G_W) {
         DrawTexture(g->bd_fg, draw_x + 2 * g->bd_fg.width, 0, DARKGRAY);
     }
-    #endif
 }
 
 //////////////////////////////

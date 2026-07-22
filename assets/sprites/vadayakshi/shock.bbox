@@ -1,2 +1,2 @@
-bbox_type=rectangle
-bbox_params=[77, 6, 106, 213]
+bbox_type=circle
+bbox_params=[127, 29, 13]

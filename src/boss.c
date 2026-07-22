@@ -105,7 +105,7 @@ bool boss_is_dead(boss_type boss) {
     switch (boss)
     {
     case KCHATHAN:
-        ret = (gref_bosses->kch.health == 0);
+        ret = (gref_bosses->kch.obj.is_active == false);
         break;
     case EPECHI:
         /* code */
@@ -114,7 +114,7 @@ bool boss_is_dead(boss_type boss) {
         /* code */
         break;
     case VADAYAKSHI:
-        ret = (gref_bosses->vy.health == 0);
+        ret = (gref_bosses->vy.obj.is_active == 0);
         break;
     
     default:

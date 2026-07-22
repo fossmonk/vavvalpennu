@@ -12,6 +12,15 @@
 
 anim_asset_t kchath_laugh;
 anim_asset_t kchath_hurt;
+anim_asset_t kchath_death;
+
+#define LAUGH      0xB10
+#define HURT       0xB11
+#define DEATH      0xB12
+
+const anim_id_t kch_laugh_id = { LAUGH };
+const anim_id_t kch_hurt_id = { HURT };
+const anim_id_t kch_death_id = { DEATH };
 
 static bool g_anim_asset_loaded = false;
 static float kch_update_timer = 0.0f;
@@ -21,18 +30,26 @@ void kchath_init(kchath_t* kch) {
     if(!g_anim_asset_loaded) {
         anim_asset_load(ANIM_KCH_LAUGH, &kchath_laugh);
         anim_asset_load(ANIM_KCH_HURT, &kchath_hurt);
+        anim_asset_load(ANIM_KCH_DEATH, &kchath_death);
     }
     Vector2 dim;
     // die
+    dim = anim_asset_get_frame_dim(&kchath_death);
+    kch->anim_death.asset = &kchath_death;
+    kch->anim_death.timer = 0.0f;
+    kch->anim_death.id    = kch_death_id;
+    kch->anim_death.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
     // laugh
     dim = anim_asset_get_frame_dim(&kchath_laugh);
     kch->anim_laugh.asset = &kchath_laugh;
     kch->anim_laugh.timer = 0.0f;
+    kch->anim_laugh.id    = kch_laugh_id;
     kch->anim_laugh.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
     // hurt
     dim = anim_asset_get_frame_dim(&kchath_hurt);
     kch->anim_hurt.asset = &kchath_hurt;
     kch->anim_hurt.timer = 0.0f;
+    kch->anim_hurt.id    = kch_hurt_id;
     kch->anim_hurt.curr_frame = (Rectangle){0, 0, dim.x, dim.y};
 
     // AUDIO
@@ -71,20 +88,36 @@ void kchath_activate(kchath_t *kch) {
 }
 
 void kchath_update(kchath_t *kch, float dt) {
-    // update skull balls
-    for(int i = 0; i < MAX_SKBALLS; ++i) {
-        skball_t *skball = &kch->skballs[i];
-        if(skball->obj.is_active) {
-            skball_update(skball, dt);
-        }
-    }
-
     if(!kch->obj.is_active) return;
 
+    if(kch->health <= 0) {
+        kch_set_die(kch);
+    }
+
     if(kch_is_dying(kch)) {
-        // check if animation is death, if not start
-        // if yes, check if it is last frame
-        // if yes mark as inactive kch and skballs
+        if(kch->obj.curr_anim->id.id == kch->anim_death.id.id) {
+            if(anim_is_lastframe(kch->obj.curr_anim)) {
+                kch->obj.is_active = false;
+            }
+        } else {
+            kch->obj.curr_anim = &kch->anim_death;
+            anim_reset(kch->obj.curr_anim);
+        }
+
+        for(int i = 0; i < MAX_SKBALLS; ++i) {
+            kch->skballs[i].obj.is_active = false;
+        }
+    } else if(kch_is_hurting(kch)) {
+        if(kch->obj.curr_anim->id.id == kch->anim_hurt.id.id) {
+            if(anim_is_lastframe(kch->obj.curr_anim)) {
+                kch_clr_hurt_shock(kch);
+                kch->obj.curr_anim = &kch->anim_laugh;
+            }
+        } else {
+            kch->obj.curr_anim = &kch->anim_hurt;
+            anim_reset(kch->obj.curr_anim);
+            PlaySound(kch->hurt);
+        }
     } else {
         kch_update_timer += dt;
         UpdateMusicStream(kch->laugh);
@@ -101,6 +134,13 @@ void kchath_update(kchath_t *kch, float dt) {
             skball_t *skball = &kch->skballs[i];
             if(!skball->obj.is_active) {
                 skball_activate(skball);
+            }
+        }
+        // update skull balls
+        for(int i = 0; i < MAX_SKBALLS; ++i) {
+            skball_t *skball = &kch->skballs[i];
+            if(skball->obj.is_active) {
+                skball_update(skball, dt);
             }
         }
     }

@@ -153,6 +153,8 @@ void player_init(player_t *p, obj_t **obstacle_list) {
     p->score = 0;
     p->curr_level = 0;
     p->obstacle_list = obstacle_list;
+    p->in_hurt_anim = false;
+    p->is_grounded = false;
 
     // init player healthbar
     hbar_init(&p->hbar, 
@@ -162,92 +164,23 @@ void player_init(player_t *p, obj_t **obstacle_list) {
     hud_init();
 }
 
-
-bool player_can_move(player_t *p, hdir_t hdir) {
-    // the player can move to the right, if there are no obstacles to the right
-    // loop through list of obstacles, check if player bbox is colliding with obstacle bbox
-    // and player right limit is >= obstacle left limit
-    bool can_move = true;
-    int num_obs = dyn_arr_len(p->obstacle_list);
-    col_details_2d c_details;
-    for(int i = 0; i < num_obs; ++i) {
-        obj_t *obs = p->obstacle_list[i];
-        if(obs->is_active) {
-            bool is_colliding = col_check_bbox(&p->obj, obs, &c_details);
-            bool check = (hdir == RIGHT) ? c_details.rl : c_details.lr;
-            can_move = !(is_colliding && check);
-            if(!can_move) break;
-        }
-    }
-    return can_move;
-}
-
-// TODO: CLEAN UP THIS FUNCTION
-bool player_is_grounded(player_t *p, float *curr_ground) {
-    bool is_grounded = false;
-    Rectangle bbox_rect = obj_get_bbox_rect(&p->obj);
-    float ground_clearance = 2.0f;
-    float player_b_y = p->obj.pos.y + bbox_rect.y + bbox_rect.height;
-    
-    // check if there are any obstacles below
-    int num_obs = dyn_arr_len(p->obstacle_list);
-    col_details_2d c_details;
-    bool obs_below = false;
-    float ground_y = -1;
-    for(int i = 0; i < num_obs; ++i) {
-        obj_t *obs = p->obstacle_list[i];
-
-        if(!obs->is_active) continue;
-        
-        bool is_colliding = col_check_bbox(&p->obj, obs, &c_details);
-        if(is_colliding && c_details.bt) {
-            ground_y = obs->pos.y;
-            obs_below = true;
-            break;
-        }
-    }
-
-    if(obs_below) {
-        is_grounded = true;
-    } else {
-        ground_y = GAME_GROUND_Y;
-        float delta_y = ground_y - player_b_y;
-        if((delta_y >= 0) && (delta_y <  ground_clearance)) {
-            is_grounded = true;
-        } else {
-            is_grounded = false;
-        }
-    }
-
-    if(is_grounded && curr_ground) {
-        *curr_ground = ground_y;
-    }
-
-    return is_grounded;
-}
-
 void player_activate_hmove(player_t *p, hdir_t hdir, float dt) {
     // set hdir
     p->obj.hdir = hdir;
     float vel_mult = (hdir == RIGHT) ? 1 : -1;
-    // switch to run only if player can move.
-    if(player_can_move(p, hdir)) {
-        // change player animation to run only if current animation is idle
-        if(p->obj.curr_anim->id.id == p->anims.idle.id.id) {
-            p->obj.curr_anim = &p->anims.run;
-            p->obj.size = anim_get_framesize(p->obj.curr_anim);
-        }
-        // flip animation if hdir has changed
-        hdir == RIGHT ? anim_hflipr(p->obj.curr_anim) : anim_hflipl(p->obj.curr_anim);
-        p->obj.vel.x += vel_mult*ACCEL_PUSH*dt;
-    } else {
-        p->obj.vel.x = 0;
+    // change player animation to run only if current animation is idle
+    if(p->obj.curr_anim->id.id == p->anims.idle.id.id) {
+        p->obj.curr_anim = &p->anims.run;
+        p->obj.size = anim_get_framesize(p->obj.curr_anim);
     }
+    // flip animation if hdir has changed
+    hdir == RIGHT ? anim_hflipr(p->obj.curr_anim) : anim_hflipl(p->obj.curr_anim);
+    p->obj.vel.x += vel_mult*ACCEL_PUSH*dt;
 }
 
 void player_activate_jump(player_t *p, float dt) {
     // check if the player is grounded
-    if(!player_is_grounded(p, NULL)) return;
+    if(!p->is_grounded) return;
 
     // set animation to jump
     p->obj.curr_anim = &p->anims.jump;
@@ -329,24 +262,39 @@ void player_clamp_to_screenx(player_t *p) {
     p->obj.pos = obj_s2w_pos(player_screen_pos);
 }
 
+static bool player_resolve_col(player_t *p, obj_t* obs) {
+    // return fast if there is no collision to resolve
+    Vector2 overlap;
+    if(!col_check_bbox(&p->obj, obs, &overlap)) return false;
+
+    // resolve along smaller: x or y
+    if(overlap.x < overlap.y) {
+        if(p->obj.pos.x < obs->pos.x) {
+            // push left by overlap_x
+            p->obj.pos.x -= overlap.x;
+        } else {
+            // push right by overlap_x
+            p->obj.pos.x += overlap.y;
+        }
+        p->obj.vel.x = 0.0f;
+    } else {
+        if(p->obj.pos.x < obs->pos.x) {
+            // push up by overlap_y
+            p->obj.pos.y -= overlap.y;
+            p->is_grounded = true;
+        } else {
+            // push down
+            p->obj.pos.y += overlap.y;
+        }
+        p->obj.vel.y = 0.0f;
+    }
+
+    return true;
+}
+
 void player_update(player_t *p, float dt) {
     // store initial position
     p->prev_pos = p->obj.pos;
-    // friction, air drag, gravity
-    p->obj.vel.x *= expf(PLAYER_VEL_X_DECAY*dt);
-    p->obj.vel.y *= expf(PLAYER_VEL_Y_DECAY*dt);
-    p->obj.vel.y += ACCEL_G*dt;
-
-    // round to zero
-    if(fabsf(p->obj.vel.x) < PLAYER_VEL_X_ROUNDOFF) p->obj.vel.x = 0;
-    if(fabsf(p->obj.vel.y) < PLAYER_VEL_Y_ROUNDOFF) p->obj.vel.y = 0;
-    /*
-    position update is conditional on certain things
-    if the player is hurting, they are stunned. 
-    so they can't move. So we don't update position
-    if the player is blocked due to an obstacle
-    then we don't update position.
-    */
     // handle player_is_hurting
     if(player_is_hurting(p)) {
         if(!p->in_hurt_anim) {
@@ -361,50 +309,49 @@ void player_update(player_t *p, float dt) {
             player_clr_hurt_flash(p);
             p->obj.curr_anim = &p->anims.idle;
         }
+    } else if(player_is_dying(p)) {
+        // handle death
+    } else if(p->obj.curr_anim->id.id == p->anims.wlash.id.id) {
+        // handle whiplash. switch to idle when done
+        if(anim_is_lastframe(p->obj.curr_anim)) p->obj.curr_anim = &p->anims.idle;
     } else {
-        Rectangle bbox_rect = obj_get_bbox_rect(&p->obj);
-        float player_b_y = bbox_rect.height + bbox_rect.y;
-        /*
-        Y Position
-        find out if the player is grounded
-        check for obstacles below player, 
-        update y position. If there are none,
-        then clamp y to GAME_GROUND_Y.
-        */
-        // update y
-        float curr_ground;
-        bool is_grounded = player_is_grounded(p, &curr_ground);
-        if(!is_grounded) {
-            p->obj.pos.y += p->obj.vel.y*dt;
-        } else if (p->obj.vel.y > 0.0f) {
-            p->obj.vel.y = 0.0f;
-        }
-        /*
-        X position
-        velocity is already zeroed out if there are obstacles.
-        so unconditionally update the x position
-        */
-        p->obj.pos.x += p->obj.vel.x*dt;
-       
-       // clamp x and y with world boundaries
-        p->obj.pos.y = _min(p->obj.pos.y, GAME_GROUND_Y - player_b_y);
-        p->obj.pos.x = _max(p->obj.pos.x, WORLD_XL);
-        p->obj.pos.x = _min(p->obj.pos.x, WORLD_XR - p->obj.size.x);
+        // normal update
+        // update velocities
+        // friction, air drag, gravity
+        p->obj.vel.x *= expf(PLAYER_VEL_X_DECAY*dt);
+        p->obj.vel.y *= expf(PLAYER_VEL_Y_DECAY*dt);
+        p->obj.vel.y += ACCEL_G*dt;
 
-        // handle whiplash
-        if(p->obj.curr_anim->id.id == p->anims.wlash.id.id) {
-            // undo all the position updates
-            p->obj.pos.x = p->prev_pos.x;
-            if(anim_is_lastframe(p->obj.curr_anim)) p->obj.curr_anim = &p->anims.idle;
-        } else if(is_grounded) {
-            // if player is grounded, stop jump
-            p->obj.pos.y = curr_ground - player_b_y;
+        // round to zero to limit the exponential decay
+        if(fabsf(p->obj.vel.x) < PLAYER_VEL_X_ROUNDOFF) p->obj.vel.x = 0;
+        if(fabsf(p->obj.vel.y) < PLAYER_VEL_Y_ROUNDOFF) p->obj.vel.y = 0;
+
+        // now resolve obstacle collisions
+        int num_obs = dyn_arr_len(p->obstacle_list);
+        bool col_res = false;
+        for(int i = 0; i < num_obs; ++i) {
+            obj_t* obs = p->obstacle_list[i];
+            col_res = player_resolve_col(p, obs);
+            if(col_res) break;
+        }
+
+        // update positions. velocities would have been zeroed out for collisions
+        p->obj.pos.x += p->obj.vel.x * dt;
+        p->obj.pos.y += p->obj.vel.y * dt;
+       
+        // clamp x and y with world boundaries
+        p->obj.pos.y = _min(p->obj.pos.y, GAME_GROUND_Y - p->obj.curr_anim->curr_frame.height);
+        p->obj.pos.x = _max(p->obj.pos.x, WORLD_XL);
+        p->obj.pos.x = _min(p->obj.pos.x, WORLD_XR - p->obj.curr_anim->curr_frame.width);
+
+        p->is_grounded = (col_res && p->is_grounded) || 
+                         (p->obj.pos.y == GAME_GROUND_Y - p->obj.curr_anim->curr_frame.height);
+
+        if(p->is_grounded) {
             player_clr_jump(p);
-            // in grounded position if player has x vel switch to run anim, else idle.
             p->obj.curr_anim = p->obj.vel.x != 0.0f ? &p->anims.run : &p->anims.idle;
             p->obj.hdir == RIGHT ? anim_hflipr(p->obj.curr_anim) : anim_hflipl(p->obj.curr_anim);
         }
-
     }
     // always update health bar
     hbar_update(&p->hbar, p->health);

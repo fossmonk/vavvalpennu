@@ -25,10 +25,22 @@
 #define kch_decr_health_batr(kch) kchath_decr_health((kch), KCH_BATR_HEALTH_DECR)
 
 typedef struct {
+    anim_t anim_laugh;
+    anim_t anim_hurt;
+    anim_t anim_death;
+} kch_anims_t;
+
+typedef struct {
+    Sound hurt;
+    Music laugh;
+} kch_audio_t;
+
+typedef struct {
     obj_t obj;
     // animations
     anim_t anim_laugh;
     anim_t anim_hurt;
+    anim_t anim_death;
     // audio
     Sound hurt;
     Music laugh;
